@@ -45,10 +45,11 @@ API_FOOTBALL_KEY=
 ANTHROPIC_API_KEY=
 AI_MODEL=claude-haiku-4-5
 AI_LAYER_MODE=full          # full | reasoning_only | off
-CONFIDENCE_FLOOR=65         # minimum probability to publish a tip
+CONFIDENCE_FLOOR=60         # minimum probability to publish a tip
 NEXTAUTH_SECRET=
 NEXTAUTH_URL=
 PAYSTACK_SECRET_KEY=
 PAYSTACK_PUBLIC_KEY=
 CRON_SECRET=
+NEXT_PUBLIC_SITE_URL=       # public origin, no trailing slash - canonical URLs, OG tags, sitemap
 ```

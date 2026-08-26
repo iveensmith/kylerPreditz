@@ -1,0 +1,55 @@
+{
+  "name": "kylerpredictz",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint",
+    "sync:fixtures": "tsx scripts/run-job.ts fixtures",
+    "sync:stats": "tsx scripts/run-job.ts stats",
+    "predictions:generate": "tsx scripts/run-job.ts predictions",
+    "sync:results": "tsx scripts/run-job.ts results",
+    "test": "vitest run",
+    "backtest": "tsx scripts/backtest-historical.ts",
+    "backtest:ai": "tsx scripts/backtest-historical-ai.ts",
+    "admin:create": "tsx scripts/create-admin.ts"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.120.0",
+    "@neondatabase/serverless": "^1.1.0",
+    "@prisma/adapter-neon": "^7.9.1",
+    "@prisma/client": "^7.9.1",
+    "bcryptjs": "^3.0.3",
+    "bufferutil": "^4.1.0",
+    "dotenv": "^17.4.2",
+    "next": "16.3.2",
+    "next-auth": "^4.24.15",
+    "react": "19.2.8",
+    "react-dom": "19.2.8",
+    "ws": "^8.21.3",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4",
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "@types/ws": "^8.18.1",
+    "eslint": "^9",
+    "eslint-config-next": "16.3.2",
+    "prisma": "^7.9.1",
+    "tailwindcss": "^4",
+    "tsx": "^4.23.12",
+    "typescript": "^5",
+    "vitest": "^4.1.11"
+  },
+  "allowScripts": {
+    "@prisma/engines@7.9.1": true,
+    "esbuild@0.28.2": true,
+    "prisma@7.9.1": true,
+    "unrs-resolver@1.12.2": true,
+    "bufferutil@4.1.0": true
+  }
+}

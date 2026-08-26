@@ -1,0 +1,325 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ---------------------------------------------------------------------------
+// API-Football response cache + daily quota guard (see /lib/api-football/client.ts)
+// ---------------------------------------------------------------------------
+
+model ApiCache {
+  id        String   @id @default(cuid())
+  cacheKey  String   @unique
+  endpoint  String
+  response  Json
+  fetchedAt DateTime @default(now())
+  expiresAt DateTime
+
+  @@index([expiresAt])
+}
+
+model ApiQuotaUsage {
+  id    String @id @default(cuid())
+  date  String @unique // UTC day, "YYYY-MM-DD"
+  count Int    @default(0)
+}
+
+// ---------------------------------------------------------------------------
+// Football data (synced from API-Football via /lib/api-football/client.ts)
+// ---------------------------------------------------------------------------
+
+model League {
+  id         String   @id @default(cuid())
+  apiId      Int      @unique
+  name       String
+  country    String
+  logoUrl    String?
+  slug       String   @unique
+  isFeatured Boolean  @default(false)
+  priority   Int      @default(0)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  teams     Team[]
+  fixtures  Fixture[]
+  standings Standing[]
+  topScorers TopScorer[]
+
+  @@index([isFeatured, priority])
+}
+
+model Team {
+  id        String  @id @default(cuid())
+  apiId     Int     @unique
+  name      String
+  shortName String?
+  logoUrl   String?
+  leagueId  String
+
+  league League @relation(fields: [leagueId], references: [id])
+
+  homeFixtures Fixture[]   @relation("HomeTeam")
+  awayFixtures Fixture[]   @relation("AwayTeam")
+  stats        TeamStats[]
+  standings    Standing[]
+  topScorers   TopScorer[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([leagueId])
+}
+
+enum FixtureStatus {
+  SCHEDULED
+  LIVE
+  HALFTIME
+  FINISHED
+  POSTPONED
+  CANCELLED
+  ABANDONED
+}
+
+model Fixture {
+  id         String        @id @default(cuid())
+  apiId      Int           @unique
+  leagueId   String
+  homeTeamId String
+  awayTeamId String
+  kickoffUtc DateTime
+  status     FixtureStatus @default(SCHEDULED)
+
+  homeScore      Int?
+  awayScore      Int?
+  htHomeScore    Int?
+  htAwayScore    Int?
+  /// Minutes played, from API-Football's fixture.status.elapsed. Only meaningful while LIVE/HALFTIME.
+  elapsedMinutes Int?
+  venue          String?
+
+  league   League @relation(fields: [leagueId], references: [id])
+  homeTeam Team   @relation("HomeTeam", fields: [homeTeamId], references: [id])
+  awayTeam Team   @relation("AwayTeam", fields: [awayTeamId], references: [id])
+
+  prediction Prediction?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([leagueId])
+  @@index([kickoffUtc])
+  @@index([status])
+}
+
+model TeamStats {
+  id     String @id @default(cuid())
+  teamId String
+  season Int
+
+  played  Int @default(0)
+  wins    Int @default(0)
+  draws   Int @default(0)
+  losses  Int @default(0)
+
+  goalsFor     Int @default(0)
+  goalsAgainst Int @default(0)
+
+  homeGoalsFor     Int @default(0)
+  homeGoalsAgainst Int @default(0)
+  awayGoalsFor     Int @default(0)
+  awayGoalsAgainst Int @default(0)
+
+  cleanSheets   Int    @default(0)
+  failedToScore Int    @default(0)
+  form          String? // last 5 results, e.g. "WWDLW"
+
+  team Team @relation(fields: [teamId], references: [id])
+
+  updatedAt DateTime @updatedAt
+
+  @@unique([teamId, season])
+}
+
+model Standing {
+  id       String @id @default(cuid())
+  leagueId String
+  teamId   String
+  season   Int
+
+  rank     Int
+  played   Int
+  points   Int
+  goalDiff Int
+
+  league League @relation(fields: [leagueId], references: [id])
+  team   Team   @relation(fields: [teamId], references: [id])
+
+  updatedAt DateTime @updatedAt
+
+  @@unique([leagueId, teamId, season])
+  @@index([leagueId, season])
+}
+
+model TopScorer {
+  id           String @id @default(cuid())
+  leagueId     String
+  playerName   String
+  teamId       String
+  goals        Int
+  appearances  Int
+  season       Int
+
+  league League @relation(fields: [leagueId], references: [id])
+  team   Team   @relation(fields: [teamId], references: [id])
+
+  updatedAt DateTime @updatedAt
+
+  @@unique([leagueId, teamId, playerName, season])
+  @@index([leagueId, season])
+}
+
+// ---------------------------------------------------------------------------
+// Prediction engine output
+// ---------------------------------------------------------------------------
+
+enum PredictionMarket {
+  HOME_WIN
+  AWAY_WIN
+  DRAW
+  DOUBLE_CHANCE_1X
+  DOUBLE_CHANCE_X2
+  DOUBLE_CHANCE_12
+  DRAW_NO_BET_HOME
+  DRAW_NO_BET_AWAY
+  OVER_1_5
+  UNDER_1_5
+  OVER_2_5
+  UNDER_2_5
+  OVER_3_5
+  UNDER_3_5
+  BTTS_YES
+  BTTS_NO
+  CORRECT_SCORE
+  HT_OVER_0_5
+}
+
+enum SettledStatus {
+  PENDING
+  WON
+  LOST
+  VOID
+}
+
+model Prediction {
+  id        String @id @default(cuid())
+  fixtureId String @unique
+
+  market     PredictionMarket
+  selection  String
+  odds       Decimal           @db.Decimal(5, 2)
+  confidence Int
+  isVip      Boolean           @default(false)
+  isBanker   Boolean           @default(false)
+  reasoning  String            @db.Text
+  settledAs  SettledStatus     @default(PENDING)
+
+  isManualOverride Boolean @default(false)
+
+  // Stage 1 (statistical model) output, kept even after AI adjustment for comparison.
+  baseMarket     PredictionMarket?
+  baseSelection  String?
+  baseConfidence Int?
+
+  // Full stage-1 market breakdown, for the match detail page's "all markets
+  // with probabilities" view - the published pick above is just the top one.
+  // Shape: { market: PredictionMarket, selection: string, probability: number }[]
+  allMarkets       Json?
+  expectedGoalsHome Float?
+  expectedGoalsAway Float?
+
+  // Stage 2 (AI layer) metadata.
+  aiAdjusted       Boolean  @default(false)
+  adjustmentReason String?  @db.Text
+  aiModel          String?
+  generatedAt      DateTime?
+
+  fixture Fixture @relation(fields: [fixtureId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([settledAs])
+  @@index([isVip])
+  @@index([isBanker])
+}
+
+// ---------------------------------------------------------------------------
+// Content
+// ---------------------------------------------------------------------------
+
+model Post {
+  id          String    @id @default(cuid())
+  title       String
+  slug        String    @unique
+  body        String    @db.Text
+  coverImage  String?
+  publishedAt DateTime?
+  author      String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([publishedAt])
+}
+
+// ---------------------------------------------------------------------------
+// Auth & billing
+// ---------------------------------------------------------------------------
+
+enum UserRole {
+  USER
+  ADMIN
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  role         UserRole @default(USER)
+  createdAt    DateTime @default(now())
+
+  subscriptions Subscription[]
+}
+
+enum SubscriptionPlan {
+  WEEKLY
+  MONTHLY
+  LIFETIME
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  EXPIRED
+  CANCELLED
+}
+
+model Subscription {
+  id         String             @id @default(cuid())
+  userId     String
+  plan       SubscriptionPlan
+  status     SubscriptionStatus @default(ACTIVE)
+  startsAt   DateTime
+  expiresAt  DateTime
+  paystackRef String            @unique
+
+  user User @relation(fields: [userId], references: [id])
+
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([status])
+}
