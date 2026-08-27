@@ -11,7 +11,7 @@ export function TipOfTheDayCard({ banker }: { banker: Banker }) {
   const { fixture } = banker;
 
   return (
-    <section className="md:sticky md:top-20 w-full md:w-72 shrink-0 rounded-xl border border-zinc-800 bg-zinc-950 text-white p-4 flex flex-col gap-4">
+    <section className="md:sticky md:top-20 rounded-xl border border-zinc-800 bg-zinc-950 text-white p-4 flex flex-col gap-4">
       <h2 className="font-semibold text-brand-light">Tip of the Day</h2>
 
       <div className="text-xs text-zinc-400 flex flex-col gap-1">

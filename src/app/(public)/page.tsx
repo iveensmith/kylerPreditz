@@ -15,6 +15,7 @@ import { MarketSidebar } from "@/components/home/MarketSidebar";
 import { DateStrip } from "@/components/home/DateStrip";
 import { LeagueTipGroup } from "@/components/home/LeagueTipGroup";
 import { TipOfTheDayCard } from "@/components/home/TipOfTheDayCard";
+import { SidebarFixtureList } from "@/components/home/SidebarFixtureList";
 import { RecentWinners } from "@/components/home/RecentWinners";
 import { LeagueTablesTabs } from "@/components/home/LeagueTablesTabs";
 import { TopScorersTable } from "@/components/home/TopScorersTable";
@@ -48,13 +49,27 @@ export default async function Home({ searchParams }: PageProps<"/">) {
     getTopScorersForFeaturedLeagues(),
   ]);
 
+  // Fills the space below the sticky Tip of the Day card on desktop, where a
+  // stretched flex sidebar would otherwise just be empty background. Reuses
+  // the fixtures already fetched above rather than a second query.
+  const sidebarFixtures = leagues
+    .flatMap((league) => league.fixtures)
+    .filter((fixture) => fixture.id !== banker?.fixture.id)
+    .sort((a, b) => a.kickoffUtc.getTime() - b.kickoffUtc.getTime())
+    .slice(0, 10);
+
   return (
     <>
       <JsonLd data={buildFaqPageJsonLd(HOMEPAGE_FAQ)} />
       <Hero />
 
       <main id="todays-tips" className="max-w-6xl mx-auto w-full px-4 py-8 flex flex-col md:flex-row gap-6">
-        {banker && <TipOfTheDayCard banker={banker} />}
+        {banker && (
+          <div className="w-full md:w-72 shrink-0 flex flex-col gap-6">
+            <TipOfTheDayCard banker={banker} />
+            <SidebarFixtureList fixtures={sidebarFixtures} />
+          </div>
+        )}
 
         <div className="flex-1 min-w-0 flex flex-col gap-8">
           <div className="flex flex-col gap-4">

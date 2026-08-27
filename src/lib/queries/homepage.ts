@@ -73,11 +73,12 @@ export async function getStandingsForFeaturedLeagues() {
 
 export type StandingsByLeague = Awaited<ReturnType<typeof getStandingsForFeaturedLeagues>>;
 
-export async function getTopScorersForFeaturedLeagues(limit = 5) {
+export async function getTopScorersForFeaturedLeagues(limit = 5, leagueLimit = 6) {
   const season = getCurrentSeason();
   const leagues = await prisma.league.findMany({
     where: { isFeatured: true },
     orderBy: { priority: "asc" },
+    take: leagueLimit,
     include: {
       topScorers: {
         where: { season },
