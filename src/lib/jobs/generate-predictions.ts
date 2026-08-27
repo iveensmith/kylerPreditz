@@ -3,11 +3,12 @@ import { ApiFootballQuotaExceededError } from "@/lib/api-football/client";
 import { getCurrentSeason } from "@/lib/api-football/season";
 import { seasonCalendarForApiId } from "@/lib/leagues.config";
 import { prisma } from "@/lib/db/prisma";
-import { buildContextPacket, DEFAULT_AI_MODEL, reviewFixturesWithMode } from "@/lib/predictions/ai";
+import { buildContextPacket, buildFallbackPick, DEFAULT_AI_MODEL, reviewFixturesWithMode } from "@/lib/predictions/ai";
 import type { AiLayerMode, ContextPacket } from "@/lib/predictions/ai";
 import { buildH2hEntries, buildInjuries, buildTeamContextStats } from "@/lib/predictions/context-input";
 import { buildTeamHistory, computeLeagueAverages } from "@/lib/predictions/history";
-import { DEFAULT_CONFIDENCE_FLOOR, MIN_MATCHES_REQUIRED, predictFixture, type MarketProbability } from "@/lib/predictions/model";
+import { assignCoverageFills, getUncoveredMarketPages } from "@/lib/predictions/market-coverage";
+import { DEFAULT_CONFIDENCE_FLOOR, MIN_MATCHES_REQUIRED, predictFixture, selectTopPick, type MarketProbability } from "@/lib/predictions/model";
 
 const GENERATE_WINDOW_HOURS = 48;
 const VALID_MODES: AiLayerMode[] = ["full", "reasoning_only", "off"];
@@ -27,6 +28,8 @@ export type GeneratePredictionsResult = {
   predictionsPublished: number;
   skippedInsufficientHistory: number;
   skippedBelowFloor: number;
+  /** Published specifically to give an otherwise-empty market page at least one live pick. */
+  coverageFillsPublished: number;
   errors: string[];
 };
 
@@ -35,23 +38,45 @@ export type GeneratePredictionsResult = {
  * next 48h that doesn't have a prediction yet. Fixtures the model can't
  * confidently pick are left without a Prediction row - an empty slot beats a
  * bad tip, per spec.
+ *
+ * Before the normal per-fixture top pick runs, a coverage pass (see
+ * market-coverage.ts) checks every market-type page on the site for zero
+ * live predictions and, where possible, dedicates one fixture to publish
+ * its real (never fabricated) probability for that specific market instead
+ * of its own natural best pick. Coverage fills skip AI review entirely -
+ * the AI is otherwise free to change the published market away from the
+ * base pick, which would silently undo the coverage guarantee.
+ *
+ * windowHours defaults to the normal 48h rolling window the scheduled job
+ * always uses; only ever pass a wider value for a one-off manual run (e.g.
+ * seeding initial market coverage against a bigger pool of fixtures).
+ * maxFixtures caps how many candidates get processed (soonest kickoff
+ * first) - each one means several sequential context-building calls, so an
+ * unbounded wide-window run can take a very long time; leave unset for the
+ * normal scheduled job, where the 48h window already keeps this small.
  */
-export async function generatePredictions(): Promise<GeneratePredictionsResult> {
+export async function generatePredictions(
+  options: { windowHours?: number; maxFixtures?: number } = {},
+): Promise<GeneratePredictionsResult> {
+  const { windowHours = GENERATE_WINDOW_HOURS, maxFixtures } = options;
   const result: GeneratePredictionsResult = {
     fixturesConsidered: 0,
     predictionsPublished: 0,
     skippedInsufficientHistory: 0,
     skippedBelowFloor: 0,
+    coverageFillsPublished: 0,
     errors: [],
   };
 
-  const windowEnd = new Date(Date.now() + GENERATE_WINDOW_HOURS * 60 * 60 * 1000);
+  const windowEnd = new Date(Date.now() + windowHours * 60 * 60 * 1000);
   const fixtures = await prisma.fixture.findMany({
     where: {
       status: FixtureStatus.SCHEDULED,
       kickoffUtc: { gte: new Date(), lte: windowEnd },
       prediction: null,
     },
+    orderBy: { kickoffUtc: "asc" },
+    take: maxFixtures,
     include: { league: true, homeTeam: true, awayTeam: true },
   });
   result.fixturesConsidered = fixtures.length;
@@ -60,14 +85,12 @@ export async function generatePredictions(): Promise<GeneratePredictionsResult> 
   const floor = getConfidenceFloor();
   const leagueAveragesCache = new Map<string, Awaited<ReturnType<typeof computeLeagueAverages>>>();
 
-  type Prepared = {
+  type Built = {
     fixtureId: string;
-    basePick: MarketProbability;
-    baseConfidence: number;
-    baseOdds: number;
+    markets: MarketProbability[];
     packet: ContextPacket;
   };
-  const prepared: Prepared[] = [];
+  const built: Built[] = [];
 
   try {
     for (const fixture of fixtures) {
@@ -87,14 +110,16 @@ export async function generatePredictions(): Promise<GeneratePredictionsResult> 
         continue;
       }
 
+      // floor=0 here so `markets` always has every market's real probability,
+      // regardless of the site's confidence floor - the coverage pass below
+      // needs the full picture to find candidates for under-covered markets.
+      // skip is only ever true here for insufficient history, already
+      // handled above, so this is never a `skip: true` result.
       const modelResult = predictFixture(
         { home: { matches: homeMatches }, away: { matches: awayMatches }, league: leagueAverages },
-        floor,
+        0,
       );
-      if (modelResult.skip) {
-        result.skippedBelowFloor++;
-        continue;
-      }
+      if (modelResult.skip) continue;
 
       const season = getCurrentSeason(fixture.kickoffUtc, seasonCalendarForApiId(fixture.league.apiId));
       const [homeStats, awayStats, h2h, injuries] = await Promise.all([
@@ -120,13 +145,7 @@ export async function generatePredictions(): Promise<GeneratePredictionsResult> 
         context: { competition: "league", isDerby: false },
       });
 
-      prepared.push({
-        fixtureId: fixture.id,
-        basePick: modelResult.topPick,
-        baseConfidence: modelResult.confidence,
-        baseOdds: modelResult.odds,
-        packet,
-      });
+      built.push({ fixtureId: fixture.id, markets: modelResult.markets, packet });
     }
   } catch (err) {
     if (err instanceof ApiFootballQuotaExceededError) {
@@ -134,6 +153,72 @@ export async function generatePredictions(): Promise<GeneratePredictionsResult> 
     } else {
       result.errors.push(err instanceof Error ? err.message : String(err));
     }
+  }
+
+  if (built.length === 0) return result;
+
+  const uncoveredPages = await getUncoveredMarketPages();
+  const fills = assignCoverageFills(
+    built.map((b) => ({ fixtureId: b.fixtureId, markets: b.markets })),
+    uncoveredPages,
+  );
+  const fillByFixtureId = new Map(fills.map((f) => [f.fixtureId, f.market]));
+
+  type Prepared = {
+    fixtureId: string;
+    basePick: MarketProbability;
+    baseConfidence: number;
+    baseOdds: number;
+    packet: ContextPacket;
+  };
+  const prepared: Prepared[] = [];
+
+  for (const item of built) {
+    const fill = fillByFixtureId.get(item.fixtureId);
+    if (fill) {
+      const pick = buildFallbackPick(fill, item.packet);
+      const odds = Math.round((1 / (pick.confidence / 100)) * 100) / 100;
+      try {
+        await prisma.prediction.create({
+          data: {
+            fixtureId: item.fixtureId,
+            market: pick.market as PredictionMarket,
+            selection: pick.selection,
+            odds,
+            confidence: pick.confidence,
+            reasoning: pick.reasoning,
+            baseMarket: pick.market as PredictionMarket,
+            baseSelection: pick.selection,
+            baseConfidence: pick.confidence,
+            allMarkets: item.packet.baseModel.markets,
+            expectedGoalsHome: item.packet.baseModel.expectedGoals.home,
+            expectedGoalsAway: item.packet.baseModel.expectedGoals.away,
+            aiAdjusted: false,
+            adjustmentReason: null,
+            aiModel: null,
+            generatedAt: new Date(),
+          },
+        });
+        result.coverageFillsPublished++;
+        result.predictionsPublished++;
+      } catch (err) {
+        result.errors.push(`fixture ${item.fixtureId}: ${err instanceof Error ? err.message : String(err)}`);
+      }
+      continue;
+    }
+
+    const topPick = selectTopPick(item.markets, floor);
+    if (!topPick) {
+      result.skippedBelowFloor++;
+      continue;
+    }
+    prepared.push({
+      fixtureId: item.fixtureId,
+      basePick: topPick,
+      baseConfidence: Math.round(topPick.probability * 100),
+      baseOdds: Math.round((1 / topPick.probability) * 100) / 100,
+      packet: item.packet,
+    });
   }
 
   if (prepared.length === 0) return result;

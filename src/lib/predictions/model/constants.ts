@@ -19,4 +19,4 @@ export const HALF_TIME_GOAL_SCALE = 0.45;
 export const MIN_MATCHES_REQUIRED = 6;
 
 // Selection floor: minimum probability (0-1) a market must clear to be published.
-export const DEFAULT_CONFIDENCE_FLOOR = 0.6;
+export const DEFAULT_CONFIDENCE_FLOOR = 0.4;
