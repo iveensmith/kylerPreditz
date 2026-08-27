@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { MARKET_PAGES } from "@/lib/markets.config";
+import { SITE_NAME, SITE_NAME_PREFIX, SITE_NAME_SUFFIX } from "@/lib/seo";
 
 const DAYS = [
   { label: "Monday", slug: "monday-predictions" },
@@ -19,7 +20,7 @@ export function Footer() {
       <div className="max-w-6xl mx-auto px-4 py-12">
         <div className="text-center mb-10">
           <div className="font-bold text-lg text-white">
-            kyler<span className="text-secondary">Predictz</span>
+            {SITE_NAME_PREFIX}<span className="text-secondary">{SITE_NAME_SUFFIX}</span>
           </div>
           <p className="text-sm max-w-md mx-auto mt-2">
             Statistical football predictions, match analysis, and a public results archive - built on a
@@ -84,7 +85,7 @@ export function Footer() {
             gambling problem, help is available.
           </p>
           <p>
-            &copy; {new Date().getFullYear()} kylerPredictz. Every published tip, win or loss, stays in our{" "}
+            &copy; {new Date().getFullYear()} {SITE_NAME}. Every published tip, win or loss, stays in our{" "}
             <Link href="/results" className="underline hover:text-white">
               public results archive
             </Link>

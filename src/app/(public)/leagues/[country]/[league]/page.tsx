@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getLeagueBySlug, getLeagueIndex } from "@/lib/queries/league-detail";
 import { slugify } from "@/lib/slugs";
-import { absoluteUrl } from "@/lib/seo";
+import { absoluteUrl, SITE_NAME } from "@/lib/seo";
 import { LeagueTipGroup } from "@/components/home/LeagueTipGroup";
 import { TeamBadge } from "@/components/ui/TeamBadge";
 
@@ -25,7 +25,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     title: league.name,
     description,
     alternates: { canonical: url },
-    openGraph: { title: `${league.name} | kylerPredictz`, description, url },
+    openGraph: { title: `${league.name} | ${SITE_NAME}`, description, url },
   };
 }
 

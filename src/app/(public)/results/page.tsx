@@ -4,7 +4,7 @@ import { PredictionMarket, SettledStatus } from "@/generated/prisma/enums";
 import { formatKickoffTime, formatMarketLabel } from "@/lib/format";
 import { parseDateParam, toDateParam } from "@/lib/format";
 import { getSettledCounts, getSettledPredictions, isValidMarket } from "@/lib/queries/results-archive";
-import { absoluteUrl } from "@/lib/seo";
+import { absoluteUrl, SITE_NAME } from "@/lib/seo";
 import { TeamBadge } from "@/components/ui/TeamBadge";
 
 export const revalidate = 900;
@@ -17,7 +17,7 @@ export const metadata: Metadata = {
   // Canonical points at the unfiltered archive - filter combinations (?date=&market=) aren't
   // separate indexable pages, they'd just create duplicate-content variants of the same page.
   alternates: { canonical: absoluteUrl("/results") },
-  openGraph: { title: "Results Archive | kylerPredictz", description: DESCRIPTION, url: absoluteUrl("/results") },
+  openGraph: { title: `Results Archive | ${SITE_NAME}`, description: DESCRIPTION, url: absoluteUrl("/results") },
 };
 
 const SETTLED_BADGE: Record<Exclude<SettledStatus, "PENDING">, string> = {

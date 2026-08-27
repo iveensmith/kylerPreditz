@@ -3,7 +3,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { getLeagueIndex } from "@/lib/queries/league-detail";
 import { slugify } from "@/lib/slugs";
-import { absoluteUrl } from "@/lib/seo";
+import { absoluteUrl, SITE_NAME } from "@/lib/seo";
 
 export const revalidate = 3600;
 
@@ -13,7 +13,7 @@ export const metadata: Metadata = {
   title: "Leagues",
   description: DESCRIPTION,
   alternates: { canonical: absoluteUrl("/leagues") },
-  openGraph: { title: "Leagues | kylerPredictz", description: DESCRIPTION, url: absoluteUrl("/leagues") },
+  openGraph: { title: `Leagues | ${SITE_NAME}`, description: DESCRIPTION, url: absoluteUrl("/leagues") },
 };
 
 export default async function LeaguesIndexPage() {

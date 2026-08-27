@@ -6,7 +6,13 @@ export function absoluteUrl(path: string): string {
   return new URL(path, SITE_URL).toString();
 }
 
-export const SITE_NAME = "kylerPredictz";
+// Split so the two halves can be styled differently in the wordmark
+// (Header/Footer); SITE_NAME is the plain-text form used everywhere else.
+export const SITE_NAME_PREFIX = "Unique";
+export const SITE_NAME_SUFFIX = "Predictz";
+export const SITE_NAME = `${SITE_NAME_PREFIX}${SITE_NAME_SUFFIX}`;
+
+export const SITE_TAGLINE = "Football Predictions & Betting Tips";
 
 /** Shared metadata shape for the 7 static day-predictions pages - only the day name/slug differ. */
 export function dayPageMetadata(dayName: string, slug: string) {

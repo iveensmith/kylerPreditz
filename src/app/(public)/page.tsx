@@ -9,7 +9,7 @@ import {
 } from "@/lib/queries/homepage";
 import { HOMEPAGE_FAQ } from "@/lib/faq.config";
 import { buildFaqPageJsonLd } from "@/lib/structured-data";
-import { absoluteUrl } from "@/lib/seo";
+import { absoluteUrl, SITE_NAME, SITE_TAGLINE } from "@/lib/seo";
 import { Hero } from "@/components/home/Hero";
 import { MarketSidebar } from "@/components/home/MarketSidebar";
 import { DateStrip } from "@/components/home/DateStrip";
@@ -25,10 +25,12 @@ const DESCRIPTION =
   "Today's football predictions with suggested betting markets, odds, and model-generated confidence, across the Premier League, La Liga, Serie A, Bundesliga, and Ligue 1.";
 
 export const metadata: Metadata = {
-  title: "kylerPredictz - Football Predictions & Betting Tips",
+  // absolute bypasses the root layout's `%s | SITE_NAME` template - this title already
+  // includes the site name, so the template would otherwise duplicate it in the tab title.
+  title: { absolute: `${SITE_NAME} - ${SITE_TAGLINE}` },
   description: DESCRIPTION,
   alternates: { canonical: absoluteUrl("/") },
-  openGraph: { title: "kylerPredictz - Football Predictions & Betting Tips", description: DESCRIPTION, url: absoluteUrl("/") },
+  openGraph: { title: `${SITE_NAME} - ${SITE_TAGLINE}`, description: DESCRIPTION, url: absoluteUrl("/") },
 };
 
 export const revalidate = 900; // 15 minutes, matches sync-results cadence
@@ -83,8 +85,8 @@ export default async function Home({ searchParams }: PageProps<"/">) {
                 A Football Prediction Site Built on a Real Model
               </h2>
               <p>
-                Most prediction sites publish a tip next to a team name with no explanation of where it came from.
-                kylerPredictz works differently: every pick starts as the output of a Poisson/Dixon-Coles statistical
+                Most prediction sites publish a tip next to a team name with no explanation of where it came from.{" "}
+                {SITE_NAME} works differently: every pick starts as the output of a Poisson/Dixon-Coles statistical
                 model, weighted toward each team&apos;s recent home and away form, then reviewed by an AI layer that
                 can only adjust the pick when the underlying data gives it a concrete reason to.
               </p>
@@ -100,7 +102,7 @@ export default async function Home({ searchParams }: PageProps<"/">) {
             <div>
               <h3 className="font-semibold text-zinc-900 dark:text-zinc-100 mb-2">Markets We Cover</h3>
               <p>
-                Beyond the traditional 1X2 match winner market, kylerPredictz derives probabilities for double
+                Beyond the traditional 1X2 match winner market, {SITE_NAME} derives probabilities for double
                 chance, both teams to score, over/under goals at multiple thresholds, draw no bet, correct score, and
                 first-half goals - all from the same underlying score matrix, so every market for a fixture is
                 internally consistent with every other market for that fixture.

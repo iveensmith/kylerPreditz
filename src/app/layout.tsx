@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { SessionProviderWrapper } from "@/components/providers/SessionProviderWrapper";
-import { SITE_NAME, SITE_URL } from "@/lib/seo";
+import { SITE_NAME, SITE_TAGLINE, SITE_URL } from "@/lib/seo";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -19,7 +19,7 @@ const DESCRIPTION = "Statistical football predictions, odds, and confidence rati
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: {
-    default: "kylerPredictz - Football Predictions & Betting Tips",
+    default: `${SITE_NAME} - ${SITE_TAGLINE}`,
     template: `%s | ${SITE_NAME}`,
   },
   description: DESCRIPTION,

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { MARKET_PAGES } from "@/lib/markets.config";
+import { SITE_NAME_PREFIX, SITE_NAME_SUFFIX } from "@/lib/seo";
 import { HeaderAuthLink } from "./HeaderAuthLink";
 
 const FEATURED_MARKETS = MARKET_PAGES.slice(0, 6);
@@ -52,7 +53,7 @@ export function Header() {
     <header className="sticky top-0 z-40 bg-zinc-950 text-zinc-100 border-b border-zinc-800">
       <div className="max-w-6xl mx-auto px-4 flex items-center justify-between h-14">
         <Link href="/" className="font-bold text-lg shrink-0">
-          kyler<span className="text-secondary">Predictz</span>
+          {SITE_NAME_PREFIX}<span className="text-secondary">{SITE_NAME_SUFFIX}</span>
         </Link>
 
         <nav className="hidden md:flex items-center gap-6 text-sm text-zinc-300">
