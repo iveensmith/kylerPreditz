@@ -9,15 +9,21 @@ export function dayRangeUtc(date: Date): { gte: Date; lt: Date } {
   return { gte: start, lt: end };
 }
 
-/** Fixtures for one calendar day (UTC), grouped by league in priority order. */
+/**
+ * Fixtures for one calendar day (UTC) that have a published tip, grouped by
+ * league in priority order. Fixtures without a prediction are left off these
+ * public day views entirely rather than shown as an empty "No tip" row - the
+ * admin can still see and manually pick them via the dedicated admin query
+ * (getSkippedFixtures in queries/admin.ts).
+ */
 export async function getFixturesForDate(date: Date) {
   const { gte, lt } = dayRangeUtc(date);
   const leagues = await prisma.league.findMany({
-    where: { isFeatured: true, fixtures: { some: { kickoffUtc: { gte, lt } } } },
+    where: { isFeatured: true, fixtures: { some: { kickoffUtc: { gte, lt }, prediction: { isNot: null } } } },
     orderBy: { priority: "asc" },
     include: {
       fixtures: {
-        where: { kickoffUtc: { gte, lt } },
+        where: { kickoffUtc: { gte, lt }, prediction: { isNot: null } },
         orderBy: { kickoffUtc: "asc" },
         include: fixtureListInclude,
       },
