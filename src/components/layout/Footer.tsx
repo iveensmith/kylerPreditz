@@ -67,15 +67,15 @@ export function Footer() {
           </p>
         </div>
 
-        <div className="border-t border-zinc-800 pt-8 text-sm">
-          <FooterContact />
-        </div>
-
-        <div className="mt-10 grid grid-cols-2 md:grid-cols-4 gap-8 text-sm">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-sm">
           <LinkColumn heading="Quick Links" links={QUICK_LINKS} />
           <LinkColumn heading="Legal Links" links={LEGAL_LINKS} />
           <LinkColumn heading="Predictions by Day" links={DAY_LINKS} />
           <LinkColumn heading="Popular Markets" links={MARKET_LINKS} />
+        </div>
+
+        <div className="mt-10 pt-8 border-t border-zinc-800 text-sm">
+          <FooterContact />
         </div>
 
         <div className="mt-10 pt-6 border-t border-zinc-800 flex flex-col gap-3 text-xs">

@@ -29,15 +29,15 @@ const valueClass = "text-white hover:text-secondary transition-colors";
 const linkClass = "text-secondary hover:text-white underline underline-offset-2 transition-colors";
 
 /**
- * "Reach Us" footer block - a full-width row of contact channels, one per line,
- * each kept unbroken (whitespace-nowrap) so nothing wraps mid-value. Wraps to a
- * stacked list only when the viewport can't fit them side by side.
+ * "Reach Us" footer block - contact channels as a vertical list, one per line,
+ * each kept unbroken (whitespace-nowrap) so a value never wraps mid-line.
+ * Rendered as its own full-width section so there's always room for the longest.
  */
 export function FooterContact() {
   return (
     <div>
       <h3 className="text-white font-semibold mb-4 border-l-2 border-secondary pl-2">Reach Us</h3>
-      <ul className="flex flex-wrap gap-x-10 gap-y-3">
+      <ul className="flex flex-col gap-3">
         <li className="flex items-center gap-2 whitespace-nowrap">
           <WhatsAppIcon />
           <span>
