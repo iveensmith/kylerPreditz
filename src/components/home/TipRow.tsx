@@ -5,6 +5,7 @@ import { TeamBadge } from "@/components/ui/TeamBadge";
 import { FormBadges } from "@/components/ui/FormBadges";
 import { MatchStatus } from "@/components/ui/MatchStatus";
 import { matchSlug } from "@/lib/queries/match-detail";
+import { PremiumCells } from "@/components/premium/PremiumCells";
 import type { FixtureWithTipInfo } from "@/lib/queries/types";
 
 const SETTLED_BADGE: Record<Exclude<SettledStatus, "PENDING">, string> = {
@@ -44,39 +45,44 @@ export function TipRow({ fixture }: { fixture: FixtureWithTipInfo }) {
         </Link>
       </td>
 
-      <td className="px-4 py-3.5 align-top">
-        {prediction ? (
-          <div className="flex flex-col gap-1">
-            <span className="w-fit rounded border border-brand/35 px-1.5 py-0.5 font-mono text-[10px] font-semibold uppercase tracking-wide text-brand">
-              {formatMarketLabel(prediction.market)}
-            </span>
-            <span className="text-xs text-muted">{prediction.selection}</span>
-          </div>
-        ) : (
-          <span className="text-xs italic text-faint">No tip</span>
-        )}
-      </td>
-
-      <td className="whitespace-nowrap px-4 py-3.5 align-top">
-        {prediction && (
-          <span className="font-mono text-sm tabular-nums text-ink">{prediction.odds.toString()}</span>
-        )}
-      </td>
-
-      <td className="whitespace-nowrap px-4 py-3.5 text-right align-top">
-        {prediction &&
-          (prediction.settledAs === SettledStatus.PENDING ? (
-            <span className="inline-flex items-center rounded-full bg-brand px-2.5 py-1 font-mono text-xs font-semibold tabular-nums text-white">
-              {prediction.confidence}%
-            </span>
-          ) : (
-            <span
-              className={`inline-flex items-center rounded-full px-2.5 py-1 font-mono text-[11px] font-semibold uppercase tracking-wide ${SETTLED_BADGE[prediction.settledAs]}`}
-            >
-              {prediction.settledAs}
-            </span>
-          ))}
-      </td>
+      {!prediction ? (
+        <>
+          <td className="px-4 py-3.5 align-top">
+            <span className="text-xs italic text-faint">No tip</span>
+          </td>
+          <td className="px-4 py-3.5" />
+          <td className="px-4 py-3.5" />
+        </>
+      ) : prediction.locked ? (
+        <PremiumCells fixtureId={fixture.id} />
+      ) : (
+        <>
+          <td className="px-4 py-3.5 align-top">
+            <div className="flex flex-col gap-1">
+              <span className="w-fit rounded border border-brand/35 px-1.5 py-0.5 font-mono text-[10px] font-semibold uppercase tracking-wide text-brand">
+                {formatMarketLabel(prediction.market)}
+              </span>
+              <span className="text-xs text-muted">{prediction.selection}</span>
+            </div>
+          </td>
+          <td className="whitespace-nowrap px-4 py-3.5 align-top">
+            <span className="font-mono text-sm tabular-nums text-ink">{prediction.odds.toString()}</span>
+          </td>
+          <td className="whitespace-nowrap px-4 py-3.5 text-right align-top">
+            {prediction.settledAs === SettledStatus.PENDING ? (
+              <span className="inline-flex items-center rounded-full bg-brand px-2.5 py-1 font-mono text-xs font-semibold tabular-nums text-white">
+                {prediction.confidence}%
+              </span>
+            ) : (
+              <span
+                className={`inline-flex items-center rounded-full px-2.5 py-1 font-mono text-[11px] font-semibold uppercase tracking-wide ${SETTLED_BADGE[prediction.settledAs]}`}
+              >
+                {prediction.settledAs}
+              </span>
+            )}
+          </td>
+        </>
+      )}
     </tr>
   );
 }

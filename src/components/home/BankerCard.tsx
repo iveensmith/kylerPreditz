@@ -1,6 +1,7 @@
 import { formatMarketLabel } from "@/lib/format";
 import { TeamBadge } from "@/components/ui/TeamBadge";
 import { MatchStatus } from "@/components/ui/MatchStatus";
+import { PremiumPickBody } from "@/components/premium/PremiumPickBody";
 import type { getBankerOfTheDay } from "@/lib/queries/homepage";
 
 type Banker = NonNullable<Awaited<ReturnType<typeof getBankerOfTheDay>>>;
@@ -26,13 +27,17 @@ export function BankerCard({ banker }: { banker: Banker }) {
           <TeamBadge name={fixture.homeTeam.name} logoUrl={fixture.homeTeam.logoUrl} />
           <TeamBadge name={fixture.awayTeam.name} logoUrl={fixture.awayTeam.logoUrl} />
         </div>
-        <div className="text-right">
-          <div className="text-sm font-semibold">{formatMarketLabel(banker.market)}</div>
-          <div className="mb-1.5 text-xs text-muted">{banker.selection}</div>
-          <span className="inline-flex items-center rounded-full bg-brand px-2.5 py-1 font-mono text-xs font-semibold tabular-nums text-white">
-            {banker.confidence}%
-          </span>
-        </div>
+        {banker.locked ? (
+          <PremiumPickBody fixtureId={fixture.id} tone="light" />
+        ) : (
+          <div className="text-right">
+            <div className="text-sm font-semibold">{formatMarketLabel(banker.market)}</div>
+            <div className="mb-1.5 text-xs text-muted">{banker.selection}</div>
+            <span className="inline-flex items-center rounded-full bg-brand px-2.5 py-1 font-mono text-xs font-semibold tabular-nums text-white">
+              {banker.confidence}%
+            </span>
+          </div>
+        )}
       </div>
     </section>
   );

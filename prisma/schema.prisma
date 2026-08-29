@@ -221,6 +221,14 @@ enum SettledStatus {
   VOID
 }
 
+// Whether a pick sits behind the premium paywall. AUTO = decided by the
+// PREMIUM_CONFIDENCE_FLOOR threshold; ALWAYS / NEVER = admin override.
+enum PremiumMode {
+  AUTO
+  ALWAYS
+  NEVER
+}
+
 model Prediction {
   id        String @id @default(cuid())
   fixtureId String @unique
@@ -229,7 +237,7 @@ model Prediction {
   selection  String
   odds       Decimal           @db.Decimal(5, 2)
   confidence Int
-  isVip      Boolean           @default(false)
+  premium    PremiumMode       @default(AUTO)
   isBanker   Boolean           @default(false)
   reasoning  String            @db.Text
   settledAs  SettledStatus     @default(PENDING)
@@ -260,7 +268,7 @@ model Prediction {
   updatedAt DateTime @updatedAt
 
   @@index([settledAs])
-  @@index([isVip])
+  @@index([premium])
   @@index([isBanker])
 }
 

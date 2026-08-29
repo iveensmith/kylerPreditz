@@ -47,7 +47,12 @@ export default async function AdminTipsPage() {
                 <td className="px-3 py-2 text-right font-mono tabular-nums">{p.confidence}%</td>
                 <td className="px-3 py-2 font-mono text-xs uppercase text-muted">{p.settledAs}</td>
                 <td className="whitespace-nowrap px-3 py-2 font-mono text-[11px] uppercase tracking-wide text-faint">
-                  {[p.isVip && "VIP", p.isBanker && "Banker", p.isManualOverride && "Edited"]
+                  {[
+                    p.premium === "ALWAYS" && "Premium",
+                    p.premium === "NEVER" && "Free",
+                    p.isBanker && "Banker",
+                    p.isManualOverride && "Edited",
+                  ]
                     .filter(Boolean)
                     .join(" · ")}
                 </td>

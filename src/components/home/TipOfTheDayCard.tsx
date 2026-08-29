@@ -2,6 +2,7 @@ import { FixtureStatus } from "@/generated/prisma/enums";
 import { formatMarketLabel } from "@/lib/format";
 import { TeamBadge } from "@/components/ui/TeamBadge";
 import { MatchStatus } from "@/components/ui/MatchStatus";
+import { PremiumPickBody } from "@/components/premium/PremiumPickBody";
 import { CountdownTimer } from "./CountdownTimer";
 import type { getBankerOfTheDay } from "@/lib/queries/homepage";
 
@@ -14,9 +15,11 @@ export function TipOfTheDayCard({ banker }: { banker: Banker }) {
     <section className="flex flex-col gap-4 rounded-[var(--radius-card)] border border-white/10 bg-[#0c1310] p-5 text-white md:sticky md:top-20">
       <div className="flex items-center justify-between">
         <h2 className="eyebrow !text-brand-light">Tip of the day</h2>
-        <span className="font-mono text-[11px] font-semibold tabular-nums text-brand-light">
-          {banker.confidence}%
-        </span>
+        {!banker.locked && (
+          <span className="font-mono text-[11px] font-semibold tabular-nums text-brand-light">
+            {banker.confidence}%
+          </span>
+        )}
       </div>
 
       <div className="flex flex-col gap-1 font-mono text-[10px] uppercase tracking-wide text-white/40">
@@ -45,8 +48,14 @@ export function TipOfTheDayCard({ banker }: { banker: Banker }) {
       )}
 
       <div className="border-t border-white/10 pt-3">
-        <div className="text-sm font-semibold">{formatMarketLabel(banker.market)}</div>
-        <div className="text-xs text-white/55">{banker.selection}</div>
+        {banker.locked ? (
+          <PremiumPickBody fixtureId={fixture.id} tone="dark" />
+        ) : (
+          <>
+            <div className="text-sm font-semibold">{formatMarketLabel(banker.market)}</div>
+            <div className="text-xs text-white/55">{banker.selection}</div>
+          </>
+        )}
       </div>
     </section>
   );

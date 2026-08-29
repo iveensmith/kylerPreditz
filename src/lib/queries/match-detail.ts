@@ -2,6 +2,7 @@ import { cache } from "react";
 import { getCurrentSeason } from "@/lib/api-football/season";
 import { prisma } from "@/lib/db/prisma";
 import { buildH2hEntries, buildTeamContextStats } from "@/lib/predictions/context-input";
+import { redactPickForFreeView } from "@/lib/premium";
 import { slugify } from "@/lib/slugs";
 
 /** cache()'d - both generateMetadata and the page component need this per request/render pass. */
@@ -19,7 +20,12 @@ export const getMatchDetail = cache(async (fixtureId: string) => {
     buildH2hEntries(fixture.homeTeam.apiId, fixture.awayTeam.apiId),
   ]);
 
-  return { fixture, homeStats, awayStats, h2h };
+  return {
+    fixture: { ...fixture, prediction: fixture.prediction ? redactPickForFreeView(fixture.prediction) : null },
+    homeStats,
+    awayStats,
+    h2h,
+  };
 });
 
 export type MatchDetail = NonNullable<Awaited<ReturnType<typeof getMatchDetail>>>;

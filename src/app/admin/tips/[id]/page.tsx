@@ -5,6 +5,7 @@ import { formatMarketLabel } from "@/lib/format";
 import { PredictionMarket } from "@/generated/prisma/enums";
 import { AdminHeader } from "@/components/admin/AdminHeader";
 import { adminInput, adminLabel, adminLabelText, adminBtn } from "@/lib/admin-ui";
+import { PREMIUM_CONFIDENCE_FLOOR } from "@/lib/premium";
 
 type Props = { params: Promise<{ id: string }> };
 
@@ -77,19 +78,22 @@ export default async function EditTipPage({ params }: Props) {
           />
         </label>
 
-        <div className="flex gap-6 text-sm">
-          <label className="flex items-center gap-2">
-            <input type="checkbox" name="isVip" defaultChecked={prediction.isVip} />
-            VIP
-          </label>
-          <label className="flex items-center gap-2">
-            <input type="checkbox" name="isBanker" defaultChecked={prediction.isBanker} />
-            Banker of the Day
-          </label>
-        </div>
+        <label className={adminLabel}>
+          <span className={adminLabelText}>Premium (paywall)</span>
+          <select name="premium" defaultValue={prediction.premium} className={adminInput}>
+            <option value="AUTO">Auto — premium if confidence ≥ {PREMIUM_CONFIDENCE_FLOOR}%</option>
+            <option value="ALWAYS">Always premium</option>
+            <option value="NEVER">Never premium (keep free)</option>
+          </select>
+        </label>
+
+        <label className="flex items-center gap-2 text-sm">
+          <input type="checkbox" name="isBanker" defaultChecked={prediction.isBanker} />
+          Banker of the Day
+        </label>
 
         <button type="submit" className={adminBtn}>
-          Save Changes
+          Save changes
         </button>
       </form>
     </div>

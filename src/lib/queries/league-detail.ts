@@ -2,6 +2,7 @@ import { cache } from "react";
 import { getCurrentSeason } from "@/lib/api-football/season";
 import { seasonCalendarForSlug } from "@/lib/leagues.config";
 import { prisma } from "@/lib/db/prisma";
+import { redactPickForFreeView } from "@/lib/premium";
 import { fixtureListInclude } from "./types";
 
 export async function getLeagueIndex() {
@@ -13,7 +14,7 @@ export type LeagueIndexEntry = Awaited<ReturnType<typeof getLeagueIndex>>[number
 /** cache()'d - both generateMetadata and the page component need this per request/render pass. */
 export const getLeagueBySlug = cache(async (slug: string) => {
   const season = getCurrentSeason(new Date(), seasonCalendarForSlug(slug));
-  return prisma.league.findUnique({
+  const league = await prisma.league.findUnique({
     where: { slug },
     include: {
       fixtures: {
@@ -35,6 +36,14 @@ export const getLeagueBySlug = cache(async (slug: string) => {
       },
     },
   });
+  if (!league) return null;
+  return {
+    ...league,
+    fixtures: league.fixtures.map((f) => ({
+      ...f,
+      prediction: f.prediction ? redactPickForFreeView(f.prediction) : null,
+    })),
+  };
 });
 
 export type LeagueDetail = NonNullable<Awaited<ReturnType<typeof getLeagueBySlug>>>;

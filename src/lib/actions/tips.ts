@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import type { PredictionMarket } from "@/generated/prisma/enums";
+import { PremiumMode, type PredictionMarket } from "@/generated/prisma/enums";
 import { prisma } from "@/lib/db/prisma";
 import { requireAdmin } from "@/lib/auth-guard";
 import { MARKETS } from "@/lib/predictions/model";
@@ -27,11 +27,16 @@ export async function updateTip(id: string, formData: FormData) {
   await requireAdmin();
   const fields = parseTipFields(formData);
 
+  const premiumRaw = String(formData.get("premium") ?? PremiumMode.AUTO);
+  const premium = (Object.values(PremiumMode) as string[]).includes(premiumRaw)
+    ? (premiumRaw as PremiumMode)
+    : PremiumMode.AUTO;
+
   await prisma.prediction.update({
     where: { id },
     data: {
       ...fields,
-      isVip: formData.get("isVip") === "on",
+      premium,
       isBanker: formData.get("isBanker") === "on",
       isManualOverride: true,
     },

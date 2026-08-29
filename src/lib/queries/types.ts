@@ -20,8 +20,21 @@ export const fixtureListInclude = {
   league: true,
 } as const satisfies Prisma.FixtureInclude;
 
-export type FixtureWithTipInfo = Prisma.FixtureGetPayload<{ include: typeof fixtureListInclude }>;
+type BaseFixtureWithTipInfo = Prisma.FixtureGetPayload<{ include: typeof fixtureListInclude }>;
 
-export type LeagueWithFixtures = Prisma.LeagueGetPayload<{
+/**
+ * `locked` is tacked on by `redactFixtureListForFreeView` (see lib/premium.ts):
+ * when true the pick is premium and its market/selection/odds/confidence have
+ * been blanked before reaching this viewer.
+ */
+export type FixtureWithTipInfo = Omit<BaseFixtureWithTipInfo, "prediction"> & {
+  prediction: (NonNullable<BaseFixtureWithTipInfo["prediction"]> & { locked?: boolean }) | null;
+};
+
+type BaseLeagueWithFixtures = Prisma.LeagueGetPayload<{
   include: { fixtures: { include: typeof fixtureListInclude } };
 }>;
+
+export type LeagueWithFixtures = Omit<BaseLeagueWithFixtures, "fixtures"> & {
+  fixtures: FixtureWithTipInfo[];
+};

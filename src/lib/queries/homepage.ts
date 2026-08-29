@@ -1,6 +1,7 @@
 import { SettledStatus } from "@/generated/prisma/enums";
 import { getCurrentSeason } from "@/lib/api-football/season";
 import { prisma } from "@/lib/db/prisma";
+import { redactFixtureListForFreeView, redactPickForFreeView } from "@/lib/premium";
 import { fixtureListInclude } from "./types";
 
 export function dayRangeUtc(date: Date): { gte: Date; lt: Date } {
@@ -29,7 +30,7 @@ export async function getFixturesForDate(date: Date) {
       },
     },
   });
-  return leagues;
+  return redactFixtureListForFreeView(leagues);
 }
 
 export type { LeagueWithFixtures as FixturesByLeague } from "./types";
@@ -37,11 +38,12 @@ export type { LeagueWithFixtures as FixturesByLeague } from "./types";
 /** The single highest-confidence pick for the day - a manually-flagged banker wins if one exists. */
 export async function getBankerOfTheDay(date: Date) {
   const { gte, lt } = dayRangeUtc(date);
-  return prisma.prediction.findFirst({
+  const banker = await prisma.prediction.findFirst({
     where: { fixture: { kickoffUtc: { gte, lt } } },
     orderBy: [{ isBanker: "desc" }, { confidence: "desc" }],
     include: { fixture: { include: fixtureListInclude } },
   });
+  return redactPickForFreeView(banker);
 }
 
 export async function getRecentWinningTips(limit = 6) {

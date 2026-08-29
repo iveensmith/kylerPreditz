@@ -12,6 +12,7 @@ import { SectionHeading } from "@/components/ui/SectionHeading";
 import { TeamFormList } from "@/components/match/TeamFormList";
 import { H2hTable } from "@/components/match/H2hTable";
 import { MarketProbabilityTable } from "@/components/match/MarketProbabilityTable";
+import { LockedPickPanel } from "@/components/premium/LockedPickPanel";
 import { JsonLd } from "@/components/seo/JsonLd";
 
 // Backstop only: sync-results revalidates this route as soon as a fixture
@@ -100,38 +101,44 @@ export default async function MatchDetailPage({ params }: Props) {
         </div>
       </header>
 
-      {prediction && (
-        <section className="rounded-[var(--radius-card)] border border-brand/30 bg-brand/[0.06] p-5">
-          <div className="eyebrow !text-brand">Our pick</div>
-          <div className="mt-3 flex items-start justify-between gap-4">
-            <div>
-              <div className="text-xl font-semibold">{formatMarketLabel(prediction.market)}</div>
-              <div className="text-sm text-muted">{prediction.selection}</div>
-            </div>
-            <div className="shrink-0 text-right">
-              <div className="font-mono text-3xl font-semibold leading-none tabular-nums text-brand">
-                {prediction.confidence}%
+      {prediction?.locked ? (
+        <LockedPickPanel fixtureId={fixture.id} />
+      ) : (
+        prediction && (
+          <section className="rounded-[var(--radius-card)] border border-brand/30 bg-brand/[0.06] p-5">
+            <div className="eyebrow !text-brand">Our pick</div>
+            <div className="mt-3 flex items-start justify-between gap-4">
+              <div>
+                <div className="text-xl font-semibold">{formatMarketLabel(prediction.market)}</div>
+                <div className="text-sm text-muted">{prediction.selection}</div>
               </div>
-              <div className="eyebrow mt-1.5">
-                Odds <span className="text-ink">{prediction.odds.toString()}</span>
+              <div className="shrink-0 text-right">
+                <div className="font-mono text-3xl font-semibold leading-none tabular-nums text-brand">
+                  {prediction.confidence}%
+                </div>
+                <div className="eyebrow mt-1.5">
+                  Odds <span className="text-ink">{prediction.odds.toString()}</span>
+                </div>
               </div>
             </div>
-          </div>
-          {prediction.reasoning && (
-            <p className="mt-4 border-t border-brand/20 pt-4 text-sm leading-relaxed text-ink/80">
-              {prediction.reasoning}
-            </p>
-          )}
-        </section>
+            {prediction.reasoning && (
+              <p className="mt-4 border-t border-brand/20 pt-4 text-sm leading-relaxed text-ink/80">
+                {prediction.reasoning}
+              </p>
+            )}
+          </section>
+        )
       )}
 
-      <section>
-        <SectionHeading eyebrow="One grid, every market" title="Market probabilities" />
-        <MarketProbabilityTable
-          allMarkets={prediction?.allMarkets ?? null}
-          publishedMarket={prediction?.market ?? null}
-        />
-      </section>
+      {!prediction?.locked && (
+        <section>
+          <SectionHeading eyebrow="One grid, every market" title="Market probabilities" />
+          <MarketProbabilityTable
+            allMarkets={prediction?.allMarkets ?? null}
+            publishedMarket={prediction?.market ?? null}
+          />
+        </section>
+      )}
 
       <section>
         <SectionHeading eyebrow="Last matches" title="Recent form" />

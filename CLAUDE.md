@@ -46,6 +46,7 @@ ANTHROPIC_API_KEY=
 AI_MODEL=claude-haiku-4-5
 AI_LAYER_MODE=full          # full | reasoning_only | off
 CONFIDENCE_FLOOR=40         # minimum probability to publish a tip
+PREMIUM_CONFIDENCE_FLOOR=85 # confidence at or above which a pick is premium (paywalled) unless admin overrides
 NEXTAUTH_SECRET=
 NEXTAUTH_URL=
 PAYSTACK_SECRET_KEY=

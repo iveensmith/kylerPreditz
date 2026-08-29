@@ -1,6 +1,7 @@
 import type { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/db/prisma";
 import type { MarketFilter } from "@/lib/markets.config";
+import { redactFixtureListForFreeView, redactPickForFreeView } from "@/lib/premium";
 import { fixtureListInclude } from "./types";
 
 const UPCOMING_WINDOW_DAYS = 7;
@@ -40,7 +41,7 @@ export async function getFixturesForMarketFilter(filter: MarketFilter) {
       },
     },
   });
-  return leagues;
+  return redactFixtureListForFreeView(leagues);
 }
 
 /**
@@ -49,11 +50,12 @@ export async function getFixturesForMarketFilter(filter: MarketFilter) {
  * the highest-confidence upcoming pick, same convention as the homepage card.
  */
 export async function getBankerPagePick() {
-  return prisma.prediction.findFirst({
+  const pick = await prisma.prediction.findFirst({
     where: { fixture: { kickoffUtc: { gte: new Date() } } },
     orderBy: [{ isBanker: "desc" }, { confidence: "desc" }],
     include: { fixture: { include: fixtureListInclude } },
   });
+  return redactPickForFreeView(pick);
 }
 
 export type { LeagueWithFixtures as MarketFixturesByLeague } from "./types";

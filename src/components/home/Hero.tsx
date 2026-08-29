@@ -34,10 +34,10 @@ export function Hero() {
               See today&rsquo;s tips
             </Link>
             <Link
-              href="/results"
+              href="/vip"
               className="inline-flex items-center rounded-[var(--radius-control)] border border-white/15 px-5 py-3 text-sm font-semibold text-white/80 transition-colors hover:border-white/35 hover:text-white"
             >
-              Check the results archive
+              Go Premium
             </Link>
           </div>
         </div>
