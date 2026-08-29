@@ -1,8 +1,9 @@
 name: Cron - Sync Results
 
+# Scheduled trigger removed: sync-results now runs from cron-job.org every ~3 min
+# (see docs/cron-setup.md). This workflow is kept only as a manual fallback for
+# when that external scheduler is down - run it from the Actions tab.
 on:
-  schedule:
-    - cron: "*/15 * * * *"
   workflow_dispatch: {}
 
 jobs:
