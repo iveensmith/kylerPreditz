@@ -1,4 +1,5 @@
 import type { PostType } from "@/generated/prisma/enums";
+import { adminInput, adminLabel, adminLabelText, adminBtn } from "@/lib/admin-ui";
 
 type PostDefaults = {
   title: string;
@@ -22,9 +23,9 @@ const EMPTY: PostDefaults = {
   sponsored: false, noindex: false, published: false,
 };
 
-const input = "rounded-md border border-zinc-200 dark:border-zinc-700 bg-transparent px-3 py-2";
-const labelWrap = "flex flex-col gap-1 text-sm";
-const hint = "text-zinc-500 dark:text-zinc-400";
+const input = adminInput;
+const labelWrap = adminLabel;
+const hint = adminLabelText;
 
 export function PostForm({
   action,
@@ -57,8 +58,8 @@ export function PostForm({
         <textarea name="body" defaultValue={post.body} required rows={14} className={input} />
       </label>
 
-      <fieldset className="flex flex-col gap-3 rounded-lg border border-zinc-200 p-3 dark:border-zinc-800">
-        <legend className="px-1 text-xs font-medium uppercase tracking-wide text-zinc-500">SEO</legend>
+      <fieldset className="flex flex-col gap-3 rounded-lg border border-line p-3">
+        <legend className="px-1 font-mono text-[11px] font-semibold uppercase tracking-wide text-faint">SEO</legend>
         <label className={labelWrap}>
           <span className={hint}>Slug (optional - derived from title if blank)</span>
           <input name="slug" defaultValue={post.slug} className={input} placeholder="todays-football-prediction" />
@@ -77,8 +78,8 @@ export function PostForm({
         </label>
       </fieldset>
 
-      <fieldset className="flex flex-col gap-3 rounded-lg border border-zinc-200 p-3 dark:border-zinc-800">
-        <legend className="px-1 text-xs font-medium uppercase tracking-wide text-zinc-500">Distribution</legend>
+      <fieldset className="flex flex-col gap-3 rounded-lg border border-line p-3">
+        <legend className="px-1 font-mono text-[11px] font-semibold uppercase tracking-wide text-faint">Distribution</legend>
         <label className={labelWrap}>
           <span className={hint}>Type</span>
           <select name="type" defaultValue={post.type} className={input}>
@@ -98,7 +99,7 @@ export function PostForm({
           <input type="checkbox" name="noindex" defaultChecked={post.noindex} />
           noindex - tell search engines not to index this page (also removed from sitemap)
         </label>
-        <p className="text-xs text-zinc-500 dark:text-zinc-400">
+        <p className="text-xs text-muted">
           An unlisted post still has a working public URL at <code>/blog/&lt;slug&gt;</code> - it is
           just not surfaced in navigation or feeds.
         </p>
@@ -109,10 +110,7 @@ export function PostForm({
         Published
       </label>
 
-      <button
-        type="submit"
-        className="self-start rounded-md bg-zinc-900 px-3 py-2 font-medium text-white dark:bg-white dark:text-zinc-900"
-      >
+      <button type="submit" className={adminBtn}>
         {submitLabel}
       </button>
     </form>

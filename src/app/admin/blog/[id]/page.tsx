@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { prisma } from "@/lib/db/prisma";
 import { updatePost } from "@/lib/actions/blog";
 import { PostForm } from "@/components/admin/PostForm";
+import { AdminHeader } from "@/components/admin/AdminHeader";
 
 type Props = { params: Promise<{ id: string }> };
 
@@ -13,8 +14,8 @@ export default async function EditPostPage({ params }: Props) {
   const updatePostWithId = updatePost.bind(null, id);
 
   return (
-    <div className="flex flex-col gap-4">
-      <h1 className="text-xl font-semibold">Edit Post</h1>
+    <div className="flex flex-col gap-6">
+      <AdminHeader eyebrow="Blog" title={`Edit · ${post.title}`} />
       <PostForm
         action={updatePostWithId}
         submitLabel="Save Changes"

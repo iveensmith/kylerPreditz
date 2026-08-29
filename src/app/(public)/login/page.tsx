@@ -28,36 +28,39 @@ export default function LoginPage() {
   }
 
   return (
-    <main className="max-w-sm mx-auto w-full px-4 py-16 flex flex-col gap-6">
-      <h1 className="text-xl font-semibold">Sign In</h1>
+    <main className="mx-auto flex w-full max-w-sm flex-col gap-6 px-4 py-20">
+      <div>
+        <div className="eyebrow mb-2">Admin</div>
+        <h1 className="text-3xl leading-none">Sign in</h1>
+      </div>
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-        <label className="flex flex-col gap-1 text-sm">
-          <span className="text-muted">Email</span>
+        <label className="flex flex-col gap-1.5 text-sm">
+          <span className="font-mono text-[11px] uppercase tracking-wide text-faint">Email</span>
           <input
             type="email"
             required
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="rounded-md border border-line bg-transparent px-3 py-2"
+            className="rounded-[var(--radius-control)] border border-line bg-surface px-3 py-2 outline-none focus:border-brand"
           />
         </label>
-        <label className="flex flex-col gap-1 text-sm">
-          <span className="text-muted">Password</span>
+        <label className="flex flex-col gap-1.5 text-sm">
+          <span className="font-mono text-[11px] uppercase tracking-wide text-faint">Password</span>
           <input
             type="password"
             required
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className="rounded-md border border-line bg-transparent px-3 py-2"
+            className="rounded-[var(--radius-control)] border border-line bg-surface px-3 py-2 outline-none focus:border-brand"
           />
         </label>
-        {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
+        {error && <p className="text-sm text-loss">{error}</p>}
         <button
           type="submit"
           disabled={submitting}
-          className="rounded-md bg-brand text-white px-3 py-2 font-medium disabled:opacity-50"
+          className="rounded-[var(--radius-control)] bg-brand px-3 py-2.5 font-semibold text-white transition-colors hover:bg-brand-hover disabled:opacity-50"
         >
-          {submitting ? "Signing in..." : "Sign In"}
+          {submitting ? "Signing in…" : "Sign in"}
         </button>
       </form>
     </main>

@@ -2,22 +2,26 @@ import Link from "next/link";
 import { getAllPredictionsForAdmin } from "@/lib/queries/admin";
 import { formatKickoffTime, formatMarketLabel } from "@/lib/format";
 import { DeleteTipButton } from "@/components/admin/DeleteTipButton";
+import { AdminHeader } from "@/components/admin/AdminHeader";
+import { adminBtnLink } from "@/lib/admin-ui";
 
 export default async function AdminTipsPage() {
   const predictions = await getAllPredictionsForAdmin();
 
   return (
-    <div className="flex flex-col gap-4">
-      <div className="flex items-center justify-between">
-        <h1 className="text-xl font-semibold">Tips</h1>
-        <Link href="/admin/tips/new" className="rounded-md bg-zinc-900 text-white dark:bg-white dark:text-zinc-900 px-3 py-1.5 text-sm font-medium">
-          New Manual Tip
-        </Link>
-      </div>
+    <div className="flex flex-col gap-6">
+      <AdminHeader
+        title="Tips"
+        action={
+          <Link href="/admin/tips/new" className={adminBtnLink}>
+            New manual tip
+          </Link>
+        }
+      />
 
-      <div className="overflow-x-auto rounded-xl border border-zinc-200 dark:border-zinc-800">
+      <div className="overflow-x-auto rounded-[var(--radius-card)] border border-line">
         <table className="w-full text-sm">
-          <thead className="bg-zinc-50 dark:bg-zinc-900 text-zinc-500 dark:text-zinc-400 text-xs">
+          <thead className="bg-surface-2 font-mono text-[11px] uppercase tracking-wide text-muted">
             <tr>
               <th className="text-left font-medium px-3 py-2">Kickoff</th>
               <th className="text-left font-medium px-3 py-2">Match</th>
@@ -30,25 +34,25 @@ export default async function AdminTipsPage() {
           </thead>
           <tbody>
             {predictions.map((p) => (
-              <tr key={p.id} className="border-t border-zinc-100 dark:border-zinc-800">
-                <td className="px-3 py-2 whitespace-nowrap tabular-nums text-zinc-500 dark:text-zinc-400">
+              <tr key={p.id} className="border-t border-line">
+                <td className="whitespace-nowrap px-3 py-2 font-mono tabular-nums text-muted">
                   {formatKickoffTime(p.fixture.kickoffUtc)}
                 </td>
-                <td className="px-3 py-2 whitespace-nowrap">
+                <td className="whitespace-nowrap px-3 py-2">
                   {p.fixture.homeTeam.name} vs {p.fixture.awayTeam.name}
                 </td>
-                <td className="px-3 py-2 whitespace-nowrap">
-                  {formatMarketLabel(p.market)} - {p.selection}
+                <td className="whitespace-nowrap px-3 py-2">
+                  {formatMarketLabel(p.market)} &middot; {p.selection}
                 </td>
-                <td className="px-3 py-2 text-right tabular-nums">{p.confidence}%</td>
-                <td className="px-3 py-2">{p.settledAs}</td>
-                <td className="px-3 py-2 whitespace-nowrap text-xs text-zinc-500 dark:text-zinc-400">
-                  {p.isVip && "VIP "}
-                  {p.isBanker && "Banker "}
-                  {p.isManualOverride && "Edited"}
+                <td className="px-3 py-2 text-right font-mono tabular-nums">{p.confidence}%</td>
+                <td className="px-3 py-2 font-mono text-xs uppercase text-muted">{p.settledAs}</td>
+                <td className="whitespace-nowrap px-3 py-2 font-mono text-[11px] uppercase tracking-wide text-faint">
+                  {[p.isVip && "VIP", p.isBanker && "Banker", p.isManualOverride && "Edited"]
+                    .filter(Boolean)
+                    .join(" · ")}
                 </td>
-                <td className="px-3 py-2 text-right whitespace-nowrap">
-                  <Link href={`/admin/tips/${p.id}`} className="underline mr-3">
+                <td className="whitespace-nowrap px-3 py-2 text-right">
+                  <Link href={`/admin/tips/${p.id}`} className="mr-3 text-brand underline">
                     Edit
                   </Link>
                   <DeleteTipButton id={p.id} />

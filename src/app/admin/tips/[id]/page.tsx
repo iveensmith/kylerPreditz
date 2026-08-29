@@ -3,6 +3,8 @@ import { getPredictionForAdmin } from "@/lib/queries/admin";
 import { updateTip } from "@/lib/actions/tips";
 import { formatMarketLabel } from "@/lib/format";
 import { PredictionMarket } from "@/generated/prisma/enums";
+import { AdminHeader } from "@/components/admin/AdminHeader";
+import { adminInput, adminLabel, adminLabelText, adminBtn } from "@/lib/admin-ui";
 
 type Props = { params: Promise<{ id: string }> };
 
@@ -14,15 +16,16 @@ export default async function EditTipPage({ params }: Props) {
   const updateTipWithId = updateTip.bind(null, id);
 
   return (
-    <div className="flex flex-col gap-4 max-w-lg">
-      <h1 className="text-xl font-semibold">
-        Edit Tip - {prediction.fixture.homeTeam.name} vs {prediction.fixture.awayTeam.name}
-      </h1>
+    <div className="flex max-w-lg flex-col gap-6">
+      <AdminHeader
+        eyebrow="Tips"
+        title={`Edit · ${prediction.fixture.homeTeam.name} v ${prediction.fixture.awayTeam.name}`}
+      />
 
       <form action={updateTipWithId} className="flex flex-col gap-4">
-        <label className="flex flex-col gap-1 text-sm">
-          <span className="text-zinc-500 dark:text-zinc-400">Market</span>
-          <select name="market" defaultValue={prediction.market} className="rounded-md border border-zinc-200 dark:border-zinc-700 bg-transparent px-3 py-2">
+        <label className={adminLabel}>
+          <span className={adminLabelText}>Market</span>
+          <select name="market" defaultValue={prediction.market} className={adminInput}>
             {Object.values(PredictionMarket).map((m) => (
               <option key={m} value={m}>
                 {formatMarketLabel(m)}
@@ -31,14 +34,14 @@ export default async function EditTipPage({ params }: Props) {
           </select>
         </label>
 
-        <label className="flex flex-col gap-1 text-sm">
-          <span className="text-zinc-500 dark:text-zinc-400">Selection</span>
-          <input name="selection" defaultValue={prediction.selection} required className="rounded-md border border-zinc-200 dark:border-zinc-700 bg-transparent px-3 py-2" />
+        <label className={adminLabel}>
+          <span className={adminLabelText}>Selection</span>
+          <input name="selection" defaultValue={prediction.selection} required className={adminInput} />
         </label>
 
         <div className="grid grid-cols-2 gap-4">
-          <label className="flex flex-col gap-1 text-sm">
-            <span className="text-zinc-500 dark:text-zinc-400">Odds</span>
+          <label className={adminLabel}>
+            <span className={adminLabelText}>Odds</span>
             <input
               name="odds"
               type="number"
@@ -46,11 +49,11 @@ export default async function EditTipPage({ params }: Props) {
               min="1"
               defaultValue={prediction.odds.toString()}
               required
-              className="rounded-md border border-zinc-200 dark:border-zinc-700 bg-transparent px-3 py-2"
+              className={adminInput}
             />
           </label>
-          <label className="flex flex-col gap-1 text-sm">
-            <span className="text-zinc-500 dark:text-zinc-400">Confidence (%)</span>
+          <label className={adminLabel}>
+            <span className={adminLabelText}>Confidence (%)</span>
             <input
               name="confidence"
               type="number"
@@ -58,19 +61,19 @@ export default async function EditTipPage({ params }: Props) {
               max="100"
               defaultValue={prediction.confidence}
               required
-              className="rounded-md border border-zinc-200 dark:border-zinc-700 bg-transparent px-3 py-2"
+              className={adminInput}
             />
           </label>
         </div>
 
-        <label className="flex flex-col gap-1 text-sm">
-          <span className="text-zinc-500 dark:text-zinc-400">Reasoning</span>
+        <label className={adminLabel}>
+          <span className={adminLabelText}>Reasoning</span>
           <textarea
             name="reasoning"
             defaultValue={prediction.reasoning}
             required
             rows={4}
-            className="rounded-md border border-zinc-200 dark:border-zinc-700 bg-transparent px-3 py-2"
+            className={adminInput}
           />
         </label>
 
@@ -85,7 +88,7 @@ export default async function EditTipPage({ params }: Props) {
           </label>
         </div>
 
-        <button type="submit" className="rounded-md bg-zinc-900 text-white dark:bg-white dark:text-zinc-900 px-3 py-2 font-medium self-start">
+        <button type="submit" className={adminBtn}>
           Save Changes
         </button>
       </form>
