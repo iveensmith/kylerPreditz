@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { getListedPosts } from "@/lib/queries/blog";
 import { absoluteUrl } from "@/lib/seo";
 import { PostCard } from "@/components/blog/PostCard";
+import { PageHeader } from "@/components/ui/PageHeader";
 
 const TITLE = "Football Blog & Analysis";
 const DESCRIPTION =
@@ -20,11 +21,8 @@ export default async function BlogIndexPage() {
   const posts = await getListedPosts();
 
   return (
-    <main className="mx-auto w-full max-w-5xl px-4 py-8 flex flex-col gap-6">
-      <div>
-        <h1 className="text-2xl font-semibold">{TITLE}</h1>
-        <p className="mt-1 text-sm text-muted">{DESCRIPTION}</p>
-      </div>
+    <main className="mx-auto flex w-full max-w-5xl flex-col gap-8 px-4 py-12 sm:px-6">
+      <PageHeader eyebrow="Blog" title="Analysis & explainers" subtitle={DESCRIPTION} />
 
       {posts.length === 0 ? (
         <p className="text-sm text-muted">No articles published yet.</p>

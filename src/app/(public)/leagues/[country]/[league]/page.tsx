@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 import { notFound } from "next/navigation";
 import { getLeagueBySlug, getLeagueIndex } from "@/lib/queries/league-detail";
 import { slugify } from "@/lib/slugs";
@@ -6,6 +7,7 @@ import { absoluteUrl, SITE_NAME } from "@/lib/seo";
 import { LeagueTipGroup } from "@/components/home/LeagueTipGroup";
 import { TeamBadge } from "@/components/ui/TeamBadge";
 import { PlayerAvatar } from "@/components/ui/PlayerAvatar";
+import { SectionHeading } from "@/components/ui/SectionHeading";
 
 export const revalidate = 900;
 
@@ -36,47 +38,52 @@ export default async function LeagueDetailPage({ params }: Props) {
   if (!league) notFound();
 
   return (
-    <main className="max-w-3xl mx-auto w-full px-4 py-6 flex flex-col gap-6">
-      <div>
-        <h1 className="text-xl font-semibold">{league.name}</h1>
-        <p className="text-sm text-muted">{league.country}</p>
-      </div>
+    <main className="mx-auto flex w-full max-w-3xl flex-col gap-10 px-4 py-12 sm:px-6">
+      <header className="flex items-center gap-4 border-b border-line pb-5">
+        {league.logoUrl && <Image src={league.logoUrl} alt="" width={40} height={40} />}
+        <div>
+          <div className="eyebrow mb-1">{league.country}</div>
+          <h1 className="text-[2rem] leading-none sm:text-4xl">{league.name}</h1>
+        </div>
+      </header>
 
       <section>
-        <h2 className="font-semibold mb-2 text-sm">Upcoming Fixtures</h2>
+        <SectionHeading eyebrow="Next 7 days" title="Upcoming fixtures" />
         {league.fixtures.length > 0 ? (
           <LeagueTipGroup league={league} />
         ) : (
-          <p className="text-muted text-sm">No upcoming fixtures tracked yet.</p>
+          <p className="text-sm text-muted">No upcoming fixtures tracked yet.</p>
         )}
       </section>
 
       <section>
-        <h2 className="font-semibold mb-2 text-sm">Table</h2>
-        <div className="overflow-x-auto rounded-xl border border-line">
+        <SectionHeading eyebrow="Standings" title="Table" />
+        <div className="overflow-x-auto rounded-[var(--radius-card)] border border-line">
           <table className="w-full text-sm">
-            <thead className="bg-surface-2 text-muted text-xs">
+            <thead className="bg-surface-2 font-mono text-[11px] uppercase tracking-wide text-muted">
               <tr>
-                <th className="text-left font-medium px-3 py-2">#</th>
-                <th className="text-left font-medium px-3 py-2">Team</th>
-                <th className="text-right font-medium px-3 py-2">P</th>
-                <th className="text-right font-medium px-3 py-2">GD</th>
-                <th className="text-right font-medium px-3 py-2">Pts</th>
-                <th className="text-right font-medium px-3 py-2">Form</th>
+                <th className="px-3 py-2 text-left font-medium">#</th>
+                <th className="px-3 py-2 text-left font-medium">Team</th>
+                <th className="px-3 py-2 text-right font-medium">P</th>
+                <th className="px-3 py-2 text-right font-medium">GD</th>
+                <th className="px-3 py-2 text-right font-medium">Pts</th>
+                <th className="px-3 py-2 text-right font-medium">Form</th>
               </tr>
             </thead>
             <tbody>
               {league.standings.map((row) => (
                 <tr key={row.id} className="border-t border-line">
-                  <td className="px-3 py-2 tabular-nums text-muted">{row.rank}</td>
+                  <td className="px-3 py-2 font-mono text-muted tabular-nums">{row.rank}</td>
                   <td className="px-3 py-2">
                     <TeamBadge name={row.team.name} logoUrl={row.team.logoUrl} size={16} />
                   </td>
-                  <td className="px-3 py-2 text-right tabular-nums">{row.played}</td>
-                  <td className="px-3 py-2 text-right tabular-nums">{row.goalDiff > 0 ? `+${row.goalDiff}` : row.goalDiff}</td>
-                  <td className="px-3 py-2 text-right tabular-nums font-medium">{row.points}</td>
-                  <td className="px-3 py-2 text-right text-xs text-muted tabular-nums">
-                    {row.team.stats[0]?.form?.slice(-5) ?? "-"}
+                  <td className="px-3 py-2 text-right font-mono tabular-nums">{row.played}</td>
+                  <td className="px-3 py-2 text-right font-mono tabular-nums">
+                    {row.goalDiff > 0 ? `+${row.goalDiff}` : row.goalDiff}
+                  </td>
+                  <td className="px-3 py-2 text-right font-mono font-semibold tabular-nums">{row.points}</td>
+                  <td className="px-3 py-2 text-right font-mono text-xs text-faint tabular-nums">
+                    {row.team.stats[0]?.form?.slice(-5) ?? "—"}
                   </td>
                 </tr>
               ))}
@@ -87,19 +94,20 @@ export default async function LeagueDetailPage({ params }: Props) {
 
       {league.topScorers.length > 0 && (
         <section>
-          <h2 className="font-semibold mb-2 text-sm">Top Scorers</h2>
-          <ul className="rounded-xl border border-line text-sm">
-            {league.topScorers.map((scorer) => (
+          <SectionHeading eyebrow="This season" title="Top scorers" />
+          <ul className="overflow-hidden rounded-[var(--radius-card)] border border-line text-sm">
+            {league.topScorers.map((scorer, i) => (
               <li
                 key={scorer.id}
-                className="flex items-center gap-2.5 px-3 py-2 border-b border-line last:border-b-0"
+                className="flex items-center gap-2.5 border-b border-line px-3 py-2.5 last:border-b-0"
               >
+                <span className="w-4 shrink-0 text-right font-mono text-xs text-faint">{i + 1}</span>
                 <PlayerAvatar name={scorer.playerName} photoUrl={scorer.photoUrl} size={28} />
-                <div className="flex flex-col min-w-0">
-                  <span>{scorer.playerName}</span>
+                <div className="flex min-w-0 flex-col">
+                  <span className="truncate">{scorer.playerName}</span>
                   <TeamBadge name={scorer.team.name} logoUrl={scorer.team.logoUrl} size={14} />
                 </div>
-                <span className="tabular-nums font-medium ml-auto">{scorer.goals}</span>
+                <span className="ml-auto shrink-0 font-mono font-semibold tabular-nums">{scorer.goals}</span>
               </li>
             ))}
           </ul>

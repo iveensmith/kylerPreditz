@@ -60,7 +60,7 @@ export default async function BlogPostPage({ params }: Props) {
   const url = absoluteUrl(`/blog/${post.slug}`);
 
   return (
-    <main className="mx-auto w-full max-w-3xl px-4 py-8 flex flex-col gap-6">
+    <main className="mx-auto flex w-full max-w-2xl flex-col gap-8 px-4 py-14 sm:px-6">
       <JsonLd
         data={buildArticleJsonLd({
           title: post.metaTitle || post.title,
@@ -74,12 +74,12 @@ export default async function BlogPostPage({ params }: Props) {
         })}
       />
 
-      <header className="flex flex-col gap-3">
-        <h1 className="text-2xl font-semibold leading-tight">{post.title}</h1>
-        <p className="text-sm text-muted">
+      <header className="flex flex-col gap-4 border-b border-line pb-6">
+        <div className="eyebrow">
           {post.author}
           {post.publishedAt ? ` · ${formatArticleDate(post.publishedAt)}` : ""}
-        </p>
+        </div>
+        <h1 className="text-[2.25rem] leading-[1.08] sm:text-[2.75rem]">{post.title}</h1>
         {post.sponsored && <SponsoredNotice />}
       </header>
 
@@ -89,15 +89,15 @@ export default async function BlogPostPage({ params }: Props) {
           src={post.coverImage}
           alt=""
           fetchPriority="high"
-          className="w-full rounded-xl object-cover"
+          className="w-full rounded-[var(--radius-card)] border border-line object-cover"
         />
       )}
 
       <PostBody body={post.body} sponsored={post.sponsored} />
 
-      <p className="mt-2 border-t border-line pt-4 text-xs text-muted">
+      <p className="border-t border-line pt-5 text-xs leading-relaxed text-faint">
         Predictions referenced on this site are statistical estimates, capped at 92% confidence, never
-        guaranteed. 18+ Gamble Responsibly.
+        guaranteed. 18+ &middot; Gamble responsibly.
       </p>
     </main>
   );

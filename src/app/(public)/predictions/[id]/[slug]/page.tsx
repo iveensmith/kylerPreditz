@@ -8,6 +8,7 @@ import { absoluteUrl } from "@/lib/seo";
 import { buildSportsEventJsonLd } from "@/lib/structured-data";
 import { TeamBadge } from "@/components/ui/TeamBadge";
 import { MatchStatus } from "@/components/ui/MatchStatus";
+import { SectionHeading } from "@/components/ui/SectionHeading";
 import { TeamFormList } from "@/components/match/TeamFormList";
 import { H2hTable } from "@/components/match/H2hTable";
 import { MarketProbabilityTable } from "@/components/match/MarketProbabilityTable";
@@ -51,7 +52,7 @@ export default async function MatchDetailPage({ params }: Props) {
   const { homeTeam, awayTeam, league, prediction } = fixture;
 
   return (
-    <main className="max-w-3xl mx-auto w-full px-4 py-6 flex flex-col gap-6">
+    <main className="mx-auto flex w-full max-w-3xl flex-col gap-10 px-4 py-12 sm:px-6">
       <JsonLd
         data={buildSportsEventJsonLd({
           homeTeam: homeTeam.name,
@@ -62,90 +63,122 @@ export default async function MatchDetailPage({ params }: Props) {
           url: absoluteUrl(`/predictions/${id}/${slug}`),
         })}
       />
-      <div>
-        <p className="text-xs text-muted mb-2 flex items-center gap-1.5">
-          <span>
-            {league.name} - {formatKickoffTime(fixture.kickoffUtc)}
-            {fixture.venue ? ` - ${fixture.venue}` : ""}
-          </span>
-          {fixture.status !== FixtureStatus.SCHEDULED && (
-            <MatchStatus
-              status={fixture.status}
-              elapsedMinutes={fixture.elapsedMinutes}
-              kickoffUtc={fixture.kickoffUtc}
-              homeScore={fixture.homeScore}
-              awayScore={fixture.awayScore}
-            />
+
+      <header className="border-b border-line pb-6">
+        <div className="eyebrow flex flex-wrap items-center gap-x-2 gap-y-1">
+          <span>{league.name}</span>
+          <span aria-hidden>&middot;</span>
+          <span>{formatKickoffTime(fixture.kickoffUtc)}</span>
+          {fixture.venue && (
+            <>
+              <span aria-hidden>&middot;</span>
+              <span>{fixture.venue}</span>
+            </>
           )}
-        </p>
-        <h1 className="text-xl font-semibold flex flex-col gap-1">
-          <TeamBadge name={homeTeam.name} logoUrl={homeTeam.logoUrl} size={24} />
-          <span className="text-sm font-normal text-faint">vs</span>
-          <TeamBadge name={awayTeam.name} logoUrl={awayTeam.logoUrl} size={24} />
+        </div>
+
+        <h1 className="mt-3 text-[1.75rem] leading-tight sm:text-[2.25rem]">
+          {homeTeam.name} <span className="text-faint">vs</span> {awayTeam.name}
         </h1>
-      </div>
+
+        <div className="mt-4 flex items-center gap-4">
+          <TeamBadge name={homeTeam.name} logoUrl={homeTeam.logoUrl} size={22} />
+          <span className="font-mono text-sm text-faint">
+            {fixture.status === FixtureStatus.SCHEDULED ? (
+              "vs"
+            ) : (
+              <MatchStatus
+                status={fixture.status}
+                elapsedMinutes={fixture.elapsedMinutes}
+                kickoffUtc={fixture.kickoffUtc}
+                homeScore={fixture.homeScore}
+                awayScore={fixture.awayScore}
+              />
+            )}
+          </span>
+          <TeamBadge name={awayTeam.name} logoUrl={awayTeam.logoUrl} size={22} />
+        </div>
+      </header>
 
       {prediction && (
-        <section className="rounded-xl border border-line p-4">
-          <div className="flex items-center justify-between mb-2">
+        <section className="rounded-[var(--radius-card)] border border-brand/30 bg-brand/[0.06] p-5">
+          <div className="eyebrow !text-brand">Our pick</div>
+          <div className="mt-3 flex items-start justify-between gap-4">
             <div>
-              <div className="font-medium">{formatMarketLabel(prediction.market)}</div>
+              <div className="text-xl font-semibold">{formatMarketLabel(prediction.market)}</div>
               <div className="text-sm text-muted">{prediction.selection}</div>
             </div>
-            <span className="inline-flex items-center rounded-full bg-brand text-white px-2.5 py-1 text-sm font-medium tabular-nums">
-              {prediction.confidence}%
-            </span>
+            <div className="shrink-0 text-right">
+              <div className="font-mono text-3xl font-semibold leading-none tabular-nums text-brand">
+                {prediction.confidence}%
+              </div>
+              <div className="eyebrow mt-1.5">
+                Odds <span className="text-ink">{prediction.odds.toString()}</span>
+              </div>
+            </div>
           </div>
-          <p className="text-sm text-muted">{prediction.reasoning}</p>
+          {prediction.reasoning && (
+            <p className="mt-4 border-t border-brand/20 pt-4 text-sm leading-relaxed text-ink/80">
+              {prediction.reasoning}
+            </p>
+          )}
         </section>
       )}
 
       <section>
-        <h2 className="font-semibold mb-2 text-sm">All Markets</h2>
-        <MarketProbabilityTable allMarkets={prediction?.allMarkets ?? null} publishedMarket={prediction?.market ?? null} />
-      </section>
-
-      <section className="grid grid-cols-2 gap-6">
-        <TeamFormList teamName={homeTeam.name} stats={homeStats} />
-        <TeamFormList teamName={awayTeam.name} stats={awayStats} />
-      </section>
-
-      <section>
-        <h2 className="font-semibold mb-2 text-sm">Goals For / Against (per match)</h2>
-        <table className="w-full text-sm">
-          <thead className="text-muted text-xs">
-            <tr>
-              <th className="text-left font-medium py-1">Team</th>
-              <th className="text-right font-medium py-1">For</th>
-              <th className="text-right font-medium py-1">Against</th>
-              <th className="text-right font-medium py-1">League Pos.</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr className="border-t border-line">
-              <td className="py-1.5">{homeTeam.name}</td>
-              <td className="py-1.5 text-right tabular-nums">{homeStats.goalsForAvg}</td>
-              <td className="py-1.5 text-right tabular-nums">{homeStats.goalsAgainstAvg}</td>
-              <td className="py-1.5 text-right tabular-nums">{homeStats.leaguePosition ?? "-"}</td>
-            </tr>
-            <tr className="border-t border-line">
-              <td className="py-1.5">{awayTeam.name}</td>
-              <td className="py-1.5 text-right tabular-nums">{awayStats.goalsForAvg}</td>
-              <td className="py-1.5 text-right tabular-nums">{awayStats.goalsAgainstAvg}</td>
-              <td className="py-1.5 text-right tabular-nums">{awayStats.leaguePosition ?? "-"}</td>
-            </tr>
-          </tbody>
-        </table>
+        <SectionHeading eyebrow="One grid, every market" title="Market probabilities" />
+        <MarketProbabilityTable
+          allMarkets={prediction?.allMarkets ?? null}
+          publishedMarket={prediction?.market ?? null}
+        />
       </section>
 
       <section>
-        <h2 className="font-semibold mb-2 text-sm">Head to Head</h2>
+        <SectionHeading eyebrow="Last matches" title="Recent form" />
+        <div className="grid gap-8 sm:grid-cols-2">
+          <TeamFormList teamName={homeTeam.name} stats={homeStats} />
+          <TeamFormList teamName={awayTeam.name} stats={awayStats} />
+        </div>
+      </section>
+
+      <section>
+        <SectionHeading eyebrow="Per match" title="Goals for & against" />
+        <div className="overflow-hidden rounded-[var(--radius-card)] border border-line">
+          <table className="w-full text-sm">
+            <thead className="bg-surface-2 font-mono text-[11px] uppercase tracking-wide text-muted">
+              <tr>
+                <th className="px-3 py-2 text-left font-medium">Team</th>
+                <th className="px-3 py-2 text-right font-medium">For</th>
+                <th className="px-3 py-2 text-right font-medium">Against</th>
+                <th className="px-3 py-2 text-right font-medium">Pos.</th>
+              </tr>
+            </thead>
+            <tbody>
+              {[
+                { team: homeTeam.name, s: homeStats },
+                { team: awayTeam.name, s: awayStats },
+              ].map(({ team, s }) => (
+                <tr key={team} className="border-t border-line">
+                  <td className="px-3 py-2">{team}</td>
+                  <td className="px-3 py-2 text-right font-mono tabular-nums">{s.goalsForAvg}</td>
+                  <td className="px-3 py-2 text-right font-mono tabular-nums">{s.goalsAgainstAvg}</td>
+                  <td className="px-3 py-2 text-right font-mono tabular-nums">{s.leaguePosition ?? "—"}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section>
+        <SectionHeading eyebrow="Recent meetings" title="Head to head" />
         <H2hTable entries={h2h} />
       </section>
 
-      <section className="text-sm text-muted pt-4 border-t border-line">
-        <p>Predictions are statistical estimates, capped at 92% confidence, never guaranteed.</p>
-      </section>
+      <p className="border-t border-line pt-5 text-xs text-faint">
+        Predictions are statistical estimates, capped at 92% confidence, never guaranteed. 18+ &middot;
+        Gamble responsibly.
+      </p>
     </main>
   );
 }

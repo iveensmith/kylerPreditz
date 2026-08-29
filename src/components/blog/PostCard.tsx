@@ -14,26 +14,19 @@ export function PostCard({ post }: { post: PostCardData }) {
   return (
     <Link
       href={`/blog/${post.slug}`}
-      className="group flex flex-col overflow-hidden rounded-xl border border-line transition-colors hover:border-brand"
+      className="group flex flex-col overflow-hidden rounded-[var(--radius-card)] border border-line bg-surface transition-colors hover:border-brand"
     >
       {post.coverImage && (
         // eslint-disable-next-line @next/next/no-img-element
-        <img
-          src={post.coverImage}
-          alt=""
-          loading="lazy"
-          className="aspect-[16/9] w-full object-cover"
-        />
+        <img src={post.coverImage} alt="" loading="lazy" className="aspect-[16/9] w-full object-cover" />
       )}
       <div className="flex flex-1 flex-col gap-2 p-4">
-        <h2 className="font-semibold leading-snug group-hover:text-brand">{post.title}</h2>
-        {post.excerpt && (
-          <p className="line-clamp-3 text-sm text-muted">{post.excerpt}</p>
+        {post.publishedAt && (
+          <div className="eyebrow">{formatArticleDate(post.publishedAt)}</div>
         )}
-        <p className="mt-auto pt-2 text-xs text-muted">
-          {post.author}
-          {post.publishedAt ? ` · ${formatArticleDate(post.publishedAt)}` : ""}
-        </p>
+        <h2 className="text-base leading-snug transition-colors group-hover:text-brand">{post.title}</h2>
+        {post.excerpt && <p className="line-clamp-3 text-sm text-muted">{post.excerpt}</p>}
+        <p className="mt-auto pt-2 font-mono text-[11px] uppercase tracking-wide text-faint">{post.author}</p>
       </div>
     </Link>
   );
