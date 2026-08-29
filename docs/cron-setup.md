@@ -22,7 +22,7 @@ tolerate that stay there. The three GH workflows are in `.github/workflows/`.
 1. Create a free account at https://cron-job.org (free tier: 50 jobs, 1-minute
    resolution).
 2. **Create cronjob**:
-   - **Title**: `predictz sync-results`
+   - **Title**: `uniquepredict sync-results`
    - **URL**: `https://YOUR_PRODUCTION_DOMAIN/api/cron/sync-results`
      (the value of `NEXT_PUBLIC_SITE_URL`)
    - **Schedule**: Every 3 minutes — under "Custom", tick every minute divisible

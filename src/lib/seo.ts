@@ -9,7 +9,7 @@ export function absoluteUrl(path: string): string {
 // Split so the two halves can be styled differently in the wordmark
 // (Header/Footer); SITE_NAME is the plain-text form used everywhere else.
 export const SITE_NAME_PREFIX = "Unique";
-export const SITE_NAME_SUFFIX = "Predictz";
+export const SITE_NAME_SUFFIX = "Predict";
 export const SITE_NAME = `${SITE_NAME_PREFIX}${SITE_NAME_SUFFIX}`;
 
 export const SITE_TAGLINE = "Football Predictions & Betting Tips";

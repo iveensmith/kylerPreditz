@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { MARKET_PAGES } from "@/lib/markets.config";
 import { SITE_NAME, SITE_NAME_PREFIX, SITE_NAME_SUFFIX } from "@/lib/seo";
+import { FooterContact } from "./FooterContact";
 
 const DAYS = [
   { label: "Monday", slug: "monday-predictions" },
@@ -14,13 +15,49 @@ const DAYS = [
 
 const QUICK_MARKETS = MARKET_PAGES.slice(0, 6);
 
+const QUICK_LINKS = [
+  { href: "/", label: "Home" },
+  { href: "/about", label: "About Us" },
+  { href: "/vip", label: "VIP Packages" },
+  { href: "/leagues", label: "Leagues" },
+  { href: "/results", label: "Results Archive" },
+  { href: "/blog", label: "Blog" },
+];
+
+const LEGAL_LINKS = [
+  { href: "/disclaimer", label: "Disclaimer" },
+  { href: "/terms", label: "Terms & Conditions" },
+  { href: "/privacy", label: "Privacy Policy" },
+];
+
+const headingClass = "text-white font-semibold mb-3 border-l-2 border-secondary pl-2";
+const linkClass = "hover:text-white transition-colors";
+
+function LinkColumn({ heading, links }: { heading: string; links: { href: string; label: string }[] }) {
+  return (
+    <div>
+      <h3 className={headingClass}>{heading}</h3>
+      <ul className="flex flex-col gap-2">
+        {links.map((l) => (
+          <li key={l.href + l.label}>
+            <Link href={l.href} className={linkClass}>
+              {l.label}
+            </Link>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
 export function Footer() {
   return (
     <footer className="mt-auto bg-zinc-950 text-zinc-400">
       <div className="max-w-6xl mx-auto px-4 py-12">
         <div className="text-center mb-10">
           <div className="font-bold text-lg text-white">
-            {SITE_NAME_PREFIX}<span className="text-secondary">{SITE_NAME_SUFFIX}</span>
+            {SITE_NAME_PREFIX}
+            <span className="text-secondary">{SITE_NAME_SUFFIX}</span>
           </div>
           <p className="text-sm max-w-md mx-auto mt-2">
             Statistical football predictions, match analysis, and a public results archive - built on a
@@ -28,13 +65,17 @@ export function Footer() {
           </p>
         </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-8 text-sm">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-8 text-sm">
+          <FooterContact />
+          <LinkColumn heading="Quick Links" links={QUICK_LINKS} />
+          <LinkColumn heading="Legal Links" links={LEGAL_LINKS} />
+
           <div>
-            <h3 className="text-white font-semibold mb-3 border-l-2 border-brand pl-2">Predictions by Day</h3>
+            <h3 className={headingClass}>Predictions by Day</h3>
             <ul className="flex flex-col gap-2">
               {DAYS.map((d) => (
                 <li key={d.slug}>
-                  <Link href={`/${d.slug}`} className="hover:text-white transition-colors">
+                  <Link href={`/${d.slug}`} className={linkClass}>
                     {d.label} Predictions
                   </Link>
                 </li>
@@ -43,41 +84,15 @@ export function Footer() {
           </div>
 
           <div>
-            <h3 className="text-white font-semibold mb-3 border-l-2 border-brand pl-2">Popular Markets</h3>
+            <h3 className={headingClass}>Popular Markets</h3>
             <ul className="flex flex-col gap-2">
               {QUICK_MARKETS.map((m) => (
                 <li key={m.slug}>
-                  <Link href={`/${m.slug}`} className="hover:text-white transition-colors">
+                  <Link href={`/${m.slug}`} className={linkClass}>
                     {m.h1}
                   </Link>
                 </li>
               ))}
-            </ul>
-          </div>
-
-          <div>
-            <h3 className="text-white font-semibold mb-3 border-l-2 border-brand pl-2">Site</h3>
-            <ul className="flex flex-col gap-2">
-              <li>
-                <Link href="/" className="hover:text-white transition-colors">
-                  Home
-                </Link>
-              </li>
-              <li>
-                <Link href="/leagues" className="hover:text-white transition-colors">
-                  Leagues
-                </Link>
-              </li>
-              <li>
-                <Link href="/results" className="hover:text-white transition-colors">
-                  Results Archive
-                </Link>
-              </li>
-              <li>
-                <Link href="/blog" className="hover:text-white transition-colors">
-                  Blog
-                </Link>
-              </li>
             </ul>
           </div>
         </div>

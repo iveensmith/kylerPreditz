@@ -31,6 +31,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: absoluteUrl("/leagues"), changeFrequency: "daily", priority: 0.6 },
     { url: absoluteUrl("/results"), changeFrequency: "daily", priority: 0.5 },
     { url: absoluteUrl("/blog"), changeFrequency: "weekly", priority: 0.5 },
+    { url: absoluteUrl("/about"), changeFrequency: "monthly", priority: 0.4 },
+    { url: absoluteUrl("/vip"), changeFrequency: "monthly", priority: 0.5 },
+    { url: absoluteUrl("/disclaimer"), changeFrequency: "yearly", priority: 0.2 },
+    { url: absoluteUrl("/terms"), changeFrequency: "yearly", priority: 0.2 },
+    { url: absoluteUrl("/privacy"), changeFrequency: "yearly", priority: 0.2 },
   ];
 
   for (const post of posts) {
