@@ -14,8 +14,6 @@ const DAYS = [
   { label: "Sunday", slug: "sunday-predictions" },
 ];
 
-const QUICK_MARKETS = MARKET_PAGES.slice(0, 6);
-
 const QUICK_LINKS = [
   { href: "/", label: "Home" },
   { href: "/about", label: "About Us" },
@@ -30,6 +28,10 @@ const LEGAL_LINKS = [
   { href: "/terms", label: "Terms & Conditions" },
   { href: "/privacy", label: "Privacy Policy" },
 ];
+
+const DAY_LINKS = DAYS.map((d) => ({ href: `/${d.slug}`, label: `${d.label} Predictions` }));
+
+const MARKET_LINKS = MARKET_PAGES.slice(0, 6).map((m) => ({ href: `/${m.slug}`, label: m.h1 }));
 
 const headingClass = "text-white font-semibold mb-3 border-l-2 border-secondary pl-2";
 const linkClass = "hover:text-white transition-colors";
@@ -65,36 +67,15 @@ export function Footer() {
           </p>
         </div>
 
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-8 text-sm">
+        <div className="border-t border-zinc-800 pt-8 text-sm">
           <FooterContact />
+        </div>
+
+        <div className="mt-10 grid grid-cols-2 md:grid-cols-4 gap-8 text-sm">
           <LinkColumn heading="Quick Links" links={QUICK_LINKS} />
           <LinkColumn heading="Legal Links" links={LEGAL_LINKS} />
-
-          <div>
-            <h3 className={headingClass}>Predictions by Day</h3>
-            <ul className="flex flex-col gap-2">
-              {DAYS.map((d) => (
-                <li key={d.slug}>
-                  <Link href={`/${d.slug}`} className={linkClass}>
-                    {d.label} Predictions
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          <div>
-            <h3 className={headingClass}>Popular Markets</h3>
-            <ul className="flex flex-col gap-2">
-              {QUICK_MARKETS.map((m) => (
-                <li key={m.slug}>
-                  <Link href={`/${m.slug}`} className={linkClass}>
-                    {m.h1}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </div>
+          <LinkColumn heading="Predictions by Day" links={DAY_LINKS} />
+          <LinkColumn heading="Popular Markets" links={MARKET_LINKS} />
         </div>
 
         <div className="mt-10 pt-6 border-t border-zinc-800 flex flex-col gap-3 text-xs">

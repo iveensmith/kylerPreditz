@@ -25,24 +25,29 @@ function MailIcon() {
   );
 }
 
+const valueClass = "text-white hover:text-secondary transition-colors";
 const linkClass = "text-secondary hover:text-white underline underline-offset-2 transition-colors";
 
-/** "Reach Us" footer column - contact channels, read from contact.config.ts. */
+/**
+ * "Reach Us" footer block - a full-width row of contact channels, one per line,
+ * each kept unbroken (whitespace-nowrap) so nothing wraps mid-value. Wraps to a
+ * stacked list only when the viewport can't fit them side by side.
+ */
 export function FooterContact() {
   return (
     <div>
-      <h3 className="text-white font-semibold mb-3 border-l-2 border-secondary pl-2">Reach Us</h3>
-      <ul className="flex flex-col gap-3">
-        <li className="flex items-start gap-2">
+      <h3 className="text-white font-semibold mb-4 border-l-2 border-secondary pl-2">Reach Us</h3>
+      <ul className="flex flex-wrap gap-x-10 gap-y-3">
+        <li className="flex items-center gap-2 whitespace-nowrap">
           <WhatsAppIcon />
           <span>
             WhatsApp Only:{" "}
-            <a href={CONTACT.whatsapp.href} target="_blank" rel="noopener noreferrer" className="text-white hover:text-secondary transition-colors">
+            <a href={CONTACT.whatsapp.href} target="_blank" rel="noopener noreferrer" className={valueClass}>
               {CONTACT.whatsapp.number}
             </a>
           </span>
         </li>
-        <li className="flex items-start gap-2">
+        <li className="flex items-center gap-2 whitespace-nowrap">
           <TelegramIcon />
           <span>
             Telegram Only:{" "}
@@ -51,7 +56,7 @@ export function FooterContact() {
             </a>
           </span>
         </li>
-        <li className="flex items-start gap-2">
+        <li className="flex items-center gap-2 whitespace-nowrap">
           <TelegramIcon />
           <span>
             Telegram Channel:{" "}
@@ -60,11 +65,11 @@ export function FooterContact() {
             </a>
           </span>
         </li>
-        <li className="flex items-start gap-2">
+        <li className="flex items-center gap-2 whitespace-nowrap">
           <MailIcon />
           <span>
             Email Us:{" "}
-            <a href={CONTACT.email.href} className="text-white hover:text-secondary transition-colors break-all">
+            <a href={CONTACT.email.href} className={valueClass}>
               {CONTACT.email.address}
             </a>
           </span>
