@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Geist, Geist_Mono, Montserrat } from "next/font/google";
 import "./globals.css";
 import { SessionProviderWrapper } from "@/components/providers/SessionProviderWrapper";
 import { ThemeScript } from "@/components/theme/ThemeScript";
@@ -13,6 +13,16 @@ const geistSans = Geist({
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
+});
+
+// Only used by the brand wordmark in <Logo>. The SVG geometry was drawn against
+// Montserrat's metrics, so a fallback face makes the two words collide.
+const montserrat = Montserrat({
+  variable: "--font-montserrat",
+  subsets: ["latin"],
+  weight: ["900"],
+  style: ["italic"],
+  display: "swap",
 });
 
 const DESCRIPTION = "Statistical football predictions, odds, and confidence ratings, backed by a public results archive.";
@@ -39,7 +49,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     <html
       lang="en"
       suppressHydrationWarning
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${geistSans.variable} ${geistMono.variable} ${montserrat.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
         <ThemeScript />

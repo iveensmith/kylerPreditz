@@ -1,8 +1,9 @@
 import Link from "next/link";
 import { MARKET_PAGES } from "@/lib/markets.config";
-import { SITE_NAME_PREFIX, SITE_NAME_SUFFIX } from "@/lib/seo";
+import { SITE_NAME } from "@/lib/seo";
 import { ThemeToggle } from "@/components/theme/ThemeToggle";
 import { HeaderAuthLink } from "./HeaderAuthLink";
+import { Logo } from "./Logo";
 
 const FEATURED_MARKETS = MARKET_PAGES.slice(0, 6);
 
@@ -53,8 +54,8 @@ export function Header() {
   return (
     <header className="sticky top-0 z-40 bg-zinc-950 text-zinc-100 border-b border-zinc-800">
       <div className="max-w-6xl mx-auto px-4 flex items-center justify-between h-14">
-        <Link href="/" className="font-bold text-lg shrink-0">
-          {SITE_NAME_PREFIX}<span className="text-secondary">{SITE_NAME_SUFFIX}</span>
+        <Link href="/" className="shrink-0" aria-label={`${SITE_NAME} home`}>
+          <Logo className="h-11 w-auto" />
         </Link>
 
         <nav className="hidden md:flex items-center gap-6 text-sm text-zinc-300">

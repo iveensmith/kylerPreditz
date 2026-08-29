@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { MARKET_PAGES } from "@/lib/markets.config";
-import { SITE_NAME, SITE_NAME_PREFIX, SITE_NAME_SUFFIX } from "@/lib/seo";
+import { SITE_NAME } from "@/lib/seo";
 import { FooterContact } from "./FooterContact";
+import { Logo } from "./Logo";
 
 const DAYS = [
   { label: "Monday", slug: "monday-predictions" },
@@ -55,11 +56,10 @@ export function Footer() {
     <footer className="mt-auto bg-zinc-950 text-zinc-400">
       <div className="max-w-6xl mx-auto px-4 py-12">
         <div className="text-center mb-10">
-          <div className="font-bold text-lg text-white">
-            {SITE_NAME_PREFIX}
-            <span className="text-secondary">{SITE_NAME_SUFFIX}</span>
-          </div>
-          <p className="text-sm max-w-md mx-auto mt-2">
+          <Link href="/" aria-label={`${SITE_NAME} home`} className="inline-block">
+            <Logo className="h-11 w-auto mx-auto" />
+          </Link>
+          <p className="text-sm max-w-md mx-auto mt-3">
             Statistical football predictions, match analysis, and a public results archive - built on a
             Poisson/Dixon-Coles goals model driven by each team&apos;s recent home and away form.
           </p>
