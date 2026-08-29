@@ -1,5 +1,7 @@
+import Link from "next/link";
 import { formatMarketLabel } from "@/lib/format";
 import { TeamBadge } from "@/components/ui/TeamBadge";
+import { SectionHeading } from "@/components/ui/SectionHeading";
 import type { getRecentWinningTips } from "@/lib/queries/homepage";
 
 type Tips = Awaited<ReturnType<typeof getRecentWinningTips>>;
@@ -9,18 +11,29 @@ export function RecentWinners({ tips }: { tips: Tips }) {
 
   return (
     <section>
-      <h2 className="font-semibold mb-3">Recent Winning Tips</h2>
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+      <SectionHeading
+        eyebrow="Settled"
+        title="Recent winning tips"
+        action={
+          <Link href="/results" className="text-brand hover:underline">
+            Full archive
+          </Link>
+        }
+      />
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {tips.map((tip) => (
-          <div key={tip.id} className="rounded-lg border border-zinc-200 dark:border-zinc-800 p-3 text-sm">
-            <div className="flex flex-col gap-1 mb-2">
+          <div
+            key={tip.id}
+            className="rounded-[var(--radius-card)] border border-line bg-surface p-4 text-sm"
+          >
+            <div className="mb-3 flex flex-col gap-1">
               <TeamBadge name={tip.fixture.homeTeam.name} logoUrl={tip.fixture.homeTeam.logoUrl} size={16} />
               <TeamBadge name={tip.fixture.awayTeam.name} logoUrl={tip.fixture.awayTeam.logoUrl} size={16} />
             </div>
-            <div className="flex items-center justify-between text-xs text-zinc-500 dark:text-zinc-400">
-              <span>{formatMarketLabel(tip.market)}</span>
-              <span className="inline-flex items-center rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300 px-2 py-0.5 font-medium">
-                WON
+            <div className="flex items-center justify-between gap-2 text-xs">
+              <span className="text-muted">{formatMarketLabel(tip.market)}</span>
+              <span className="inline-flex items-center rounded-full bg-win/12 px-2 py-0.5 font-mono text-[11px] font-semibold uppercase tracking-wide text-win">
+                Won
               </span>
             </div>
           </div>

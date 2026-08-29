@@ -13,23 +13,21 @@ export function LegalPageShell({
   children: ReactNode;
 }) {
   return (
-    <main className="max-w-3xl mx-auto w-full px-4 py-10 flex flex-col gap-6">
-      <header className="flex flex-col gap-2">
-        <h1 className="text-2xl font-semibold border-l-2 border-secondary pl-3">{title}</h1>
-        {intro && <p className="text-sm text-zinc-600 dark:text-zinc-400">{intro}</p>}
-        {updated && <p className="text-xs text-zinc-500 dark:text-zinc-500">Last updated {updated}</p>}
+    <main className="mx-auto w-full max-w-2xl px-4 py-14 sm:px-6">
+      <header className="border-b border-line pb-6">
+        {updated && <div className="eyebrow mb-3">Updated {updated}</div>}
+        <h1 className="text-[2rem] leading-[1.05] sm:text-[2.5rem]">{title}</h1>
+        {intro && <p className="mt-4 text-[15px] leading-relaxed text-muted">{intro}</p>}
       </header>
-      <div className="flex flex-col gap-6 text-sm leading-relaxed text-zinc-700 dark:text-zinc-300">
-        {children}
-      </div>
+      <div className="mt-8 flex flex-col gap-8 text-[15px] leading-relaxed text-ink/85">{children}</div>
     </main>
   );
 }
 
 export function Section({ heading, children }: { heading: string; children: ReactNode }) {
   return (
-    <section className="flex flex-col gap-2">
-      <h2 className="text-base font-semibold text-zinc-900 dark:text-zinc-100">{heading}</h2>
+    <section className="flex flex-col gap-2.5">
+      <h2 className="text-lg font-semibold text-ink">{heading}</h2>
       {children}
     </section>
   );

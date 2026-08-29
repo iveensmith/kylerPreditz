@@ -8,9 +8,9 @@ import { matchSlug } from "@/lib/queries/match-detail";
 import type { FixtureWithTipInfo } from "@/lib/queries/types";
 
 const SETTLED_BADGE: Record<Exclude<SettledStatus, "PENDING">, string> = {
-  WON: "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300",
-  LOST: "bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-300",
-  VOID: "bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400",
+  WON: "bg-win/12 text-win",
+  LOST: "bg-loss/12 text-loss",
+  VOID: "bg-surface-2 text-muted",
 };
 
 /** A <tr> - must be rendered inside a <table><tbody>. */
@@ -19,8 +19,8 @@ export function TipRow({ fixture }: { fixture: FixtureWithTipInfo }) {
   const href = `/predictions/${fixture.id}/${matchSlug(fixture.homeTeam.name, fixture.awayTeam.name)}`;
 
   return (
-    <tr className="border-t border-zinc-100 dark:border-zinc-800 text-sm hover:bg-brand/5 dark:hover:bg-brand/10 transition-colors">
-      <td className="px-3 py-3 whitespace-nowrap tabular-nums text-zinc-500 dark:text-zinc-400 align-top">
+    <tr className="border-b border-line text-sm transition-colors last:border-b-0 hover:bg-surface-2">
+      <td className="whitespace-nowrap px-4 py-3.5 align-top font-mono text-xs text-muted tabular-nums">
         <MatchStatus
           status={fixture.status}
           elapsedMinutes={fixture.elapsedMinutes}
@@ -30,8 +30,8 @@ export function TipRow({ fixture }: { fixture: FixtureWithTipInfo }) {
         />
       </td>
 
-      <td className="px-3 py-3 align-top">
-        <Link href={href} className="flex flex-col gap-1.5 group">
+      <td className="px-4 py-3.5 align-top">
+        <Link href={href} className="group flex flex-col gap-1.5">
           <div className="flex items-center gap-2">
             <TeamBadge name={fixture.homeTeam.name} logoUrl={fixture.homeTeam.logoUrl} />
             <FormBadges form={fixture.homeTeam.stats[0]?.form} />
@@ -44,36 +44,34 @@ export function TipRow({ fixture }: { fixture: FixtureWithTipInfo }) {
         </Link>
       </td>
 
-      <td className="px-3 py-3 align-top whitespace-nowrap">
+      <td className="px-4 py-3.5 align-top">
         {prediction ? (
-          <div className="flex flex-col gap-1 items-start">
-            <span className="inline-flex items-center rounded-full border border-brand/40 dark:border-brand/50 text-brand-hover dark:text-brand-light px-2 py-0.5 text-xs font-semibold">
-              TIP: {formatMarketLabel(prediction.market)}
+          <div className="flex flex-col gap-1">
+            <span className="w-fit rounded border border-brand/35 px-1.5 py-0.5 font-mono text-[10px] font-semibold uppercase tracking-wide text-brand">
+              {formatMarketLabel(prediction.market)}
             </span>
-            <span className="text-xs text-zinc-500 dark:text-zinc-400">{prediction.selection}</span>
+            <span className="text-xs text-muted">{prediction.selection}</span>
           </div>
         ) : (
-          <span className="text-zinc-400 text-xs italic">No tip</span>
+          <span className="text-xs italic text-faint">No tip</span>
         )}
       </td>
 
-      <td className="px-3 py-3 align-top whitespace-nowrap">
+      <td className="whitespace-nowrap px-4 py-3.5 align-top">
         {prediction && (
-          <span className="inline-flex items-center rounded-full border border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-300 px-2 py-0.5 text-xs font-medium tabular-nums">
-            Odds: {prediction.odds.toString()}
-          </span>
+          <span className="font-mono text-sm tabular-nums text-ink">{prediction.odds.toString()}</span>
         )}
       </td>
 
-      <td className="px-3 py-3 align-top whitespace-nowrap">
+      <td className="whitespace-nowrap px-4 py-3.5 text-right align-top">
         {prediction &&
           (prediction.settledAs === SettledStatus.PENDING ? (
-            <span className="inline-flex items-center rounded-full bg-brand text-white px-2.5 py-1 text-xs font-semibold tabular-nums shadow-sm">
+            <span className="inline-flex items-center rounded-full bg-brand px-2.5 py-1 font-mono text-xs font-semibold tabular-nums text-white">
               {prediction.confidence}%
             </span>
           ) : (
             <span
-              className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold ${SETTLED_BADGE[prediction.settledAs]}`}
+              className={`inline-flex items-center rounded-full px-2.5 py-1 font-mono text-[11px] font-semibold uppercase tracking-wide ${SETTLED_BADGE[prediction.settledAs]}`}
             >
               {prediction.settledAs}
             </span>

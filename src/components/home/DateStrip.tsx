@@ -17,14 +17,15 @@ export function DateStrip({ selectedDate }: { selectedDate: Date }) {
           <Link
             key={offset}
             href={offset === 0 ? "/" : `/?date=${param}`}
-            className={`shrink-0 rounded-full px-4 py-2 text-sm text-center min-w-[76px] border font-medium transition-colors ${
+            aria-current={isSelected ? "page" : undefined}
+            className={`min-w-[80px] shrink-0 rounded-[var(--radius-control)] border px-4 py-2 text-center text-sm transition-colors ${
               isSelected
-                ? "bg-brand text-white border-brand"
-                : "border-zinc-200 dark:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                ? "border-brand bg-brand text-white"
+                : "border-line text-muted hover:border-line-strong hover:text-ink"
             }`}
           >
-            <div className="font-medium">{formatDateStripLabel(date, offset)}</div>
-            <div className="text-xs opacity-70">{formatDayMonth(date)}</div>
+            <div className="font-semibold">{formatDateStripLabel(date, offset)}</div>
+            <div className="font-mono text-[11px] opacity-70">{formatDayMonth(date)}</div>
           </Link>
         );
       })}

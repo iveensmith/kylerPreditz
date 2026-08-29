@@ -20,19 +20,23 @@ export default async function LeaguesIndexPage() {
   const leagues = await getLeagueIndex();
 
   return (
-    <main className="max-w-3xl mx-auto w-full px-4 py-6 flex flex-col gap-6">
-      <h1 className="text-xl font-semibold">Leagues</h1>
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+    <main className="mx-auto flex w-full max-w-4xl flex-col gap-8 px-4 py-12 sm:px-6">
+      <header className="border-b border-line pb-5">
+        <div className="eyebrow mb-2">Coverage</div>
+        <h1 className="text-[2rem] leading-[1.05] sm:text-4xl">Leagues</h1>
+        <p className="mt-3 text-[15px] text-muted">Fixtures, tables, and top scorers for every league we track.</p>
+      </header>
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         {leagues.map((league) => (
           <Link
             key={league.id}
             href={`/leagues/${slugify(league.country)}/${league.slug}`}
-            className="flex items-center gap-3 rounded-xl border border-zinc-200 dark:border-zinc-800 p-4 hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-colors"
+            className="flex items-center gap-3 rounded-[var(--radius-card)] border border-line p-4 transition-colors hover:border-brand hover:bg-surface-2"
           >
-            {league.logoUrl && <Image src={league.logoUrl} alt={`${league.name} logo`} width={32} height={32} />}
+            {league.logoUrl && <Image src={league.logoUrl} alt="" width={30} height={30} />}
             <div>
-              <div className="font-medium text-sm">{league.name}</div>
-              <div className="text-xs text-zinc-500 dark:text-zinc-400">{league.country}</div>
+              <div className="text-sm font-semibold">{league.name}</div>
+              <div className="font-mono text-[11px] uppercase tracking-wide text-faint">{league.country}</div>
             </div>
           </Link>
         ))}

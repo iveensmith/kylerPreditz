@@ -32,7 +32,7 @@ export function ThemeToggle({ className = "" }: { className?: string }) {
       type="button"
       onClick={toggle}
       aria-label={theme === "dark" ? "Switch to light theme" : "Switch to dark theme"}
-      className={`inline-flex h-8 w-8 items-center justify-center rounded-md text-current transition-colors hover:bg-zinc-200/60 dark:hover:bg-zinc-800 ${className}`}
+      className={`inline-flex h-8 w-8 items-center justify-center rounded-md text-current transition-colors hover:bg-surface-2 ${className}`}
     >
       <span className="sr-only">Toggle theme</span>
       {theme === null ? (

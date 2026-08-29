@@ -43,18 +43,19 @@ export default async function MarketPage({ params }: Props) {
   const faq = generateMarketFaq(config);
 
   return (
-    <main className="max-w-5xl mx-auto w-full px-4 py-6 flex flex-col gap-6">
+    <main className="mx-auto flex w-full max-w-5xl flex-col gap-8 px-4 py-12 sm:px-6">
       <JsonLd data={buildFaqPageJsonLd(faq)} />
-      <div>
-        <h1 className="text-xl font-semibold mb-2">{config.h1}</h1>
-        <p className="text-sm text-zinc-500 dark:text-zinc-400">{config.intro}</p>
-      </div>
+      <header className="border-b border-line pb-5">
+        <div className="eyebrow mb-2">Market</div>
+        <h1 className="text-[2rem] leading-[1.05] sm:text-4xl">{config.h1}</h1>
+        <p className="mt-3 max-w-2xl text-[15px] leading-relaxed text-muted">{config.intro}</p>
+      </header>
 
       {config.filter.type === "banker" ? (
         banker ? (
           <BankerCard banker={banker} />
         ) : (
-          <p className="text-zinc-500 dark:text-zinc-400 text-sm">No upcoming picks yet.</p>
+          <p className="text-muted text-sm">No upcoming picks yet.</p>
         )
       ) : leagues.length > 0 ? (
         <div className="flex flex-col gap-4">
@@ -63,14 +64,14 @@ export default async function MarketPage({ params }: Props) {
           ))}
         </div>
       ) : (
-        <p className="text-zinc-500 dark:text-zinc-400 text-sm">No matching tips in the next 7 days yet.</p>
+        <p className="text-muted text-sm">No matching tips in the next 7 days yet.</p>
       )}
 
-      <section className="text-sm text-zinc-500 dark:text-zinc-400 pt-4 border-t border-zinc-200 dark:border-zinc-800">
+      <section className="text-sm text-muted pt-4 border-t border-line">
         <p>
           All predictions are statistical estimates from our own model, capped at 92% confidence. They are not
           guaranteed outcomes - see our public{" "}
-          <Link href="/results" className="underline hover:text-zinc-700 dark:hover:text-zinc-200">
+          <Link href="/results" className="underline hover:text-ink">
             results archive
           </Link>{" "}
           for every published tip, win or lose.

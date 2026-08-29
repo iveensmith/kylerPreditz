@@ -76,7 +76,7 @@ export default async function BlogPostPage({ params }: Props) {
 
       <header className="flex flex-col gap-3">
         <h1 className="text-2xl font-semibold leading-tight">{post.title}</h1>
-        <p className="text-sm text-zinc-500 dark:text-zinc-400">
+        <p className="text-sm text-muted">
           {post.author}
           {post.publishedAt ? ` · ${formatArticleDate(post.publishedAt)}` : ""}
         </p>
@@ -95,7 +95,7 @@ export default async function BlogPostPage({ params }: Props) {
 
       <PostBody body={post.body} sponsored={post.sponsored} />
 
-      <p className="mt-2 border-t border-zinc-200 pt-4 text-xs text-zinc-500 dark:border-zinc-800 dark:text-zinc-400">
+      <p className="mt-2 border-t border-line pt-4 text-xs text-muted">
         Predictions referenced on this site are statistical estimates, capped at 92% confidence, never
         guaranteed. 18+ Gamble Responsibly.
       </p>

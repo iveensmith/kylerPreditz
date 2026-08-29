@@ -7,7 +7,7 @@ export function TeamBadge({ name, logoUrl, size = 20 }: { name: string; logoUrl:
         <Image src={logoUrl} alt={`${name} logo`} width={size} height={size} className="shrink-0" />
       ) : (
         <span
-          className="shrink-0 rounded-full bg-zinc-200 dark:bg-zinc-700"
+          className="shrink-0 rounded-full bg-surface-2"
           style={{ width: size, height: size }}
           aria-hidden
         />

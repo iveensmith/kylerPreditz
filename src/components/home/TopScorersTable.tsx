@@ -1,5 +1,6 @@
 import { TeamBadge } from "@/components/ui/TeamBadge";
 import { PlayerAvatar } from "@/components/ui/PlayerAvatar";
+import { SectionHeading } from "@/components/ui/SectionHeading";
 import type { TopScorersByLeague } from "@/lib/queries/homepage";
 
 export function TopScorersTable({ leagues }: { leagues: TopScorersByLeague }) {
@@ -7,25 +8,26 @@ export function TopScorersTable({ leagues }: { leagues: TopScorersByLeague }) {
 
   return (
     <section>
-      <h2 className="font-semibold mb-3">Top Scorers</h2>
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+      <SectionHeading eyebrow="This season" title="Top scorers" />
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {leagues.map((league) => (
-          <div key={league.slug} className="rounded-xl border border-zinc-200 dark:border-zinc-800 overflow-hidden">
-            <header className="px-3 py-2 bg-zinc-50 dark:bg-zinc-900 border-b border-zinc-100 dark:border-zinc-800 text-xs font-medium">
+          <div key={league.slug} className="overflow-hidden rounded-[var(--radius-card)] border border-line">
+            <header className="border-b border-line bg-surface-2 px-3 py-2 font-mono text-[11px] uppercase tracking-wide text-muted">
               {league.name}
             </header>
             <ul className="text-sm">
-              {league.topScorers.map((scorer) => (
+              {league.topScorers.map((scorer, i) => (
                 <li
                   key={scorer.id}
-                  className="flex items-center gap-2.5 px-3 py-2 border-b border-zinc-100 dark:border-zinc-800 last:border-b-0"
+                  className="flex items-center gap-2.5 border-b border-line px-3 py-2 last:border-b-0"
                 >
+                  <span className="w-4 shrink-0 text-right font-mono text-xs text-faint">{i + 1}</span>
                   <PlayerAvatar name={scorer.playerName} photoUrl={scorer.photoUrl} size={28} />
-                  <div className="min-w-0 flex flex-col">
+                  <div className="flex min-w-0 flex-col">
                     <span className="truncate">{scorer.playerName}</span>
                     <TeamBadge name={scorer.team.name} logoUrl={scorer.team.logoUrl} size={14} />
                   </div>
-                  <span className="tabular-nums font-medium shrink-0 ml-auto">{scorer.goals}</span>
+                  <span className="ml-auto shrink-0 font-mono font-semibold tabular-nums">{scorer.goals}</span>
                 </li>
               ))}
             </ul>

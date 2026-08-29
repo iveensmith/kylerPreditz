@@ -63,7 +63,7 @@ export default async function MatchDetailPage({ params }: Props) {
         })}
       />
       <div>
-        <p className="text-xs text-zinc-500 dark:text-zinc-400 mb-2 flex items-center gap-1.5">
+        <p className="text-xs text-muted mb-2 flex items-center gap-1.5">
           <span>
             {league.name} - {formatKickoffTime(fixture.kickoffUtc)}
             {fixture.venue ? ` - ${fixture.venue}` : ""}
@@ -80,23 +80,23 @@ export default async function MatchDetailPage({ params }: Props) {
         </p>
         <h1 className="text-xl font-semibold flex flex-col gap-1">
           <TeamBadge name={homeTeam.name} logoUrl={homeTeam.logoUrl} size={24} />
-          <span className="text-sm font-normal text-zinc-400">vs</span>
+          <span className="text-sm font-normal text-faint">vs</span>
           <TeamBadge name={awayTeam.name} logoUrl={awayTeam.logoUrl} size={24} />
         </h1>
       </div>
 
       {prediction && (
-        <section className="rounded-xl border border-zinc-200 dark:border-zinc-800 p-4">
+        <section className="rounded-xl border border-line p-4">
           <div className="flex items-center justify-between mb-2">
             <div>
               <div className="font-medium">{formatMarketLabel(prediction.market)}</div>
-              <div className="text-sm text-zinc-500 dark:text-zinc-400">{prediction.selection}</div>
+              <div className="text-sm text-muted">{prediction.selection}</div>
             </div>
-            <span className="inline-flex items-center rounded-full bg-zinc-900 text-white dark:bg-white dark:text-zinc-900 px-2.5 py-1 text-sm font-medium tabular-nums">
+            <span className="inline-flex items-center rounded-full bg-brand text-white px-2.5 py-1 text-sm font-medium tabular-nums">
               {prediction.confidence}%
             </span>
           </div>
-          <p className="text-sm text-zinc-600 dark:text-zinc-300">{prediction.reasoning}</p>
+          <p className="text-sm text-muted">{prediction.reasoning}</p>
         </section>
       )}
 
@@ -113,7 +113,7 @@ export default async function MatchDetailPage({ params }: Props) {
       <section>
         <h2 className="font-semibold mb-2 text-sm">Goals For / Against (per match)</h2>
         <table className="w-full text-sm">
-          <thead className="text-zinc-500 dark:text-zinc-400 text-xs">
+          <thead className="text-muted text-xs">
             <tr>
               <th className="text-left font-medium py-1">Team</th>
               <th className="text-right font-medium py-1">For</th>
@@ -122,13 +122,13 @@ export default async function MatchDetailPage({ params }: Props) {
             </tr>
           </thead>
           <tbody>
-            <tr className="border-t border-zinc-100 dark:border-zinc-800">
+            <tr className="border-t border-line">
               <td className="py-1.5">{homeTeam.name}</td>
               <td className="py-1.5 text-right tabular-nums">{homeStats.goalsForAvg}</td>
               <td className="py-1.5 text-right tabular-nums">{homeStats.goalsAgainstAvg}</td>
               <td className="py-1.5 text-right tabular-nums">{homeStats.leaguePosition ?? "-"}</td>
             </tr>
-            <tr className="border-t border-zinc-100 dark:border-zinc-800">
+            <tr className="border-t border-line">
               <td className="py-1.5">{awayTeam.name}</td>
               <td className="py-1.5 text-right tabular-nums">{awayStats.goalsForAvg}</td>
               <td className="py-1.5 text-right tabular-nums">{awayStats.goalsAgainstAvg}</td>
@@ -143,7 +143,7 @@ export default async function MatchDetailPage({ params }: Props) {
         <H2hTable entries={h2h} />
       </section>
 
-      <section className="text-sm text-zinc-500 dark:text-zinc-400 pt-4 border-t border-zinc-200 dark:border-zinc-800">
+      <section className="text-sm text-muted pt-4 border-t border-line">
         <p>Predictions are statistical estimates, capped at 92% confidence, never guaranteed.</p>
       </section>
     </main>

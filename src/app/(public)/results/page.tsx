@@ -21,9 +21,9 @@ export const metadata: Metadata = {
 };
 
 const SETTLED_BADGE: Record<Exclude<SettledStatus, "PENDING">, string> = {
-  WON: "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300",
-  LOST: "bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-300",
-  VOID: "bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400",
+  WON: "bg-win/12 text-win",
+  LOST: "bg-loss/12 text-loss",
+  VOID: "bg-surface-2 text-muted",
 };
 
 type Props = { searchParams: Promise<{ date?: string; market?: string }> };
@@ -42,37 +42,45 @@ export default async function ResultsPage({ searchParams }: Props) {
   const hitRate = total > 0 ? Math.round((counts.won / (counts.won + counts.lost || 1)) * 100) : null;
 
   return (
-    <main className="max-w-3xl mx-auto w-full px-4 py-6 flex flex-col gap-6">
-      <div>
-        <h1 className="text-xl font-semibold mb-1">Results Archive</h1>
-        <p className="text-sm text-zinc-500 dark:text-zinc-400">
-          Every settled prediction we&apos;ve published, win or lose. Nothing is ever removed or edited.
+    <main className="mx-auto flex w-full max-w-3xl flex-col gap-8 px-4 py-12 sm:px-6">
+      <header className="border-b border-line pb-5">
+        <div className="eyebrow mb-2">Every settled tip</div>
+        <h1 className="text-[2rem] leading-[1.05] sm:text-4xl">Results archive</h1>
+        <p className="mt-3 text-[15px] leading-relaxed text-muted">
+          Every prediction we&apos;ve published, win or lose. Nothing is ever removed or edited.
         </p>
-      </div>
+      </header>
 
-      <div className="flex items-center gap-4 text-sm">
-        <span className="text-emerald-700 dark:text-emerald-400 font-medium">{counts.won} Won</span>
-        <span className="text-red-700 dark:text-red-400 font-medium">{counts.lost} Lost</span>
-        <span className="text-zinc-500 dark:text-zinc-400">{counts.void} Void</span>
-        {hitRate !== null && <span className="text-zinc-500 dark:text-zinc-400">- {hitRate}% hit rate</span>}
+      <div className="grid grid-cols-2 gap-px overflow-hidden rounded-[var(--radius-card)] border border-line bg-line sm:grid-cols-4">
+        {[
+          { label: "Won", value: counts.won, tone: "text-win" },
+          { label: "Lost", value: counts.lost, tone: "text-loss" },
+          { label: "Void", value: counts.void, tone: "text-muted" },
+          { label: "Hit rate", value: hitRate !== null ? `${hitRate}%` : "—", tone: "text-ink" },
+        ].map((s) => (
+          <div key={s.label} className="bg-surface px-4 py-3.5">
+            <div className={`font-mono text-2xl font-semibold tabular-nums ${s.tone}`}>{s.value}</div>
+            <div className="eyebrow mt-1">{s.label}</div>
+          </div>
+        ))}
       </div>
 
       <form className="flex flex-wrap items-end gap-3 text-sm" method="get">
         <label className="flex flex-col gap-1">
-          <span className="text-xs text-zinc-500 dark:text-zinc-400">Date</span>
+          <span className="text-xs text-muted">Date</span>
           <input
             type="date"
             name="date"
             defaultValue={date ? toDateParam(date) : ""}
-            className="rounded-md border border-zinc-200 dark:border-zinc-700 bg-transparent px-2 py-1.5"
+            className="rounded-md border border-line bg-transparent px-2 py-1.5"
           />
         </label>
         <label className="flex flex-col gap-1">
-          <span className="text-xs text-zinc-500 dark:text-zinc-400">Market</span>
+          <span className="text-xs text-muted">Market</span>
           <select
             name="market"
             defaultValue={market ?? ""}
-            className="rounded-md border border-zinc-200 dark:border-zinc-700 bg-transparent px-2 py-1.5"
+            className="rounded-md border border-line bg-transparent px-2 py-1.5"
           >
             <option value="">All markets</option>
             {Object.values(PredictionMarket).map((m) => (
@@ -84,36 +92,38 @@ export default async function ResultsPage({ searchParams }: Props) {
         </label>
         <button
           type="submit"
-          className="rounded-md bg-zinc-900 text-white dark:bg-white dark:text-zinc-900 px-3 py-1.5 font-medium"
+          className="rounded-[var(--radius-control)] bg-brand px-4 py-2 font-medium text-white transition-colors hover:bg-brand-hover"
         >
           Filter
         </button>
         {(date || market) && (
-          <Link href="/results" className="text-zinc-500 dark:text-zinc-400 underline">
+          <Link href="/results" className="text-muted underline">
             Clear
           </Link>
         )}
       </form>
 
       {predictions.length === 0 ? (
-        <p className="text-zinc-500 dark:text-zinc-400 text-sm">No settled predictions match this filter yet.</p>
+        <p className="text-muted text-sm">No settled predictions match this filter yet.</p>
       ) : (
-        <div className="rounded-xl border border-zinc-200 dark:border-zinc-800 overflow-hidden">
+        <div className="overflow-hidden rounded-[var(--radius-card)] border border-line">
           {predictions.map((p) => (
             <div
               key={p.id}
-              className="flex items-center justify-between gap-3 px-3 py-3 border-b border-zinc-100 dark:border-zinc-800 last:border-b-0 text-sm"
+              className="flex items-center justify-between gap-3 border-b border-line px-4 py-3.5 text-sm last:border-b-0"
             >
               <div className="min-w-0 flex-1">
                 <div className="flex flex-col gap-0.5">
                   <TeamBadge name={p.fixture.homeTeam.name} logoUrl={p.fixture.homeTeam.logoUrl} size={16} />
                   <TeamBadge name={p.fixture.awayTeam.name} logoUrl={p.fixture.awayTeam.logoUrl} size={16} />
                 </div>
-                <div className="text-xs text-zinc-500 dark:text-zinc-400 mt-1">
-                  {formatKickoffTime(p.fixture.kickoffUtc)} - {formatMarketLabel(p.market)} - {p.selection}
+                <div className="mt-1.5 font-mono text-[11px] uppercase tracking-wide text-faint">
+                  {formatKickoffTime(p.fixture.kickoffUtc)} &middot; {formatMarketLabel(p.market)} &middot; {p.selection}
                 </div>
               </div>
-              <span className={`shrink-0 inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${SETTLED_BADGE[p.settledAs as Exclude<SettledStatus, "PENDING">]}`}>
+              <span
+                className={`inline-flex shrink-0 items-center rounded-full px-2.5 py-1 font-mono text-[11px] font-semibold uppercase tracking-wide ${SETTLED_BADGE[p.settledAs as Exclude<SettledStatus, "PENDING">]}`}
+              >
                 {p.settledAs}
               </span>
             </div>

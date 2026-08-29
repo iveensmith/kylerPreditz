@@ -14,7 +14,7 @@ export function PostCard({ post }: { post: PostCardData }) {
   return (
     <Link
       href={`/blog/${post.slug}`}
-      className="group flex flex-col overflow-hidden rounded-xl border border-zinc-200 transition-colors hover:border-brand dark:border-zinc-800"
+      className="group flex flex-col overflow-hidden rounded-xl border border-line transition-colors hover:border-brand"
     >
       {post.coverImage && (
         // eslint-disable-next-line @next/next/no-img-element
@@ -28,9 +28,9 @@ export function PostCard({ post }: { post: PostCardData }) {
       <div className="flex flex-1 flex-col gap-2 p-4">
         <h2 className="font-semibold leading-snug group-hover:text-brand">{post.title}</h2>
         {post.excerpt && (
-          <p className="line-clamp-3 text-sm text-zinc-600 dark:text-zinc-400">{post.excerpt}</p>
+          <p className="line-clamp-3 text-sm text-muted">{post.excerpt}</p>
         )}
-        <p className="mt-auto pt-2 text-xs text-zinc-500 dark:text-zinc-400">
+        <p className="mt-auto pt-2 text-xs text-muted">
           {post.author}
           {post.publishedAt ? ` · ${formatArticleDate(post.publishedAt)}` : ""}
         </p>

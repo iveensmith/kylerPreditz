@@ -23,6 +23,7 @@ import { LeagueTablesTabs } from "@/components/home/LeagueTablesTabs";
 import { TopScorersTable } from "@/components/home/TopScorersTable";
 import { LatestPosts } from "@/components/home/LatestPosts";
 import { FaqSection } from "@/components/home/FaqSection";
+import { SectionHeading } from "@/components/ui/SectionHeading";
 import { JsonLd } from "@/components/seo/JsonLd";
 
 const DESCRIPTION =
@@ -77,9 +78,12 @@ export default async function Home({ searchParams }: PageProps<"/">) {
           </div>
         )}
 
-        <div className="flex-1 min-w-0 flex flex-col gap-8">
+        <div className="flex-1 min-w-0 flex flex-col gap-12">
           <div className="flex flex-col gap-4">
-            <h2 className="text-xl font-semibold">Today&apos;s Football Predictions</h2>
+            <div className="border-b border-line pb-3">
+              <div className="eyebrow mb-1.5">Fixtures &amp; tips</div>
+              <h2 className="text-xl leading-tight sm:text-[1.375rem]">Today&apos;s football predictions</h2>
+            </div>
             <MarketSidebar />
             <DateStrip selectedDate={selectedDate} />
           </div>
@@ -91,7 +95,7 @@ export default async function Home({ searchParams }: PageProps<"/">) {
               ))}
             </div>
           ) : (
-            <p className="text-zinc-500 dark:text-zinc-400 text-sm">No fixtures tracked for this date yet.</p>
+            <p className="text-muted text-sm">No fixtures tracked for this date yet.</p>
           )}
 
           <RecentWinners tips={recentWinners} />
@@ -102,11 +106,10 @@ export default async function Home({ searchParams }: PageProps<"/">) {
 
           <TopScorersTable leagues={topScorers} />
 
-          <section className="text-sm text-zinc-600 dark:text-zinc-300 space-y-6 pt-6 border-t border-zinc-200 dark:border-zinc-800">
+          <section className="text-sm leading-relaxed text-muted">
+            <SectionHeading eyebrow="How it works" title="A prediction site built on a real model" />
+            <div className="space-y-6">
             <div>
-              <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100 mb-2">
-                A Football Prediction Site Built on a Real Model
-              </h2>
               <p>
                 Most prediction sites publish a tip next to a team name and leave you to guess where it came from.{" "}
                 {SITE_NAME} works differently. Every selection on this page is the output of a single statistical
@@ -116,7 +119,7 @@ export default async function Home({ searchParams }: PageProps<"/">) {
               </p>
             </div>
             <div>
-              <h3 className="font-semibold text-zinc-900 dark:text-zinc-100 mb-2">How the Model Works</h3>
+              <h3 className="font-semibold text-ink mb-2">How the Model Works</h3>
               <p>
                 For each team we measure attack strength - goals scored relative to the league average - and defence
                 strength - goals conceded relative to the league average - calculated separately for home matches and
@@ -127,7 +130,7 @@ export default async function Home({ searchParams }: PageProps<"/">) {
               </p>
             </div>
             <div>
-              <h3 className="font-semibold text-zinc-900 dark:text-zinc-100 mb-2">Recent Form Counts for More</h3>
+              <h3 className="font-semibold text-ink mb-2">Recent Form Counts for More</h3>
               <p>
                 A result from last week tells you more about a team than a result from six months ago, so the model
                 weights matches by recency on an exponential curve with a half-life of roughly eight to ten games.
@@ -136,7 +139,7 @@ export default async function Home({ searchParams }: PageProps<"/">) {
               </p>
             </div>
             <div>
-              <h3 className="font-semibold text-zinc-900 dark:text-zinc-100 mb-2">One Score Matrix, Every Market</h3>
+              <h3 className="font-semibold text-ink mb-2">One Score Matrix, Every Market</h3>
               <p>
                 The two Poisson distributions combine into a single grid of every plausible scoreline and its
                 probability. Every market we publish - 1X2, double chance, over and under goals at 1.5, 2.5 and 3.5,
@@ -146,7 +149,7 @@ export default async function Home({ searchParams }: PageProps<"/">) {
               </p>
             </div>
             <div>
-              <h3 className="font-semibold text-zinc-900 dark:text-zinc-100 mb-2">How Confidence Is Calculated</h3>
+              <h3 className="font-semibold text-ink mb-2">How Confidence Is Calculated</h3>
               <p>
                 The confidence percentage next to each tip is the model&apos;s estimated probability for that exact
                 selection, rounded to a whole number - not a marketing figure. The odds shown are the fair price
@@ -156,7 +159,7 @@ export default async function Home({ searchParams }: PageProps<"/">) {
               </p>
             </div>
             <div>
-              <h3 className="font-semibold text-zinc-900 dark:text-zinc-100 mb-2">Why Some Matches Have No Tip</h3>
+              <h3 className="font-semibold text-ink mb-2">Why Some Matches Have No Tip</h3>
               <p>
                 A fixture only gets a published tip if its best market clears our confidence floor. If nothing does,
                 or if one of the teams has played too few recent matches for the model to read them reliably - a
@@ -165,7 +168,7 @@ export default async function Home({ searchParams }: PageProps<"/">) {
               </p>
             </div>
             <div>
-              <h3 className="font-semibold text-zinc-900 dark:text-zinc-100 mb-2">Every Result Stays on the Site</h3>
+              <h3 className="font-semibold text-ink mb-2">Every Result Stays on the Site</h3>
               <p>
                 Once a match finishes, the tip is settled as a win or a loss and moved to the{" "}
                 <Link href="/results" className="text-brand hover:underline">
@@ -175,6 +178,7 @@ export default async function Home({ searchParams }: PageProps<"/">) {
                 the model&apos;s working is that you can check how it has actually performed, not just take our word
                 for it.
               </p>
+            </div>
             </div>
           </section>
 

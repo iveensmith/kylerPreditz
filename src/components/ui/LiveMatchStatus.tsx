@@ -53,7 +53,7 @@ export function LiveMatchStatus({
 
   if (isStale) {
     return hasScore ? (
-      <span className="font-semibold text-zinc-900 dark:text-zinc-100">
+      <span className="font-semibold text-ink">
         {homeScore}-{awayScore}
       </span>
     ) : (
@@ -64,7 +64,7 @@ export function LiveMatchStatus({
   return (
     <span className="flex flex-col items-start gap-0.5">
       {hasScore && (
-        <span className="font-semibold text-zinc-900 dark:text-zinc-100">
+        <span className="font-semibold text-ink">
           {homeScore}-{awayScore}
         </span>
       )}

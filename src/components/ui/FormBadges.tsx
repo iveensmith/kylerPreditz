@@ -1,9 +1,9 @@
 import { formLetters } from "@/lib/format";
 
 const COLOR: Record<"W" | "D" | "L", string> = {
-  W: "bg-emerald-500 text-white",
-  D: "bg-amber-400 text-white",
-  L: "bg-red-500 text-white",
+  W: "bg-win/15 text-win",
+  D: "bg-surface-2 text-muted",
+  L: "bg-loss/15 text-loss",
 };
 
 export function FormBadges({ form }: { form: string | null | undefined }) {

@@ -39,10 +39,10 @@ export default function VipPage() {
           {PACKAGES.map((p) => (
             <div
               key={p.name}
-              className="rounded-xl border border-zinc-200 dark:border-zinc-800 p-4 flex flex-col gap-2"
+              className="rounded-xl border border-line p-4 flex flex-col gap-2"
             >
-              <div className="font-semibold text-zinc-900 dark:text-zinc-100">{p.name}</div>
-              <p className="text-xs text-zinc-500 dark:text-zinc-400">{p.blurb}</p>
+              <div className="font-semibold text-ink">{p.name}</div>
+              <p className="text-xs text-muted">{p.blurb}</p>
               <div className="text-xs font-medium text-brand-hover dark:text-brand-light mt-auto pt-2">
                 Message us for current pricing
               </div>

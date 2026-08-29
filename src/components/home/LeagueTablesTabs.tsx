@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { TeamBadge } from "@/components/ui/TeamBadge";
+import { SectionHeading } from "@/components/ui/SectionHeading";
 import type { StandingsByLeague } from "@/lib/queries/homepage";
 
 export function LeagueTablesTabs({ leagues }: { leagues: StandingsByLeague }) {
@@ -11,18 +12,18 @@ export function LeagueTablesTabs({ leagues }: { leagues: StandingsByLeague }) {
 
   return (
     <section>
-      <h2 className="font-semibold mb-3">League Tables</h2>
-      <div className="flex gap-1 mb-3 overflow-x-auto" role="tablist">
+      <SectionHeading eyebrow="Standings" title="League tables" />
+      <div className="mb-3 flex gap-1.5 overflow-x-auto" role="tablist">
         {leagues.map((league) => (
           <button
             key={league.slug}
             role="tab"
             aria-selected={league.slug === active.slug}
             onClick={() => setActiveSlug(league.slug)}
-            className={`shrink-0 rounded-md px-3 py-1.5 text-xs font-medium transition-colors ${
+            className={`shrink-0 rounded-[var(--radius-control)] px-3 py-1.5 text-xs font-medium transition-colors ${
               league.slug === active.slug
-                ? "bg-zinc-900 text-white dark:bg-white dark:text-zinc-900"
-                : "bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-700"
+                ? "bg-brand text-white"
+                : "border border-line text-muted hover:border-line-strong hover:text-ink"
             }`}
           >
             {league.name}
@@ -30,29 +31,29 @@ export function LeagueTablesTabs({ leagues }: { leagues: StandingsByLeague }) {
         ))}
       </div>
 
-      <div className="overflow-x-auto rounded-xl border border-zinc-200 dark:border-zinc-800">
+      <div className="overflow-x-auto rounded-[var(--radius-card)] border border-line">
         <table className="w-full text-sm">
-          <thead className="bg-zinc-50 dark:bg-zinc-900 text-zinc-500 dark:text-zinc-400 text-xs">
+          <thead className="bg-surface-2 font-mono text-[11px] uppercase tracking-wide text-muted">
             <tr>
-              <th className="text-left font-medium px-3 py-2">#</th>
-              <th className="text-left font-medium px-3 py-2">Team</th>
-              <th className="text-right font-medium px-3 py-2">P</th>
-              <th className="text-right font-medium px-3 py-2">GD</th>
-              <th className="text-right font-medium px-3 py-2">Pts</th>
+              <th className="px-3 py-2 text-left font-medium">#</th>
+              <th className="px-3 py-2 text-left font-medium">Team</th>
+              <th className="px-3 py-2 text-right font-medium">P</th>
+              <th className="px-3 py-2 text-right font-medium">GD</th>
+              <th className="px-3 py-2 text-right font-medium">Pts</th>
             </tr>
           </thead>
           <tbody>
             {active.standings.map((row) => (
-              <tr key={row.id} className="border-t border-zinc-100 dark:border-zinc-800">
-                <td className="px-3 py-2 tabular-nums text-zinc-500 dark:text-zinc-400">{row.rank}</td>
+              <tr key={row.id} className="border-t border-line">
+                <td className="px-3 py-2 font-mono text-muted tabular-nums">{row.rank}</td>
                 <td className="px-3 py-2">
                   <TeamBadge name={row.team.name} logoUrl={row.team.logoUrl} size={16} />
                 </td>
-                <td className="px-3 py-2 text-right tabular-nums">{row.played}</td>
-                <td className="px-3 py-2 text-right tabular-nums">
+                <td className="px-3 py-2 text-right font-mono tabular-nums">{row.played}</td>
+                <td className="px-3 py-2 text-right font-mono tabular-nums">
                   {row.goalDiff > 0 ? `+${row.goalDiff}` : row.goalDiff}
                 </td>
-                <td className="px-3 py-2 text-right tabular-nums font-medium">{row.points}</td>
+                <td className="px-3 py-2 text-right font-mono font-semibold tabular-nums">{row.points}</td>
               </tr>
             ))}
           </tbody>

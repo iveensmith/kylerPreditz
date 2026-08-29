@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { formatArticleDate } from "@/lib/format";
+import { SectionHeading } from "@/components/ui/SectionHeading";
 
 type LatestPost = {
   id: string;
@@ -14,22 +15,25 @@ export function LatestPosts({ posts }: { posts: LatestPost[] }) {
 
   return (
     <section>
-      <div className="mb-3 flex items-baseline justify-between">
-        <h2 className="text-xl font-semibold">Latest from the Blog</h2>
-        <Link href="/blog" className="text-sm text-brand hover:underline">
-          View all
-        </Link>
-      </div>
-      <ul className="divide-y divide-zinc-100 rounded-xl border border-zinc-200 dark:divide-zinc-800 dark:border-zinc-800">
+      <SectionHeading
+        eyebrow="Reading"
+        title="Latest from the blog"
+        action={
+          <Link href="/blog" className="text-brand hover:underline">
+            View all
+          </Link>
+        }
+      />
+      <ul className="divide-y divide-line overflow-hidden rounded-[var(--radius-card)] border border-line">
         {posts.map((post) => (
           <li key={post.id}>
-            <Link href={`/blog/${post.slug}`} className="block px-4 py-3 hover:bg-zinc-50 dark:hover:bg-zinc-900">
+            <Link href={`/blog/${post.slug}`} className="block px-4 py-3.5 transition-colors hover:bg-surface-2">
               <div className="font-medium">{post.title}</div>
-              {post.excerpt && (
-                <p className="line-clamp-1 text-sm text-zinc-500 dark:text-zinc-400">{post.excerpt}</p>
-              )}
+              {post.excerpt && <p className="line-clamp-1 text-sm text-muted">{post.excerpt}</p>}
               {post.publishedAt && (
-                <p className="mt-0.5 text-xs text-zinc-400">{formatArticleDate(post.publishedAt)}</p>
+                <p className="mt-1 font-mono text-[11px] uppercase tracking-wide text-faint">
+                  {formatArticleDate(post.publishedAt)}
+                </p>
               )}
             </Link>
           </li>

@@ -35,15 +35,15 @@ export function CountdownTimer({ targetIso }: { targetIso: string }) {
   const seconds = totalSeconds % 60;
 
   return (
-    <div className="flex gap-2">
+    <div className="flex items-stretch gap-px overflow-hidden rounded-[var(--radius-control)] border border-white/10 bg-white/5 text-center font-mono">
       {[
-        { label: "Hours", value: hours },
-        { label: "Minutes", value: minutes },
-        { label: "Seconds", value: seconds },
+        { label: "Hrs", value: hours },
+        { label: "Min", value: minutes },
+        { label: "Sec", value: seconds },
       ].map((unit) => (
-        <div key={unit.label} className="flex-1 rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-center">
-          <div className="text-xl font-bold tabular-nums text-white">{pad(unit.value)}</div>
-          <div className="text-[10px] uppercase tracking-wide text-zinc-400">{unit.label}</div>
+        <div key={unit.label} className="flex-1 px-2 py-2.5">
+          <div className="text-2xl font-semibold tabular-nums text-white">{pad(unit.value)}</div>
+          <div className="mt-0.5 text-[10px] uppercase tracking-[0.15em] text-white/40">{unit.label}</div>
         </div>
       ))}
     </div>

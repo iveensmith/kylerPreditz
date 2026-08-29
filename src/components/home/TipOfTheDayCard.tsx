@@ -11,10 +11,15 @@ export function TipOfTheDayCard({ banker }: { banker: Banker }) {
   const { fixture } = banker;
 
   return (
-    <section className="md:sticky md:top-20 rounded-xl border border-zinc-800 bg-zinc-950 text-white p-4 flex flex-col gap-4">
-      <h2 className="font-semibold text-brand-light">Tip of the Day</h2>
+    <section className="flex flex-col gap-4 rounded-[var(--radius-card)] border border-white/10 bg-[#0c1310] p-5 text-white md:sticky md:top-20">
+      <div className="flex items-center justify-between">
+        <h2 className="eyebrow !text-brand-light">Tip of the day</h2>
+        <span className="font-mono text-[11px] font-semibold tabular-nums text-brand-light">
+          {banker.confidence}%
+        </span>
+      </div>
 
-      <div className="text-xs text-zinc-400 flex flex-col gap-1">
+      <div className="flex flex-col gap-1 font-mono text-[10px] uppercase tracking-wide text-white/40">
         <span>{fixture.league.name}</span>
         {fixture.status !== FixtureStatus.SCHEDULED && (
           <MatchStatus
@@ -27,26 +32,21 @@ export function TipOfTheDayCard({ banker }: { banker: Banker }) {
         )}
       </div>
 
-      <div className="flex items-center justify-between gap-2 text-sm">
-        <div className="flex flex-col items-center gap-1 flex-1 min-w-0">
-          <TeamBadge name={fixture.homeTeam.name} logoUrl={fixture.homeTeam.logoUrl} size={28} />
-        </div>
-        <span className="text-xs text-zinc-500 shrink-0">vs</span>
-        <div className="flex flex-col items-center gap-1 flex-1 min-w-0">
-          <TeamBadge name={fixture.awayTeam.name} logoUrl={fixture.awayTeam.logoUrl} size={28} />
+      <div className="flex items-center justify-between gap-3">
+        <TeamBadge name={fixture.homeTeam.name} logoUrl={fixture.homeTeam.logoUrl} size={30} />
+        <span className="shrink-0 font-mono text-[10px] uppercase text-white/35">v</span>
+        <div className="flex min-w-0 flex-1 justify-end">
+          <TeamBadge name={fixture.awayTeam.name} logoUrl={fixture.awayTeam.logoUrl} size={30} />
         </div>
       </div>
 
-      {fixture.status === FixtureStatus.SCHEDULED && <CountdownTimer targetIso={fixture.kickoffUtc.toISOString()} />}
+      {fixture.status === FixtureStatus.SCHEDULED && (
+        <CountdownTimer targetIso={fixture.kickoffUtc.toISOString()} />
+      )}
 
-      <div className="border-t border-zinc-800 pt-3 flex items-center justify-between">
-        <div>
-          <div className="text-sm font-medium">{formatMarketLabel(banker.market)}</div>
-          <div className="text-xs text-zinc-400">{banker.selection}</div>
-        </div>
-        <span className="inline-flex items-center rounded-full bg-brand text-white px-2.5 py-1 text-xs font-semibold tabular-nums">
-          {banker.confidence}%
-        </span>
+      <div className="border-t border-white/10 pt-3">
+        <div className="text-sm font-semibold">{formatMarketLabel(banker.market)}</div>
+        <div className="text-xs text-white/55">{banker.selection}</div>
       </div>
     </section>
   );

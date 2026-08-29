@@ -23,11 +23,11 @@ export default async function BlogIndexPage() {
     <main className="mx-auto w-full max-w-5xl px-4 py-8 flex flex-col gap-6">
       <div>
         <h1 className="text-2xl font-semibold">{TITLE}</h1>
-        <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">{DESCRIPTION}</p>
+        <p className="mt-1 text-sm text-muted">{DESCRIPTION}</p>
       </div>
 
       {posts.length === 0 ? (
-        <p className="text-sm text-zinc-500 dark:text-zinc-400">No articles published yet.</p>
+        <p className="text-sm text-muted">No articles published yet.</p>
       ) : (
         <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
           {posts.map((post) => (

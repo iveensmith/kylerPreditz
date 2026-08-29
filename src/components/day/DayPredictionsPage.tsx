@@ -12,11 +12,11 @@ export async function DayPredictionsPage({ weekday }: { weekday: number }) {
   const dayName = WEEKDAY_NAMES[weekday];
 
   return (
-    <main className="max-w-5xl mx-auto w-full px-4 py-6 flex flex-col gap-6">
-      <div>
-        <h1 className="text-xl font-semibold mb-1">{dayName} Predictions</h1>
-        <p className="text-sm text-zinc-500 dark:text-zinc-400">{formatDayMonth(date)}</p>
-      </div>
+    <main className="mx-auto flex w-full max-w-5xl flex-col gap-8 px-4 py-12 sm:px-6">
+      <header className="border-b border-line pb-4">
+        <div className="eyebrow mb-1.5">{formatDayMonth(date)}</div>
+        <h1 className="text-[2rem] leading-[1.05] sm:text-4xl">{dayName} predictions</h1>
+      </header>
 
       {leagues.length > 0 ? (
         <div className="flex flex-col gap-4">
@@ -25,10 +25,10 @@ export async function DayPredictionsPage({ weekday }: { weekday: number }) {
           ))}
         </div>
       ) : (
-        <p className="text-zinc-500 dark:text-zinc-400 text-sm">No fixtures tracked for {dayName.toLowerCase()} yet.</p>
+        <p className="text-muted text-sm">No fixtures tracked for {dayName.toLowerCase()} yet.</p>
       )}
 
-      <section className="text-sm text-zinc-500 dark:text-zinc-400 pt-4 border-t border-zinc-200 dark:border-zinc-800">
+      <section className="border-t border-line pt-6 text-sm text-muted">
         <p>
           Predictions are statistical estimates, capped at 92% confidence, never guaranteed. Every published tip
           stays on the public record.

@@ -25,22 +25,38 @@ function ChevronDown() {
   );
 }
 
-function NavDropdown({ label, viewAllHref, viewAllLabel, items }: { label: string; viewAllHref: string; viewAllLabel: string; items: { href: string; label: string }[] }) {
+const navLink = "text-[13px] font-medium text-white/65 transition-colors hover:text-white";
+
+function NavDropdown({
+  label,
+  viewAllHref,
+  viewAllLabel,
+  items,
+}: {
+  label: string;
+  viewAllHref: string;
+  viewAllLabel: string;
+  items: { href: string; label: string }[];
+}) {
   return (
-    <div className="relative group">
-      <button className="hover:text-white transition-colors flex items-center gap-1">
+    <div className="group relative">
+      <button className={`${navLink} flex items-center gap-1`}>
         {label}
         <ChevronDown />
       </button>
-      <div className="absolute left-0 top-full pt-2 hidden group-hover:block">
-        <div className="w-56 rounded-lg border border-zinc-800 bg-zinc-950 shadow-xl py-2">
+      <div className="absolute left-0 top-full hidden pt-3 group-hover:block">
+        <div className="w-56 overflow-hidden rounded-[var(--radius-control)] border border-white/10 bg-[#0d1310] py-1.5 shadow-2xl shadow-black/40">
           {items.map((item) => (
-            <Link key={item.href} href={item.href} className="block px-4 py-2 text-sm text-zinc-300 hover:bg-zinc-900 hover:text-white">
+            <Link
+              key={item.href}
+              href={item.href}
+              className="block px-4 py-2 text-[13px] text-white/70 transition-colors hover:bg-white/5 hover:text-white"
+            >
               {item.label}
             </Link>
           ))}
-          <div className="border-t border-zinc-800 mt-1 pt-1">
-            <Link href={viewAllHref} className="block px-4 py-2 text-sm text-brand-light hover:bg-zinc-900">
+          <div className="mt-1 border-t border-white/10 pt-1">
+            <Link href={viewAllHref} className="block px-4 py-2 text-[13px] font-medium text-brand-light hover:bg-white/5">
               {viewAllLabel}
             </Link>
           </div>
@@ -52,15 +68,15 @@ function NavDropdown({ label, viewAllHref, viewAllLabel, items }: { label: strin
 
 export function Header() {
   return (
-    <header className="sticky top-0 z-40 bg-zinc-950 text-zinc-100 border-b border-zinc-800">
-      <div className="max-w-6xl mx-auto px-4 flex items-center justify-between h-14">
+    <header className="sticky top-0 z-40 border-b border-white/10 bg-[#08110D] text-white">
+      <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-4 sm:px-6">
         <Link href="/" className="shrink-0" aria-label={`${SITE_NAME} home`}>
-          <Logo className="h-11 w-auto" />
+          <Logo className="h-10 w-auto" />
         </Link>
 
-        <nav className="hidden md:flex items-center gap-6 text-sm text-zinc-300">
-          <Link href="/" className="hover:text-white transition-colors">
-            Today&apos;s Predictions
+        <nav className="hidden items-center gap-7 md:flex">
+          <Link href="/" className={navLink}>
+            Today&apos;s tips
           </Link>
 
           <NavDropdown
@@ -71,25 +87,25 @@ export function Header() {
           />
 
           <NavDropdown
-            label="Predictions by Day"
+            label="By day"
             viewAllHref="/monday-predictions"
             viewAllLabel="View all days"
             items={DAYS.map((d) => ({ href: `/${d.slug}`, label: `${d.label} Predictions` }))}
           />
 
-          <Link href="/leagues" className="hover:text-white transition-colors">
+          <Link href="/leagues" className={navLink}>
             Leagues
           </Link>
-          <Link href="/results" className="hover:text-white transition-colors">
+          <Link href="/results" className={navLink}>
             Results
           </Link>
-          <Link href="/blog" className="hover:text-white transition-colors">
+          <Link href="/blog" className={navLink}>
             Blog
           </Link>
         </nav>
 
-        <div className="flex items-center gap-2 text-sm">
-          <ThemeToggle className="text-zinc-300 hover:!bg-zinc-800 hover:text-white" />
+        <div className="flex items-center gap-1.5 text-sm">
+          <ThemeToggle className="text-white/65 hover:text-white hover:!bg-white/8" />
           <HeaderAuthLink />
         </div>
       </div>

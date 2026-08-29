@@ -18,12 +18,12 @@ export function MarketProbabilityTable({
 }) {
   const rows = parseAllMarkets(allMarkets).sort((a, b) => b.probability - a.probability);
   if (rows.length === 0) {
-    return <p className="text-xs text-zinc-400 italic">No market breakdown available for this fixture.</p>;
+    return <p className="text-xs text-faint italic">No market breakdown available for this fixture.</p>;
   }
 
   return (
     <table className="w-full text-sm">
-      <thead className="text-zinc-500 dark:text-zinc-400 text-xs">
+      <thead className="text-muted text-xs">
         <tr>
           <th className="text-left font-medium py-1">Market</th>
           <th className="text-right font-medium py-1">Probability</th>
@@ -33,11 +33,11 @@ export function MarketProbabilityTable({
         {rows.map((row) => (
           <tr
             key={row.market}
-            className={`border-t border-zinc-100 dark:border-zinc-800 ${row.market === publishedMarket ? "bg-zinc-50 dark:bg-zinc-900" : ""}`}
+            className={`border-t border-line ${row.market === publishedMarket ? "bg-surface-2" : ""}`}
           >
             <td className="py-1.5">
               <span className={row.market === publishedMarket ? "font-medium" : ""}>{formatMarketLabel(row.market)}</span>
-              <span className="text-zinc-500 dark:text-zinc-400"> - {row.selection}</span>
+              <span className="text-muted"> - {row.selection}</span>
             </td>
             <td className="py-1.5 text-right tabular-nums font-medium">{Math.round(row.probability * 100)}%</td>
           </tr>

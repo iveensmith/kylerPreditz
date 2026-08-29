@@ -1,17 +1,31 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono, Montserrat } from "next/font/google";
+import { Archivo, Hanken_Grotesk, Geist_Mono, Montserrat } from "next/font/google";
 import "./globals.css";
 import { SessionProviderWrapper } from "@/components/providers/SessionProviderWrapper";
 import { ThemeScript } from "@/components/theme/ThemeScript";
 import { SITE_NAME, SITE_TAGLINE, SITE_URL } from "@/lib/seo";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+// Display face: a grotesque with a width axis, run slightly expanded for headlines
+// and big numbers - a back-page / matchday-programme voice rather than another
+// geometric startup sans.
+const archivo = Archivo({
+  variable: "--ff-display",
   subsets: ["latin"],
+  axes: ["wdth"],
+  display: "swap",
 });
 
+// Body face: warm, highly legible workhorse - not Inter.
+const hanken = Hanken_Grotesk({
+  variable: "--ff-body",
+  subsets: ["latin"],
+  display: "swap",
+});
+
+// Every number on the site (odds, confidence %, scores, form, countdown) is set
+// in this, with tabular figures, so columns of data line up.
 const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+  variable: "--ff-mono",
   subsets: ["latin"],
 });
 
@@ -49,7 +63,8 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     <html
       lang="en"
       suppressHydrationWarning
-      className={`${geistSans.variable} ${geistMono.variable} ${montserrat.variable} h-full antialiased`}
+      className={`${archivo.variable} ${hanken.variable} ${geistMono.variable} ${montserrat.variable} h-full antialiased`}
+      data-scroll-behavior="smooth"
     >
       <body className="min-h-full flex flex-col">
         <ThemeScript />

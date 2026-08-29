@@ -34,7 +34,7 @@ export function MatchStatus({ status, elapsedMinutes, kickoffUtc, homeScore, awa
 
   if (status === FixtureStatus.FINISHED && hasScore) {
     return (
-      <span className="font-semibold text-zinc-900 dark:text-zinc-100">
+      <span className="font-semibold text-ink">
         {homeScore}-{awayScore}
       </span>
     );
@@ -42,7 +42,7 @@ export function MatchStatus({ status, elapsedMinutes, kickoffUtc, homeScore, awa
 
   const nonLiveLabel = NON_LIVE_LABEL[status];
   if (nonLiveLabel) {
-    return <span className="text-xs text-zinc-400">{nonLiveLabel}</span>;
+    return <span className="text-xs text-faint">{nonLiveLabel}</span>;
   }
 
   return <>{formatKickoffTime(kickoffUtc)}</>;
