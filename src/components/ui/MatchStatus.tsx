@@ -1,5 +1,6 @@
 import { FixtureStatus } from "@/generated/prisma/enums";
 import { formatKickoffTime } from "@/lib/format";
+import { LiveMatchStatus } from "@/components/ui/LiveMatchStatus";
 
 type MatchStatusProps = {
   status: FixtureStatus;
@@ -21,17 +22,13 @@ export function MatchStatus({ status, elapsedMinutes, kickoffUtc, homeScore, awa
 
   if (status === FixtureStatus.LIVE || status === FixtureStatus.HALFTIME) {
     return (
-      <span className="flex flex-col items-start gap-0.5">
-        {hasScore && (
-          <span className="font-semibold text-zinc-900 dark:text-zinc-100">
-            {homeScore}-{awayScore}
-          </span>
-        )}
-        <span className="inline-flex items-center gap-1 text-red-600 dark:text-red-400 text-xs font-semibold">
-          <span className="h-1.5 w-1.5 rounded-full bg-red-600 dark:bg-red-400 animate-pulse" aria-hidden />
-          {status === FixtureStatus.HALFTIME ? "HT" : elapsedMinutes !== null ? `${elapsedMinutes}'` : "LIVE"}
-        </span>
-      </span>
+      <LiveMatchStatus
+        isHalftime={status === FixtureStatus.HALFTIME}
+        elapsedMinutes={elapsedMinutes}
+        kickoffUtc={kickoffUtc}
+        homeScore={homeScore}
+        awayScore={awayScore}
+      />
     );
   }
 

@@ -37,7 +37,9 @@ export const metadata: Metadata = {
   openGraph: { title: `${SITE_NAME} - ${SITE_TAGLINE}`, description: DESCRIPTION, url: absoluteUrl("/") },
 };
 
-export const revalidate = 900; // 15 minutes, matches sync-results cadence
+// Backstop only: sync-results calls revalidatePath("/") the moment a fixture
+// changes status, so live scores refresh well inside this window.
+export const revalidate = 120;
 
 export default async function Home({ searchParams }: PageProps<"/">) {
   const params = await searchParams;

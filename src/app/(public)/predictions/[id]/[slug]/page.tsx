@@ -13,7 +13,9 @@ import { H2hTable } from "@/components/match/H2hTable";
 import { MarketProbabilityTable } from "@/components/match/MarketProbabilityTable";
 import { JsonLd } from "@/components/seo/JsonLd";
 
-export const revalidate = 900;
+// Backstop only: sync-results revalidates this route as soon as a fixture
+// changes status, so the live/final line refreshes well inside this window.
+export const revalidate = 120;
 
 export async function generateStaticParams() {
   const fixtures = await prisma.fixture.findMany({

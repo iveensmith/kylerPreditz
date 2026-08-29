@@ -3,6 +3,7 @@ import { ApiFootballQuotaExceededError } from "@/lib/api-football/client";
 import { getFixturesForLiveUpdate } from "@/lib/api-football/endpoints";
 import { getCurrentSeason as seasonFor } from "@/lib/api-football/season";
 import { mapApiFixtureStatus } from "@/lib/api-football/status";
+import { seasonCalendarForApiId } from "@/lib/leagues.config";
 import { prisma } from "@/lib/db/prisma";
 import { evaluateOutcome, type MatchOutcome } from "@/lib/predictions/model";
 
@@ -15,13 +16,21 @@ function toVoidOutcome(): MatchOutcome {
 export type SyncResultsResult = {
   fixturesChecked: number;
   fixturesUpdated: number;
+  /** Fixtures whose status actually changed value this run (e.g. LIVE -> FINISHED) - the caller uses this to decide whether to revalidate public pages. */
+  fixturesTransitioned: number;
   predictionsSettled: number;
   errors: string[];
 };
 
 /** Refreshes in-progress/recently-kicked-off fixtures and settles any PENDING prediction whose fixture just finished. */
 export async function syncResults(): Promise<SyncResultsResult> {
-  const result: SyncResultsResult = { fixturesChecked: 0, fixturesUpdated: 0, predictionsSettled: 0, errors: [] };
+  const result: SyncResultsResult = {
+    fixturesChecked: 0,
+    fixturesUpdated: 0,
+    fixturesTransitioned: 0,
+    predictionsSettled: 0,
+    errors: [],
+  };
 
   const candidates = await prisma.fixture.findMany({
     where: { status: { in: NOT_YET_FINAL }, kickoffUtc: { lte: new Date() } },
@@ -34,7 +43,7 @@ export async function syncResults(): Promise<SyncResultsResult> {
   const groups = new Map<string, { leagueApiId: number; season: number; date: string; fixtureIds: Set<number> }>();
   for (const f of candidates) {
     const date = f.kickoffUtc.toISOString().slice(0, 10);
-    const season = seasonFor(f.kickoffUtc);
+    const season = seasonFor(f.kickoffUtc, seasonCalendarForApiId(f.league.apiId));
     const key = `${f.league.apiId}|${season}|${date}`;
     if (!groups.has(key)) groups.set(key, { leagueApiId: f.league.apiId, season, date, fixtureIds: new Set() });
     groups.get(key)!.fixtureIds.add(f.apiId);
@@ -62,6 +71,7 @@ export async function syncResults(): Promise<SyncResultsResult> {
           },
         });
         result.fixturesUpdated++;
+        if (newStatus !== existing.status) result.fixturesTransitioned++;
 
         const prediction = existing.prediction;
         if (!prediction || prediction.settledAs !== SettledStatus.PENDING) continue;
