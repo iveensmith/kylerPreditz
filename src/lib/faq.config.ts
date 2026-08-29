@@ -5,12 +5,12 @@ export const HOMEPAGE_FAQ: FaqEntry[] = [
   {
     question: "How are these football predictions generated?",
     answer:
-      "Every tip runs through a two-stage engine. First, a statistical model (Poisson distributions with a Dixon-Coles low-score adjustment) computes a probability for every market from each team's recent form. Then an AI layer reviews that base pick against the same data and can adjust it by up to 10 points if there's a concrete reason - an injury, a fixture pile-up, a defensive record - never on a whim.",
+      "Every tip comes from a statistical model. We fit Poisson distributions to each team's recent scoring and conceding rates - calculated separately for home and away matches and weighted toward the most recent games - then apply a Dixon-Coles adjustment that corrects the low-scoring results raw Poisson tends to underrate. That produces a probability for every market on the fixture, and we publish the one the model rates highest, provided it clears our confidence floor.",
   },
   {
     question: "How is the confidence percentage calculated?",
     answer:
-      "Confidence is the model's estimated probability for the published selection, rounded to the nearest whole number. It's capped at 92% - we never display a higher figure, no matter what the model or the AI review produces.",
+      "Confidence is the model's estimated probability for the published selection, rounded to the nearest whole number. It's capped at 92% - we never display a higher figure, and a 92% pick still loses roughly one time in twelve.",
   },
   {
     question: "Are these predictions guaranteed to win?",

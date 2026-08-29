@@ -24,7 +24,7 @@ export function Footer() {
           </div>
           <p className="text-sm max-w-md mx-auto mt-2">
             Statistical football predictions, match analysis, and a public results archive - built on a
-            Poisson/Dixon-Coles model reviewed by an AI layer.
+            Poisson/Dixon-Coles goals model driven by each team&apos;s recent home and away form.
           </p>
         </div>
 

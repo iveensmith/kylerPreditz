@@ -28,9 +28,11 @@ export function Hero() {
         <h1 className="text-3xl sm:text-5xl font-bold leading-tight max-w-2xl">
           Football Predictions Built on a <span className="text-brand-light">Statistical Model</span>, Not Guesswork
         </h1>
-        <p className="mt-4 max-w-xl text-zinc-300">
-          Every tip runs through a Poisson/Dixon-Coles model and an AI review layer, capped at 92% confidence, with
-          every result kept in a public archive - wins and losses alike.
+        <p className="mt-4 max-w-2xl text-zinc-300">
+          Every fixture is run through a Poisson model with a Dixon-Coles adjustment, built from each team&apos;s
+          recent scoring and defensive form - home and away weighted separately. One probability matrix per match
+          drives every market we publish, confidence is capped at 92%, and every tip stays in a public archive
+          afterwards, win or lose.
         </p>
         <a
           href="#todays-tips"

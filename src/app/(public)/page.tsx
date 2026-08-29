@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { parseDateParam } from "@/lib/format";
 import {
   getBankerOfTheDay,
@@ -105,35 +106,72 @@ export default async function Home({ searchParams }: PageProps<"/">) {
                 A Football Prediction Site Built on a Real Model
               </h2>
               <p>
-                Most prediction sites publish a tip next to a team name with no explanation of where it came from.{" "}
-                {SITE_NAME} works differently: every pick starts as the output of a Poisson/Dixon-Coles statistical
-                model, weighted toward each team&apos;s recent home and away form, then reviewed by an AI layer that
-                can only adjust the pick when the underlying data gives it a concrete reason to.
+                Most prediction sites publish a tip next to a team name and leave you to guess where it came from.{" "}
+                {SITE_NAME} works differently. Every selection on this page is the output of a single statistical
+                model that reads each team&apos;s recent results and turns them into a probability for every betting
+                market on the fixture. There is no tipster picking favourites by feel, and no pick is published
+                unless the numbers behind it are strong enough to stand on their own.
+              </p>
+            </div>
+            <div>
+              <h3 className="font-semibold text-zinc-900 dark:text-zinc-100 mb-2">How the Model Works</h3>
+              <p>
+                For each team we measure attack strength - goals scored relative to the league average - and defence
+                strength - goals conceded relative to the league average - calculated separately for home matches and
+                away matches, because most sides are meaningfully better in one than the other. Those strengths give
+                an expected goals figure for each team in the fixture, which becomes a Poisson distribution over how
+                many goals they are likely to score. We then apply a Dixon-Coles adjustment, which corrects a known
+                weakness of raw Poisson: it underrates tight, low-scoring results like 0-0, 1-0 and 1-1.
+              </p>
+            </div>
+            <div>
+              <h3 className="font-semibold text-zinc-900 dark:text-zinc-100 mb-2">Recent Form Counts for More</h3>
+              <p>
+                A result from last week tells you more about a team than a result from six months ago, so the model
+                weights matches by recency on an exponential curve with a half-life of roughly eight to ten games.
+                Early-season form, a new manager bounce, or a mid-table side that has quietly won five in a row all
+                show up in the numbers quickly rather than being diluted by a full season of older data.
+              </p>
+            </div>
+            <div>
+              <h3 className="font-semibold text-zinc-900 dark:text-zinc-100 mb-2">One Score Matrix, Every Market</h3>
+              <p>
+                The two Poisson distributions combine into a single grid of every plausible scoreline and its
+                probability. Every market we publish - 1X2, double chance, over and under goals at 1.5, 2.5 and 3.5,
+                both teams to score, draw no bet, correct score and first-half goals - is read straight off that one
+                grid by adding up the relevant cells. Because they all come from the same source, the markets for a
+                fixture never contradict each other, and the tip we show is simply the one the grid rates highest.
               </p>
             </div>
             <div>
               <h3 className="font-semibold text-zinc-900 dark:text-zinc-100 mb-2">How Confidence Is Calculated</h3>
               <p>
-                The confidence percentage next to each tip is the model&apos;s estimated probability for that
-                selection, not a marketing number. It&apos;s capped at 92% regardless of what the model or the AI
-                review produces - nothing on this site is ever presented as a certainty.
-              </p>
-            </div>
-            <div>
-              <h3 className="font-semibold text-zinc-900 dark:text-zinc-100 mb-2">Markets We Cover</h3>
-              <p>
-                Beyond the traditional 1X2 match winner market, {SITE_NAME} derives probabilities for double
-                chance, both teams to score, over/under goals at multiple thresholds, draw no bet, correct score, and
-                first-half goals - all from the same underlying score matrix, so every market for a fixture is
-                internally consistent with every other market for that fixture.
+                The confidence percentage next to each tip is the model&apos;s estimated probability for that exact
+                selection, rounded to a whole number - not a marketing figure. The odds shown are the fair price
+                implied by that probability. Confidence is capped at 92% no matter how lopsided the fixture looks,
+                and a 92% pick still loses roughly one time in twelve. Nothing on this site is presented as a
+                certainty.
               </p>
             </div>
             <div>
               <h3 className="font-semibold text-zinc-900 dark:text-zinc-100 mb-2">Why Some Matches Have No Tip</h3>
               <p>
-                If no market clears our confidence floor for a fixture, or a team doesn&apos;t yet have enough recent
-                match history for the model to trust, we publish nothing for that match rather than force a low-
-                quality pick. An empty slot is better than a bad tip.
+                A fixture only gets a published tip if its best market clears our confidence floor. If nothing does,
+                or if one of the teams has played too few recent matches for the model to read them reliably - a
+                promoted side early in the season, for example - we publish nothing for that match. An empty slot is
+                more useful than a low-quality pick padding out the list.
+              </p>
+            </div>
+            <div>
+              <h3 className="font-semibold text-zinc-900 dark:text-zinc-100 mb-2">Every Result Stays on the Site</h3>
+              <p>
+                Once a match finishes, the tip is settled as a win or a loss and moved to the{" "}
+                <Link href="/results" className="text-brand hover:underline">
+                  results archive
+                </Link>
+                , where it stays permanently. Losing tips are never deleted or quietly edited. The point of showing
+                the model&apos;s working is that you can check how it has actually performed, not just take our word
+                for it.
               </p>
             </div>
           </section>
