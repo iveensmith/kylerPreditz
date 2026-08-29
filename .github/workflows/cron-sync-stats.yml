@@ -1,8 +1,10 @@
 name: Cron - Sync Stats
 
+# Hourly, not daily: sync-stats processes only the stalest few leagues per run
+# (Vercel Hobby's 60s function limit), so it needs several runs to cover all 30.
 on:
   schedule:
-    - cron: "0 3 * * *"
+    - cron: "17 * * * *"
   workflow_dispatch: {}
 
 jobs:

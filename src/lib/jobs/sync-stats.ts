@@ -11,25 +11,46 @@ import { seasonCalendarForApiId } from "@/lib/leagues.config";
 
 export type SyncStatsResult = {
   leaguesProcessed: number;
+  leaguesDeferred: number;
   teamsUpdated: number;
   standingsUpdated: number;
   topScorersUpdated: number;
   errors: string[];
 };
 
-/** Refreshes team stats, standings, and top scorers for every actively-synced league. */
+/**
+ * Vercel Hobby kills any function at 60s, and a full 30-league refresh is far
+ * more than that (roughly a team-statistics call per team). So each run works
+ * through the leagues that were synced least recently and stops when the budget
+ * is spent; the hourly schedule means every league still gets refreshed within a
+ * few hours. Kept comfortably under the 60s hard limit.
+ */
+const TIME_BUDGET_MS = 35_000;
+
+/** Refreshes team stats, standings, and top scorers, stalest leagues first, time-boxed per run. */
 export async function syncStats(): Promise<SyncStatsResult> {
-  const leagues = await prisma.league.findMany({ where: { isFeatured: true } });
+  const startedAt = Date.now();
+  const leagues = await prisma.league.findMany({
+    where: { isFeatured: true },
+    orderBy: [{ statsSyncedAt: { sort: "asc", nulls: "first" } }, { priority: "asc" }],
+  });
 
   const result: SyncStatsResult = {
     leaguesProcessed: 0,
+    leaguesDeferred: 0,
     teamsUpdated: 0,
     standingsUpdated: 0,
     topScorersUpdated: 0,
     errors: [],
   };
 
+  let attempted = 0;
   outer: for (const league of leagues) {
+    if (Date.now() - startedAt > TIME_BUDGET_MS) {
+      result.leaguesDeferred = leagues.length - attempted;
+      break;
+    }
+    attempted++;
     try {
       const season = getCurrentSeason(new Date(), seasonCalendarForApiId(league.apiId));
       const apiTeams = await getTeamsByLeague(league.apiId, season);
@@ -162,6 +183,10 @@ export async function syncStats(): Promise<SyncStatsResult> {
         result.topScorersUpdated++;
       }
 
+      await prisma.league.update({
+        where: { id: league.id },
+        data: { statsSyncedAt: new Date() },
+      });
       result.leaguesProcessed++;
     } catch (err) {
       if (err instanceof ApiFootballQuotaExceededError) {
@@ -169,6 +194,12 @@ export async function syncStats(): Promise<SyncStatsResult> {
         break;
       }
       result.errors.push(`${league.name}: ${err instanceof Error ? err.message : String(err)}`);
+      // Stamp anyway so one consistently-failing league can't sit at the front of
+      // the stalest-first queue and starve the rest run after run. The error is
+      // still reported; it'll come back around on the next full cycle.
+      await prisma.league
+        .update({ where: { id: league.id }, data: { statsSyncedAt: new Date() } })
+        .catch(() => {});
     }
   }
 

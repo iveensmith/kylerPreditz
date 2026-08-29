@@ -44,6 +44,11 @@ model League {
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 
+  // Last time syncStats finished refreshing this league's teams/standings/scorers.
+  // syncStats processes leagues stalest-first and time-boxes each run, so this is
+  // how it picks up where the previous run left off. Null = never synced.
+  statsSyncedAt DateTime?
+
   teams     Team[]
   fixtures  Fixture[]
   standings Standing[]
