@@ -1,9 +1,27 @@
 @import "tailwindcss";
 @plugin "@tailwindcss/typography";
 
+/* Dark mode is driven by data-theme on <html>, set before paint by ThemeScript
+   (cookie choice, falling back to the OS preference). This overrides Tailwind's
+   default prefers-color-scheme behaviour so a manual toggle can win. */
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
 :root {
   --background: #ffffff;
   --foreground: #171717;
+}
+
+[data-theme="dark"] {
+  --background: #0a0a0a;
+  --foreground: #ededed;
+}
+
+/* No-JS fallback: honour the OS preference until ThemeScript sets an explicit value. */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme]) {
+    --background: #0a0a0a;
+    --foreground: #ededed;
+  }
 }
 
 @theme inline {
@@ -18,13 +36,6 @@
   --color-brand-light: #22c55e;
   --color-secondary: #dc2626;
   --color-secondary-hover: #b91c1c;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
 }
 
 body {

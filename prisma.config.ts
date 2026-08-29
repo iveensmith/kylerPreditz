@@ -11,6 +11,9 @@ export default defineConfig({
     seed: "tsx prisma/seed.ts",
   },
   datasource: {
-    url: process.env["DATABASE_URL"],
+    // Prefer a direct (unpooled) connection for migrations when one is provided -
+    // `prisma migrate deploy` (run from the build script) can stall on a pgBouncer
+    // pooler. Falls back to DATABASE_URL when DIRECT_URL is unset.
+    url: process.env["DIRECT_URL"] || process.env["DATABASE_URL"],
   },
 });

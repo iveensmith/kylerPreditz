@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { requireAdmin } from "@/lib/auth-guard";
 import { SignOutButton } from "@/components/admin/SignOutButton";
+import { ThemeToggle } from "@/components/theme/ThemeToggle";
 
 const NAV = [
   { href: "/admin", label: "Dashboard" },
@@ -24,6 +25,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
           ))}
         </nav>
         <div className="flex items-center gap-3 text-sm text-zinc-500 dark:text-zinc-400">
+          <ThemeToggle />
           <span>{session.user.email}</span>
           <SignOutButton />
         </div>

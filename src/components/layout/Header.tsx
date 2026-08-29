@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { MARKET_PAGES } from "@/lib/markets.config";
 import { SITE_NAME_PREFIX, SITE_NAME_SUFFIX } from "@/lib/seo";
+import { ThemeToggle } from "@/components/theme/ThemeToggle";
 import { HeaderAuthLink } from "./HeaderAuthLink";
 
 const FEATURED_MARKETS = MARKET_PAGES.slice(0, 6);
@@ -86,7 +87,8 @@ export function Header() {
           </Link>
         </nav>
 
-        <div className="flex items-center gap-3 text-sm">
+        <div className="flex items-center gap-2 text-sm">
+          <ThemeToggle className="text-zinc-300 hover:!bg-zinc-800 hover:text-white" />
           <HeaderAuthLink />
         </div>
       </div>
