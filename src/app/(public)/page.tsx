@@ -7,6 +7,7 @@ import {
   getStandingsForFeaturedLeagues,
   getTopScorersForFeaturedLeagues,
 } from "@/lib/queries/homepage";
+import { getLatestListedPosts } from "@/lib/queries/blog";
 import { HOMEPAGE_FAQ } from "@/lib/faq.config";
 import { buildFaqPageJsonLd } from "@/lib/structured-data";
 import { absoluteUrl, SITE_NAME, SITE_TAGLINE } from "@/lib/seo";
@@ -19,6 +20,7 @@ import { SidebarFixtureList } from "@/components/home/SidebarFixtureList";
 import { RecentWinners } from "@/components/home/RecentWinners";
 import { LeagueTablesTabs } from "@/components/home/LeagueTablesTabs";
 import { TopScorersTable } from "@/components/home/TopScorersTable";
+import { LatestPosts } from "@/components/home/LatestPosts";
 import { FaqSection } from "@/components/home/FaqSection";
 import { JsonLd } from "@/components/seo/JsonLd";
 
@@ -41,12 +43,13 @@ export default async function Home({ searchParams }: PageProps<"/">) {
   const dateParam = Array.isArray(params.date) ? params.date[0] : params.date;
   const selectedDate = parseDateParam(dateParam);
 
-  const [leagues, banker, recentWinners, standings, topScorers] = await Promise.all([
+  const [leagues, banker, recentWinners, standings, topScorers, latestPosts] = await Promise.all([
     getFixturesForDate(selectedDate),
     getBankerOfTheDay(selectedDate),
     getRecentWinningTips(),
     getStandingsForFeaturedLeagues(),
     getTopScorersForFeaturedLeagues(),
+    getLatestListedPosts(4),
   ]);
 
   // Fills the space below the sticky Tip of the Day card on desktop, where a
@@ -89,6 +92,8 @@ export default async function Home({ searchParams }: PageProps<"/">) {
           )}
 
           <RecentWinners tips={recentWinners} />
+
+          <LatestPosts posts={latestPosts} />
 
           <LeagueTablesTabs leagues={standings} />
 

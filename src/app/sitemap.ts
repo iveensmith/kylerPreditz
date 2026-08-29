@@ -3,6 +3,7 @@ import { prisma } from "@/lib/db/prisma";
 import { MARKET_PAGES } from "@/lib/markets.config";
 import { matchSlug } from "@/lib/queries/match-detail";
 import { slugify } from "@/lib/slugs";
+import { getSitemapPosts } from "@/lib/queries/blog";
 import { absoluteUrl } from "@/lib/seo";
 
 const DAY_SLUGS = [
@@ -16,19 +17,30 @@ const DAY_SLUGS = [
 ];
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const [leagues, fixtures] = await Promise.all([
+  const [leagues, fixtures, posts] = await Promise.all([
     prisma.league.findMany({ where: { isFeatured: true } }),
     prisma.fixture.findMany({
       where: { prediction: { isNot: null } },
       select: { id: true, updatedAt: true, homeTeam: { select: { name: true } }, awayTeam: { select: { name: true } } },
     }),
+    getSitemapPosts(),
   ]);
 
   const entries: MetadataRoute.Sitemap = [
     { url: absoluteUrl("/"), changeFrequency: "hourly", priority: 1 },
     { url: absoluteUrl("/leagues"), changeFrequency: "daily", priority: 0.6 },
     { url: absoluteUrl("/results"), changeFrequency: "daily", priority: 0.5 },
+    { url: absoluteUrl("/blog"), changeFrequency: "weekly", priority: 0.5 },
   ];
+
+  for (const post of posts) {
+    entries.push({
+      url: absoluteUrl(`/blog/${post.slug}`),
+      lastModified: post.updatedAt,
+      changeFrequency: "monthly",
+      priority: 0.5,
+    });
+  }
 
   for (const m of MARKET_PAGES) {
     entries.push({ url: absoluteUrl(`/${m.slug}`), changeFrequency: "hourly", priority: 0.8 });

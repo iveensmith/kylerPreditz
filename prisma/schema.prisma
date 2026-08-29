@@ -261,19 +261,37 @@ model Prediction {
 // Content
 // ---------------------------------------------------------------------------
 
+enum PostType {
+  ARTICLE // normal editorial content
+  GUEST   // guest / sponsored submission, unlisted by default
+}
+
 model Post {
   id          String    @id @default(cuid())
   title       String
   slug        String    @unique
-  body        String    @db.Text
+  body        String    @db.Text // Markdown, rendered + sanitized in /lib/markdown.ts
   coverImage  String?
   publishedAt DateTime?
   author      String
+
+  type            PostType @default(ARTICLE)
+  /// Appears in the /blog index, homepage "latest posts", and sitemap. Unlisted posts still
+  /// have a working public URL - they're just not surfaced in navigation or feeds.
+  listed          Boolean  @default(true)
+  /// Emits <meta robots noindex> and drops the URL from sitemap.xml entirely.
+  noindex         Boolean  @default(false)
+  /// Renders a sponsored-content disclosure and marks outbound links rel="sponsored nofollow".
+  sponsored       Boolean  @default(false)
+  excerpt         String?  @db.Text
+  metaTitle       String?
+  metaDescription String?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@index([publishedAt])
+  @@index([type, listed, publishedAt])
 }
 
 // ---------------------------------------------------------------------------

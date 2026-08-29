@@ -56,6 +56,10 @@ export function formatDayMonth(date: Date): string {
   return new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "short", timeZone: "UTC" }).format(date);
 }
 
+export function formatArticleDate(date: Date): string {
+  return new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "long", year: "numeric", timeZone: "UTC" }).format(date);
+}
+
 /** Last 5 results (most recent last), e.g. "WWDLW" -> ["W","W","D","L","W"]. Empty/missing form returns []. */
 export function formLetters(form: string | null | undefined): ("W" | "D" | "L")[] {
   if (!form) return [];
