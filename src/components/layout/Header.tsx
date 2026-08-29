@@ -102,6 +102,9 @@ export function Header() {
           <Link href="/blog" className={navLink}>
             Blog
           </Link>
+          <Link href="/vip" className="text-[13px] font-semibold text-brand-light transition-colors hover:text-white">
+            Premium
+          </Link>
         </nav>
 
         <div className="flex items-center gap-1.5 text-sm">

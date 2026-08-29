@@ -3,6 +3,8 @@ import Link from "next/link";
 import { absoluteUrl, SITE_NAME } from "@/lib/seo";
 import { CONTACT } from "@/lib/contact.config";
 import { LegalPageShell, Section } from "@/components/layout/LegalPageShell";
+import { GoPremiumCta } from "@/components/premium/GoPremiumCta";
+import { PREMIUM_CONFIDENCE_FLOOR } from "@/lib/premium";
 
 const DESCRIPTION = `${SITE_NAME} VIP - a short daily list of our highest-conviction football selections, delivered on Telegram and WhatsApp.`;
 
@@ -22,14 +24,16 @@ const PACKAGES = [
 export default function VipPage() {
   return (
     <LegalPageShell
-      title="VIP Packages"
-      intro="The free page covers every fixture. VIP is the opposite - a small, filtered list of the selections our model is most confident in, sent to you directly."
+      title="Go Premium"
+      intro={`The free board shows every fixture. Premium unlocks the picks our model rates highest — anything at ${PREMIUM_CONFIDENCE_FLOOR}% confidence or above — that stay locked for everyone else.`}
     >
+      <GoPremiumCta />
+
       <Section heading="What you get">
         <ul className="list-disc pl-5 flex flex-col gap-1.5">
-          <li>A short daily slip of our highest-confidence picks, not the full board</li>
-          <li>Delivered on Telegram and WhatsApp as soon as it&apos;s ready</li>
-          <li>Every VIP result still goes on the public record - see the archive</li>
+          <li>Every locked pick unlocked — on the site, the moment it&apos;s published</li>
+          <li>The full market grid and write-up on each Premium fixture</li>
+          <li>Every Premium result stays on the public record — see the archive</li>
           <li>Direct line to us for questions on any selection</li>
         </ul>
       </Section>

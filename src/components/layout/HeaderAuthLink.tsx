@@ -9,23 +9,29 @@ import { useSession } from "next-auth/react";
  * it anywhere in (public)/layout.tsx would force every page under it out of static
  * rendering, defeating the generateStaticParams/ISR the SEO phase set up everywhere.
  */
+const linkClass =
+  "rounded-full bg-brand px-4 py-1.5 font-medium text-white transition-colors hover:bg-brand-hover";
+
 export function HeaderAuthLink() {
-  const { data: session } = useSession();
+  const { data: session, status } = useSession();
+
+  // Avoid flashing "Sign in" before the session resolves.
+  if (status === "loading") {
+    return <span className="h-8 w-20 rounded-full bg-white/10" aria-hidden />;
+  }
 
   if (session) {
+    const isAdmin = session.user.role === "ADMIN";
     return (
-      <Link
-        href={session.user.role === "ADMIN" ? "/admin" : "/dashboard"}
-        className="rounded-full bg-brand hover:bg-brand-hover transition-colors text-white px-4 py-1.5 font-medium"
-      >
-        {session.user.role === "ADMIN" ? "Admin" : "Dashboard"}
+      <Link href={isAdmin ? "/admin" : "/dashboard"} className={linkClass}>
+        {isAdmin ? "Admin" : "Dashboard"}
       </Link>
     );
   }
 
   return (
-    <Link href="/login" className="rounded-full bg-brand hover:bg-brand-hover transition-colors text-white px-4 py-1.5 font-medium">
-      Sign In
+    <Link href="/login" className={linkClass}>
+      Sign in
     </Link>
   );
 }

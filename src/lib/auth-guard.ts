@@ -6,8 +6,7 @@ import { authOptions } from "./auth";
 /** Redirects to /login unless the current session belongs to an ADMIN user. Call from admin layouts/pages. */
 export async function requireAdmin() {
   const session = await getServerSession(authOptions);
-  if (!session || session.user.role !== UserRole.ADMIN) {
-    redirect("/login");
-  }
+  if (!session) redirect("/login?next=/admin");
+  if (session.user.role !== UserRole.ADMIN) redirect("/");
   return session;
 }
