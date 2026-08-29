@@ -1,4 +1,5 @@
 import { TeamBadge } from "@/components/ui/TeamBadge";
+import { PlayerAvatar } from "@/components/ui/PlayerAvatar";
 import type { TopScorersByLeague } from "@/lib/queries/homepage";
 
 export function TopScorersTable({ leagues }: { leagues: TopScorersByLeague }) {
@@ -17,13 +18,14 @@ export function TopScorersTable({ leagues }: { leagues: TopScorersByLeague }) {
               {league.topScorers.map((scorer) => (
                 <li
                   key={scorer.id}
-                  className="flex items-center justify-between px-3 py-2 border-b border-zinc-100 dark:border-zinc-800 last:border-b-0"
+                  className="flex items-center gap-2.5 px-3 py-2 border-b border-zinc-100 dark:border-zinc-800 last:border-b-0"
                 >
+                  <PlayerAvatar name={scorer.playerName} photoUrl={scorer.photoUrl} size={28} />
                   <div className="min-w-0 flex flex-col">
                     <span className="truncate">{scorer.playerName}</span>
                     <TeamBadge name={scorer.team.name} logoUrl={scorer.team.logoUrl} size={14} />
                   </div>
-                  <span className="tabular-nums font-medium shrink-0">{scorer.goals}</span>
+                  <span className="tabular-nums font-medium shrink-0 ml-auto">{scorer.goals}</span>
                 </li>
               ))}
             </ul>

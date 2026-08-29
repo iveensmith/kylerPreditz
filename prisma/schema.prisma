@@ -168,6 +168,8 @@ model TopScorer {
   id           String @id @default(cuid())
   leagueId     String
   playerName   String
+  playerApiId  Int?
+  photoUrl     String? // API-Football headshot, e.g. https://media.api-sports.io/football/players/<id>.png
   teamId       String
   goals        Int
   appearances  Int

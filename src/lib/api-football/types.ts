@@ -139,7 +139,7 @@ export const apiStandingsResponseSchema = apiFootballEnvelope(z.array(apiStandin
 // --- /players/topscorers -----------------------------------------------
 
 export const apiTopScorerSchema = z.object({
-  player: z.object({ id: z.number(), name: z.string() }),
+  player: z.object({ id: z.number(), name: z.string(), photo: z.string().nullable().optional() }),
   statistics: z.array(
     z.object({
       team: z.object({ id: z.number(), name: z.string(), logo: z.string() }),

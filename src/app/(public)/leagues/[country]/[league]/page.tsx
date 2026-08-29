@@ -5,6 +5,7 @@ import { slugify } from "@/lib/slugs";
 import { absoluteUrl, SITE_NAME } from "@/lib/seo";
 import { LeagueTipGroup } from "@/components/home/LeagueTipGroup";
 import { TeamBadge } from "@/components/ui/TeamBadge";
+import { PlayerAvatar } from "@/components/ui/PlayerAvatar";
 
 export const revalidate = 900;
 
@@ -91,13 +92,14 @@ export default async function LeagueDetailPage({ params }: Props) {
             {league.topScorers.map((scorer) => (
               <li
                 key={scorer.id}
-                className="flex items-center justify-between px-3 py-2 border-b border-zinc-100 dark:border-zinc-800 last:border-b-0"
+                className="flex items-center gap-2.5 px-3 py-2 border-b border-zinc-100 dark:border-zinc-800 last:border-b-0"
               >
-                <div className="flex flex-col">
+                <PlayerAvatar name={scorer.playerName} photoUrl={scorer.photoUrl} size={28} />
+                <div className="flex flex-col min-w-0">
                   <span>{scorer.playerName}</span>
                   <TeamBadge name={scorer.team.name} logoUrl={scorer.team.logoUrl} size={14} />
                 </div>
-                <span className="tabular-nums font-medium">{scorer.goals}</span>
+                <span className="tabular-nums font-medium ml-auto">{scorer.goals}</span>
               </li>
             ))}
           </ul>
