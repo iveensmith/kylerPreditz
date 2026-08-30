@@ -15,7 +15,11 @@ const VALID_MODES: AiLayerMode[] = ["full", "reasoning_only", "off"];
 
 function getAiLayerMode(): AiLayerMode {
   const raw = process.env.AI_LAYER_MODE;
-  return VALID_MODES.includes(raw as AiLayerMode) ? (raw as AiLayerMode) : "full";
+  // Default reasoning_only: a 300-fixture backtest showed the AI layer's
+  // selection/confidence adjustments match the base model exactly (no gain) but
+  // add failure paths. We keep the AI-written reasoning text, publish the pure
+  // statistical pick. Flip to "full" to re-enable adjustments.
+  return VALID_MODES.includes(raw as AiLayerMode) ? (raw as AiLayerMode) : "reasoning_only";
 }
 
 function getConfidenceFloor(): number {
