@@ -19,7 +19,7 @@ export const HOMEPAGE_INTRO: string[] = [
 
 export const HOW_IT_WORKS: ContentSection[] = [
   {
-    heading: "Football Predictions Site",
+    heading: "Accurate Football Predicting Site",
     body: [
       `${SITE_NAME} provides free football predictions and betting tips for today's and tomorrow's matches, along with match analysis, team statistics, form guides and league tables. Coverage spans leagues and cups worldwide, from the biggest European divisions to selected competitions in the Americas, Asia and elsewhere.`,
       `The site was built to keep football predictions simple. Many prediction sites overcomplicate things or make promises they cannot keep. ${SITE_NAME} is straightforward to navigate on a phone or a desktop, every tip is analysed with the same method, and the confidence figure next to each pick tells you exactly how strongly the model rates it.`,
