@@ -69,8 +69,9 @@ function round2(n: number): number {
       await prisma.prediction.update({
         where: { id: r.id },
         data: {
-          market: r.baseMarket,
-          selection: r.baseSelection,
+          // non-null: the where clause filters baseMarket / baseSelection / baseConfidence
+          market: r.baseMarket as NonNullable<typeof r.baseMarket>,
+          selection: r.baseSelection as string,
           confidence: conf,
           odds,
           aiAdjusted: false,
