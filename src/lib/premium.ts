@@ -69,15 +69,25 @@ export function redactPickForFreeView<T extends LockablePick>(pick: T | null) {
   };
 }
 
-/** Redacts every locked pick in a league→fixtures list. */
-export function redactFixtureListForFreeView(leagues: LeagueWithFixtures[]): LeagueWithFixtures[] {
-  return leagues.map((league) => ({
-    ...league,
-    fixtures: league.fixtures.map((fixture) => ({
-      ...fixture,
-      prediction: fixture.prediction ? redactPickForFreeView(fixture.prediction) : null,
-    })),
-  }));
+/**
+ * Drops every fixture whose pick is currently locked (premium + still pending)
+ * from a league→fixtures list, then drops any league left with no fixtures.
+ * Public list views (homepage, market pages, league pages, day pages) use this:
+ * a pending premium pick must not appear there at all - not even as a teaser.
+ * Settled premium picks are not locked, so they pass through untouched.
+ */
+export function dropLockedFixturesFromList(leagues: LeagueWithFixtures[]): LeagueWithFixtures[] {
+  return leagues
+    .map((league) => ({
+      ...league,
+      fixtures: league.fixtures.filter((f) => !(f.prediction && shouldLockPick(f.prediction))),
+    }))
+    .filter((league) => league.fixtures.length > 0);
+}
+
+/** True when this pick must be kept off the public site entirely (pending premium). */
+export function isHiddenFromPublic(pick: PremiumFields & { settledAs: SettledStatus }): boolean {
+  return shouldLockPick(pick);
 }
 
 /** The viewer's premium status - an active subscription that hasn't expired. Cached per request. */

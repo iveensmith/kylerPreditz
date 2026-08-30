@@ -1,7 +1,7 @@
 import type { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/db/prisma";
 import type { MarketFilter } from "@/lib/markets.config";
-import { redactFixtureListForFreeView, redactPickForFreeView } from "@/lib/premium";
+import { dropLockedFixturesFromList, shouldLockPick } from "@/lib/premium";
 import { fixtureListInclude } from "./types";
 
 const UPCOMING_WINDOW_DAYS = 7;
@@ -41,21 +41,23 @@ export async function getFixturesForMarketFilter(filter: MarketFilter) {
       },
     },
   });
-  return redactFixtureListForFreeView(leagues);
+  return dropLockedFixturesFromList(leagues);
 }
 
 /**
  * The banker-of-the-day market page needs one highlighted pick, not a list.
  * Prefers a manually-flagged banker (admin feature, Phase 6); falls back to
  * the highest-confidence upcoming pick, same convention as the homepage card.
+ * Pending premium picks are skipped - this is a public page.
  */
 export async function getBankerPagePick() {
-  const pick = await prisma.prediction.findFirst({
+  const candidates = await prisma.prediction.findMany({
     where: { fixture: { kickoffUtc: { gte: new Date() } } },
     orderBy: [{ isBanker: "desc" }, { confidence: "desc" }],
+    take: 10,
     include: { fixture: { include: fixtureListInclude } },
   });
-  return redactPickForFreeView(pick);
+  return candidates.find((p) => !shouldLockPick(p)) ?? null;
 }
 
 export type { LeagueWithFixtures as MarketFixturesByLeague } from "./types";

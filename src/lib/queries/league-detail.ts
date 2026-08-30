@@ -2,7 +2,7 @@ import { cache } from "react";
 import { getCurrentSeason } from "@/lib/api-football/season";
 import { seasonCalendarForSlug } from "@/lib/leagues.config";
 import { prisma } from "@/lib/db/prisma";
-import { redactPickForFreeView } from "@/lib/premium";
+import { shouldLockPick } from "@/lib/premium";
 import { fixtureListInclude } from "./types";
 
 export async function getLeagueIndex() {
@@ -39,9 +39,12 @@ export const getLeagueBySlug = cache(async (slug: string) => {
   if (!league) return null;
   return {
     ...league,
+    // The league page is a fixtures list, so a premium-pick fixture still shows
+    // as a row - but with the pick stripped to null (rendered like a match with
+    // no tip). Pending premium picks never surface on the public site.
     fixtures: league.fixtures.map((f) => ({
       ...f,
-      prediction: f.prediction ? redactPickForFreeView(f.prediction) : null,
+      prediction: f.prediction && shouldLockPick(f.prediction) ? null : f.prediction,
     })),
   };
 });

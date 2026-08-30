@@ -1,26 +1,52 @@
 import type { MarketPageConfig } from "./markets.config";
+import { SITE_NAME, SITE_URL } from "./seo";
 import type { FaqEntry } from "./structured-data";
 
+const SITE_HOST = SITE_URL.replace(/^https?:\/\//, "");
+
+// Question set mirrors passionpredict.com's homepage FAQ; answers are written for
+// our own model and kept within the content rules (no "sure win" / guarantees,
+// no invented accuracy figures or company details).
 export const HOMEPAGE_FAQ: FaqEntry[] = [
   {
-    question: "How are these football predictions generated?",
+    question: `What is ${SITE_NAME} Website?`,
     answer:
-      "Every tip comes from a statistical model. We fit Poisson distributions to each team's recent scoring and conceding rates - calculated separately for home and away matches and weighted toward the most recent games - then apply a Dixon-Coles adjustment that corrects the low-scoring results raw Poisson tends to underrate. That produces a probability for every market on the fixture, and we publish the one the model rates highest, provided it clears our confidence floor.",
+      `${SITE_NAME} is a football prediction and statistics website, online at ${SITE_HOST} and built to work on phones and desktop. Every day it publishes free predictions with a suggested betting market, fair odds and a confidence rating, alongside form guides, head-to-head records, league tables and a permanent results archive. If anything isn't working, contact us on WhatsApp or Telegram using the details in the footer.`,
   },
   {
-    question: "How is the confidence percentage calculated?",
+    question: `Are ${SITE_NAME} Tips Really Free?`,
     answer:
-      "Confidence is the model's estimated probability for the published selection, rounded to the nearest whole number. It's capped at 92% - we never display a higher figure, and a 92% pick still loses roughly one time in twelve.",
+      "Yes. Every prediction on the main site is free, with no sign-up required and no hidden charges. The only paid part is the Premium section, which holds the model's highest-rated picks for subscribers. Today's and tomorrow's tips, the analysis, the statistics and the full results archive are all open to everyone.",
   },
   {
-    question: "Are these predictions guaranteed to win?",
+    question: "Where do We Get Our Tips?",
     answer:
-      "No. Every tip is a statistical estimate, not a certainty. Betting carries risk, and even a 92% confidence pick loses sometimes - that's what the number means. Never stake more than you can afford to lose.",
+      "Every tip comes from our own statistical model. It reads each team's recent scoring and conceding rates, split by home and away form and weighted toward recent games, then builds a grid of likely scorelines using a Poisson model with a Dixon-Coles adjustment. Every market is derived from that one grid. There is no tipster picking favourites by feel, though an admin can override a pick and it is flagged when that happens.",
   },
   {
-    question: "What happens when a tip loses?",
+    question: "How Accurate Are Our Tips?",
     answer:
-      "It stays on the site. Our results archive shows every published prediction, win or lose, with nothing ever removed or edited after the fact.",
+      "It varies by match and by market, and we don't publish a single headline accuracy figure because one number is easy to massage. Instead the whole record is public: the results archive shows every settled prediction, win or loss, with nothing removed or edited. The confidence percentage next to each tip is the model's own probability estimate, capped at 92% - and a 92% pick still loses roughly one time in twelve.",
+  },
+  {
+    question: `How Can I Win Bet Using ${SITE_NAME} Tips?`,
+    answer:
+      "There is no way to guarantee a winning bet, and anyone who tells you otherwise is not being straight with you. What helps: favour selections with a strong probability, prefer single bets to large accumulators, stake only what you can afford to lose, and read the reasoning and head-to-head data on the match page before you commit. Treat the tips as one input, not a certainty.",
+  },
+  {
+    question: "When Do We Post Our Tips?",
+    answer:
+      "Predictions for the next couple of days are generated in the early morning and refresh through the day as team news and results come in. Fixtures and scores sync automatically so the board stays current. Late injury news is exactly when a pick is most likely to change.",
+  },
+  {
+    question: `What is ${SITE_NAME} Official Telegram Channel?`,
+    answer:
+      "Our Telegram channel carries a free daily selection plus updates. The link is in the site footer and on the VIP page - join from there rather than trusting any channel that copies our name.",
+  },
+  {
+    question: `Is ${SITE_NAME} Legit and Safe?`,
+    answer:
+      `Yes. ${SITE_NAME} is a straightforward predictions site: it does not take bets, hold funds, or ask for payment to see the free tips. Predictions are never edited after results are published - the archive is permanent. You must be 18 or over to use the site, and betting should only ever be done with money you can afford to lose.`,
   },
 ];
 

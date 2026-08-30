@@ -1,7 +1,7 @@
 import { SettledStatus } from "@/generated/prisma/enums";
 import { getCurrentSeason } from "@/lib/api-football/season";
 import { prisma } from "@/lib/db/prisma";
-import { redactFixtureListForFreeView, redactPickForFreeView } from "@/lib/premium";
+import { dropLockedFixturesFromList, shouldLockPick } from "@/lib/premium";
 import { fixtureListInclude } from "./types";
 
 export function dayRangeUtc(date: Date): { gte: Date; lt: Date } {
@@ -30,20 +30,26 @@ export async function getFixturesForDate(date: Date) {
       },
     },
   });
-  return redactFixtureListForFreeView(leagues);
+  return dropLockedFixturesFromList(leagues);
 }
 
 export type { LeagueWithFixtures as FixturesByLeague } from "./types";
 
-/** The single highest-confidence pick for the day - a manually-flagged banker wins if one exists. */
+/**
+ * The single highest-confidence pick for the day - a manually-flagged banker
+ * wins if one exists. Pending premium picks are skipped: the public banker
+ * slot only ever shows a free pick (the strongest premium pick lives on
+ * /premium). Falls back through the top few candidates.
+ */
 export async function getBankerOfTheDay(date: Date) {
   const { gte, lt } = dayRangeUtc(date);
-  const banker = await prisma.prediction.findFirst({
+  const candidates = await prisma.prediction.findMany({
     where: { fixture: { kickoffUtc: { gte, lt } } },
     orderBy: [{ isBanker: "desc" }, { confidence: "desc" }],
+    take: 10,
     include: { fixture: { include: fixtureListInclude } },
   });
-  return redactPickForFreeView(banker);
+  return candidates.find((p) => !shouldLockPick(p)) ?? null;
 }
 
 export async function getRecentWinningTips(limit = 6) {

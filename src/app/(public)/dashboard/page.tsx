@@ -5,9 +5,7 @@ import { authOptions } from "@/lib/auth";
 import { getViewerPremium } from "@/lib/premium";
 import { PageHeader } from "@/components/ui/PageHeader";
 
-// Members-only. The full picks view lands here in 7.4; for now it confirms
-// membership status and points to where the picks currently are (unlocked
-// inline across the site).
+// Members-only account page. The picks themselves live on /premium.
 export const dynamic = "force-dynamic";
 
 function formatDate(d: Date) {
@@ -29,14 +27,16 @@ export default async function DashboardPage() {
           <div className="rounded-[var(--radius-card)] border border-brand/30 bg-brand/[0.06] p-5">
             <div className="eyebrow !text-brand">Premium active</div>
             <p className="mt-2 text-sm text-ink/80">
-              Your membership runs until {expiresAt ? formatDate(expiresAt) : "—"}. Every Premium pick is
-              unlocked for you across the site — the homepage board, market pages and match pages all
-              show the full tip, odds and confidence.
+              Your membership runs until {expiresAt ? formatDate(expiresAt) : "—"}. Premium picks are
+              kept off the public board — you view them on the Premium page.
             </p>
           </div>
-          <p className="text-sm text-muted">
-            A dedicated Premium-only picks list lands here in the next update.
-          </p>
+          <Link
+            href="/premium"
+            className="inline-flex w-fit items-center rounded-[var(--radius-control)] bg-brand px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-brand-hover"
+          >
+            View Premium picks
+          </Link>
         </div>
       ) : (
         <div className="flex flex-col gap-4">

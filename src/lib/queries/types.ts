@@ -23,9 +23,11 @@ export const fixtureListInclude = {
 type BaseFixtureWithTipInfo = Prisma.FixtureGetPayload<{ include: typeof fixtureListInclude }>;
 
 /**
- * `locked` is tacked on by `redactFixtureListForFreeView` (see lib/premium.ts):
- * when true the pick is premium and its market/selection/odds/confidence have
- * been blanked before reaching this viewer.
+ * `locked` is tacked on by `redactPickForFreeView` (see lib/premium.ts): when
+ * true the pick is premium and its market/selection/odds/confidence have been
+ * blanked before reaching this viewer. Public list queries drop or null locked
+ * picks instead, so on those `locked` is never set - only the single-fixture
+ * match-detail view still carries it.
  */
 export type FixtureWithTipInfo = Omit<BaseFixtureWithTipInfo, "prediction"> & {
   prediction: (NonNullable<BaseFixtureWithTipInfo["prediction"]> & { locked?: boolean }) | null;
