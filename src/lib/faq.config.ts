@@ -1,8 +1,6 @@
 import type { MarketPageConfig } from "./markets.config";
-import { SITE_NAME, SITE_URL } from "./seo";
+import { SITE_NAME } from "./seo";
 import type { FaqEntry } from "./structured-data";
-
-const SITE_HOST = SITE_URL.replace(/^https?:\/\//, "");
 
 // Question set mirrors passionpredict.com's homepage FAQ; answers are written for
 // our own model and kept within the content rules (no "sure win" / guarantees,
@@ -11,7 +9,7 @@ export const HOMEPAGE_FAQ: FaqEntry[] = [
   {
     question: `What is ${SITE_NAME} Website?`,
     answer:
-      `${SITE_NAME} is a football prediction and statistics website, online at ${SITE_HOST} and built to work on phones and desktop. Every day it publishes free predictions with a suggested betting market, fair odds and a confidence rating, alongside form guides, head-to-head records, league tables and a permanent results archive. If anything isn't working, contact us on WhatsApp or Telegram using the details in the footer.`,
+      `${SITE_NAME} is a football prediction and statistics site for fans and bettors who want a clearer read on a match before kickoff. Every day we publish free predictions - each with a suggested betting market, fair odds and a confidence rating - right next to the detail behind them: recent form, head-to-head records, league tables, and a results archive that keeps every past tip on show, win or loss. It's built to be quick to check on your phone and easy to follow. Got a question? Reach us on WhatsApp or Telegram - links are in the footer.`,
   },
   {
     question: `Are ${SITE_NAME} Tips Really Free?`,
