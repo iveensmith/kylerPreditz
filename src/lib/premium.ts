@@ -6,7 +6,7 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db/prisma";
 import type { LeagueWithFixtures } from "@/lib/queries/types";
 
-export const PREMIUM_CONFIDENCE_FLOOR = Number(process.env.PREMIUM_CONFIDENCE_FLOOR ?? 85);
+export const PREMIUM_CONFIDENCE_FLOOR = Number(process.env.PREMIUM_CONFIDENCE_FLOOR ?? 92);
 
 type PremiumFields = { premium: PremiumMode; confidence: number };
 
