@@ -5,6 +5,7 @@ import { getLeagueBySlug, getLeagueIndex } from "@/lib/queries/league-detail";
 import { slugify } from "@/lib/slugs";
 import { absoluteUrl, SITE_NAME } from "@/lib/seo";
 import { LeagueTipGroup } from "@/components/home/LeagueTipGroup";
+import { StandingsTable } from "@/components/league/StandingsTable";
 import { TeamBadge } from "@/components/ui/TeamBadge";
 import { PlayerAvatar } from "@/components/ui/PlayerAvatar";
 import { SectionHeading } from "@/components/ui/SectionHeading";
@@ -58,38 +59,7 @@ export default async function LeagueDetailPage({ params }: Props) {
 
       <section>
         <SectionHeading eyebrow="Standings" title="Table" />
-        <div className="overflow-x-auto rounded-[var(--radius-card)] border border-line">
-          <table className="w-full text-sm">
-            <thead className="bg-surface-2 font-mono text-[11px] uppercase tracking-wide text-muted">
-              <tr>
-                <th className="px-3 py-2 text-left font-medium">#</th>
-                <th className="px-3 py-2 text-left font-medium">Team</th>
-                <th className="px-3 py-2 text-right font-medium">P</th>
-                <th className="px-3 py-2 text-right font-medium">GD</th>
-                <th className="px-3 py-2 text-right font-medium">Pts</th>
-                <th className="px-3 py-2 text-right font-medium">Form</th>
-              </tr>
-            </thead>
-            <tbody>
-              {league.standings.map((row) => (
-                <tr key={row.id} className="border-t border-line">
-                  <td className="px-3 py-2 font-mono text-muted tabular-nums">{row.rank}</td>
-                  <td className="px-3 py-2">
-                    <TeamBadge name={row.team.name} logoUrl={row.team.logoUrl} size={16} />
-                  </td>
-                  <td className="px-3 py-2 text-right font-mono tabular-nums">{row.played}</td>
-                  <td className="px-3 py-2 text-right font-mono tabular-nums">
-                    {row.goalDiff > 0 ? `+${row.goalDiff}` : row.goalDiff}
-                  </td>
-                  <td className="px-3 py-2 text-right font-mono font-semibold tabular-nums">{row.points}</td>
-                  <td className="px-3 py-2 text-right font-mono text-xs text-faint tabular-nums">
-                    {row.team.stats[0]?.form?.slice(-5) ?? "—"}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <StandingsTable rows={league.standings} />
       </section>
 
       {league.topScorers.length > 0 && (

@@ -99,6 +99,20 @@ export async function getHeadToHead(homeApiTeamId: number, awayApiTeamId: number
   return response;
 }
 
+/** A team's last N fixtures across all competitions, most recent first. */
+export async function getTeamRecentFixtures(apiTeamId: number, last = 10) {
+  const { response } = await apiFootballRequest(
+    "/fixtures",
+    { team: apiTeamId, last },
+    apiFixturesResponseSchema,
+    // 1 day - a team's last-10 only changes when it next plays, and sync-results
+    // keeps the live board fresh separately. Long TTL keeps this off the quota
+    // during static builds.
+    { ttlSeconds: DAY },
+  );
+  return response;
+}
+
 /** Current injuries for a team this season - used to enrich the AI layer's context packet. */
 export async function getInjuries(apiLeagueId: number, season: number, apiTeamId: number) {
   const { response } = await apiFootballRequest(
