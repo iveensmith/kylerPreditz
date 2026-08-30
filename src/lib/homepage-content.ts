@@ -61,7 +61,7 @@ export const HOW_IT_WORKS: ContentSection[] = [
     ],
   },
   {
-    heading: "Accurate Football Predictions Site",
+    heading: "How Accurate Our Predictions Are",
     body: [
       `We work at making the predictions as accurate as the data reasonably allows by focusing on how teams are actually performing, who they are facing, and their recent record. The method is identical for every match, so nothing is cherry-picked after the result is known.`,
       `The honest position: no prediction site can promise profit. Sports betting carries risk and even a strong call loses sometimes. What ${SITE_NAME} offers is a consistent method and a full, unedited record of how it has done - which is more than most sites will show you. A sensible habit is to stick to single bets on selections with a solid probability rather than stacking every tip onto one slip.`,
