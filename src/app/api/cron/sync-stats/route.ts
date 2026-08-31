@@ -21,7 +21,7 @@ export async function GET(request: NextRequest) {
 
   const result = await syncStats();
 
-  if (result.leaguesProcessed > 0) {
+  if (result.tablesRefreshed > 0) {
     for (const [path, type] of STATS_FACING_PATHS) {
       revalidatePath(path, type);
     }

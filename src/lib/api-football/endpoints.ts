@@ -9,6 +9,7 @@ import {
   apiTopScorersResponseSchema,
 } from "./types";
 
+const HOUR = 60 * 60;
 const DAY = 60 * 60 * 24;
 
 export async function getLeagueById(apiLeagueId: number) {
@@ -73,7 +74,8 @@ export async function getStandings(apiLeagueId: number, season: number) {
     "/standings",
     { league: apiLeagueId, season },
     apiStandingsResponseSchema,
-    { ttlSeconds: DAY },
+    // Moves after every matchday - a day-long cache made the table look frozen.
+    { ttlSeconds: 3 * HOUR },
   );
   return response[0]?.league.standings.flat() ?? [];
 }
@@ -83,7 +85,7 @@ export async function getTopScorers(apiLeagueId: number, season: number) {
     "/players/topscorers",
     { league: apiLeagueId, season },
     apiTopScorersResponseSchema,
-    { ttlSeconds: DAY },
+    { ttlSeconds: 3 * HOUR },
   );
   return response;
 }
