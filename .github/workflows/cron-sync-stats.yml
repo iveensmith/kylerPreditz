@@ -1,7 +1,10 @@
 name: Cron - Sync Stats
 
-# Hourly, not daily: sync-stats processes only the stalest few leagues per run
-# (Vercel Hobby's 60s function limit), so it needs several runs to cover all 30.
+# Fallback only - sync-stats runs on cron-job.org every 30 min (see
+# docs/cron-setup.md), which honours the schedule where GitHub does not.
+# /api/cron/sync-stats now just refreshes standings + top scorers (fast);
+# per-team stats moved to the separate Sync Team Stats workflow.
+# Disabled in the Actions tab; kept for manual workflow_dispatch.
 on:
   schedule:
     - cron: "17 * * * *"

@@ -2,14 +2,16 @@ import { config } from "dotenv";
 config({ path: ".env.local" });
 
 import { syncFixtures } from "@/lib/jobs/sync-fixtures";
-import { syncStats } from "@/lib/jobs/sync-stats";
+import { syncStats, syncLeagueTables, syncTeamStats } from "@/lib/jobs/sync-stats";
 import { generatePredictions } from "@/lib/jobs/generate-predictions";
 import { syncResults } from "@/lib/jobs/sync-results";
 import { prisma } from "@/lib/db/prisma";
 
 const JOBS = {
   fixtures: syncFixtures,
-  stats: syncStats,
+  stats: syncStats, // both table + team-stats passes
+  "league-tables": syncLeagueTables, // standings + top scorers only (the cron-job.org job)
+  "team-stats": syncTeamStats, // per-team TeamStats only
   predictions: generatePredictions,
   results: syncResults,
 } as const;

@@ -9,27 +9,30 @@ import { getCurrentSeason } from "@/lib/api-football/season";
 import { ApiFootballQuotaExceededError } from "@/lib/api-football/client";
 import { isCupLeague, seasonCalendarForApiId } from "@/lib/leagues.config";
 
-export type SyncStatsResult = {
-  /** Leagues whose standings + top scorers were refreshed (pass 1 - every run covers all of them). */
-  tablesRefreshed: number;
-  /** Leagues whose per-team TeamStats were refreshed (pass 2 - time-boxed, stalest-first). */
-  teamStatsRefreshed: number;
-  teamStatsDeferred: number;
-  teamsUpdated: number;
-  standingsUpdated: number;
-  topScorersUpdated: number;
+export type LeagueTablesResult = {
+  /** Leagues whose standings + top scorers were checked (all of them, every run). */
+  tablesChecked: number;
+  standingsWritten: number;
+  topScorersWritten: number;
   staleRowsPruned: number;
   errors: string[];
 };
 
-// Vercel Hobby kills any function at 60s. Pass 1 (standings + scorers, 2 cheap
-// API calls per league) is fast enough to cover all 32 leagues every run. Pass 2
-// (a team-statistics call per team) is not - it works stalest-first and stops
-// when the budget runs out; the hourly schedule catches every league up within a
-// few hours. The two are separate so a matchday's table/scorer changes always
-// show within the hour, not whenever pass 2 happens to reach that league.
-const TEAM_STATS_BUDGET_MS = 30_000;
-const UPSERT_CONCURRENCY = 8;
+export type TeamStatsResult = {
+  /** Leagues whose per-team TeamStats were refreshed this run (stalest-first, time-boxed). */
+  leaguesRefreshed: number;
+  leaguesDeferred: number;
+  teamsUpdated: number;
+  errors: string[];
+};
+
+const UPSERT_CONCURRENCY = 10;
+// Leagues processed in parallel in the table pass - the API client has its own
+// rate-limit throttle and the DB pool handles the fan-out.
+const LEAGUE_CONCURRENCY = 5;
+// The per-team-statistics pass can't finish all 32 leagues inside one function
+// invocation. It works stalest-first and stops here; its own schedule catches up.
+const TEAM_STATS_BUDGET_MS = 45_000;
 
 async function inChunks<T>(items: T[], size: number, fn: (item: T) => Promise<unknown>) {
   for (let i = 0; i < items.length; i += size) {
@@ -37,15 +40,17 @@ async function inChunks<T>(items: T[], size: number, fn: (item: T) => Promise<un
   }
 }
 
-/** Refreshes standings + top scorers for every league, then per-team stats stalest-first (time-boxed). */
-export async function syncStats(): Promise<SyncStatsResult> {
-  const result: SyncStatsResult = {
-    tablesRefreshed: 0,
-    teamStatsRefreshed: 0,
-    teamStatsDeferred: 0,
-    teamsUpdated: 0,
-    standingsUpdated: 0,
-    topScorersUpdated: 0,
+/**
+ * Standings + top scorers for every featured league. Cheap: two cached API calls
+ * per league, and rows are only written when a value actually changed (most runs
+ * between matchdays write nothing). This is the freshness-sensitive half - it
+ * runs often and must stay well under any scheduler's response timeout.
+ */
+export async function syncLeagueTables(): Promise<LeagueTablesResult> {
+  const result: LeagueTablesResult = {
+    tablesChecked: 0,
+    standingsWritten: 0,
+    topScorersWritten: 0,
     staleRowsPruned: 0,
     errors: [],
   };
@@ -55,130 +60,148 @@ export async function syncStats(): Promise<SyncStatsResult> {
     orderBy: { priority: "asc" },
   });
 
-  // One bulk load instead of a /teams call + per-team upsert per league. Teams
-  // are created by sync-fixtures; a standings/scorer row for a team we've never
-  // seen a fixture for is just skipped (it'll resolve once that fixture syncs).
   const allTeams = await prisma.team.findMany({ select: { id: true, apiId: true } });
   const teamIdByApiId = new Map(allTeams.map((t) => [t.apiId, t.id]));
 
-  // ---- Pass 1: standings + top scorers, every league -----------------------
-  for (const league of leagues) {
+  await inChunks(leagues, LEAGUE_CONCURRENCY, async (league) => {
     const season = getCurrentSeason(new Date(), seasonCalendarForApiId(league.apiId));
     try {
-      const [standings, topScorers] = await Promise.all([
+      const [standings, topScorers, existingStandings, existingScorers] = await Promise.all([
         getStandings(league.apiId, season),
         getTopScorers(league.apiId, season),
+        prisma.standing.findMany({ where: { leagueId: league.id, season } }),
+        prisma.topScorer.findMany({ where: { leagueId: league.id, season } }),
       ]);
 
-      const seenStandingTeamIds: string[] = [];
+      // ---- standings ----------------------------------------------------
+      const standingByTeam = new Map(existingStandings.map((s) => [s.teamId, s]));
+      const seenStandingTeamIds = new Set<string>();
       await inChunks(
         standings.filter((row) => teamIdByApiId.has(row.team.id)),
         UPSERT_CONCURRENCY,
         async (row) => {
           const teamId = teamIdByApiId.get(row.team.id)!;
+          seenStandingTeamIds.add(teamId);
+          const next = {
+            rank: row.rank,
+            played: row.all.played,
+            points: row.points ?? 0,
+            goalDiff: row.goalsDiff ?? 0,
+          };
+          const current = standingByTeam.get(teamId);
+          if (
+            current &&
+            current.rank === next.rank &&
+            current.played === next.played &&
+            current.points === next.points &&
+            current.goalDiff === next.goalDiff
+          ) {
+            return; // unchanged
+          }
           await prisma.standing.upsert({
             where: { leagueId_teamId_season: { leagueId: league.id, teamId, season } },
-            create: {
-              leagueId: league.id,
-              teamId,
-              season,
-              rank: row.rank,
-              played: row.all.played,
-              points: row.points ?? 0,
-              goalDiff: row.goalsDiff ?? 0,
-            },
-            update: {
-              rank: row.rank,
-              played: row.all.played,
-              points: row.points ?? 0,
-              goalDiff: row.goalsDiff ?? 0,
-            },
+            create: { leagueId: league.id, teamId, season, ...next },
+            update: next,
           });
-          seenStandingTeamIds.push(teamId);
-          result.standingsUpdated++;
+          result.standingsWritten++;
         },
       );
-      // Drop rows for teams no longer in this season's table. Only when the API
-      // actually returned one - an empty response (pre-season cup) must not
-      // wipe an existing table.
-      if (seenStandingTeamIds.length > 0) {
-        const pruned = await prisma.standing.deleteMany({
-          where: { leagueId: league.id, season, teamId: { notIn: seenStandingTeamIds } },
-        });
-        result.staleRowsPruned += pruned.count;
+      // Drop rows for teams no longer in the table - but only when the API
+      // actually returned one (an empty pre-season cup response must not wipe it).
+      if (seenStandingTeamIds.size > 0) {
+        const stale = existingStandings.filter((s) => !seenStandingTeamIds.has(s.teamId)).map((s) => s.id);
+        if (stale.length > 0) {
+          const pruned = await prisma.standing.deleteMany({ where: { id: { in: stale } } });
+          result.staleRowsPruned += pruned.count;
+        }
       }
 
-      const seenScorerIds: string[] = [];
+      // ---- top scorers ------------------------------------------------
+      const scorerByKey = new Map(existingScorers.map((s) => [`${s.teamId}::${s.playerName}`, s]));
+      const seenScorerIds = new Set<string>();
       await inChunks(
         topScorers.filter((e) => e.statistics[0] && teamIdByApiId.has(e.statistics[0].team.id)),
         UPSERT_CONCURRENCY,
         async (entry) => {
           const stat = entry.statistics[0]!;
           const teamId = teamIdByApiId.get(stat.team.id)!;
-          const scorer = await prisma.topScorer.upsert({
-            where: {
-              leagueId_teamId_playerName_season: {
-                leagueId: league.id,
-                teamId,
-                playerName: entry.player.name,
-                season,
-              },
-            },
-            create: {
-              leagueId: league.id,
-              teamId,
-              playerName: entry.player.name,
-              playerApiId: entry.player.id,
-              photoUrl: entry.player.photo ?? null,
-              goals: stat.goals.total ?? 0,
-              appearances: stat.games.appearences ?? 0,
-              season,
-            },
-            update: {
-              playerApiId: entry.player.id,
-              photoUrl: entry.player.photo ?? null,
-              goals: stat.goals.total ?? 0,
-              appearances: stat.games.appearences ?? 0,
-            },
+          const next = {
+            playerApiId: entry.player.id,
+            photoUrl: entry.player.photo ?? null,
+            goals: stat.goals.total ?? 0,
+            appearances: stat.games.appearences ?? 0,
+          };
+          const current = scorerByKey.get(`${teamId}::${entry.player.name}`);
+          if (current) {
+            seenScorerIds.add(current.id);
+            if (
+              current.goals === next.goals &&
+              current.appearances === next.appearances &&
+              current.playerApiId === next.playerApiId &&
+              current.photoUrl === next.photoUrl
+            ) {
+              return; // unchanged
+            }
+            await prisma.topScorer.update({ where: { id: current.id }, data: next });
+            result.topScorersWritten++;
+            return;
+          }
+          const created = await prisma.topScorer.create({
+            data: { leagueId: league.id, teamId, playerName: entry.player.name, season, ...next },
             select: { id: true },
           });
-          seenScorerIds.push(scorer.id);
-          result.topScorersUpdated++;
+          seenScorerIds.add(created.id);
+          result.topScorersWritten++;
         },
       );
-      // The API returns only the current top ~20; a player who has since dropped
-      // out keeps a stale row (and stale goal count) that pollutes the top-10 list.
-      if (seenScorerIds.length > 0) {
-        const pruned = await prisma.topScorer.deleteMany({
-          where: { leagueId: league.id, season, id: { notIn: seenScorerIds } },
-        });
-        result.staleRowsPruned += pruned.count;
+      // The API only returns the current top ~20; anyone who dropped out keeps a
+      // stale row (and stale goal count) that pollutes the top-10 list.
+      if (seenScorerIds.size > 0) {
+        const stale = existingScorers.filter((s) => !seenScorerIds.has(s.id)).map((s) => s.id);
+        if (stale.length > 0) {
+          const pruned = await prisma.topScorer.deleteMany({ where: { id: { in: stale } } });
+          result.staleRowsPruned += pruned.count;
+        }
       }
 
-      result.tablesRefreshed++;
+      result.tablesChecked++;
     } catch (err) {
-      if (err instanceof ApiFootballQuotaExceededError) {
-        result.errors.push(`${league.name}: quota exhausted during table refresh, stopping`);
-        return result;
-      }
-      result.errors.push(`${league.name} tables: ${err instanceof Error ? err.message : String(err)}`);
+      const label = err instanceof ApiFootballQuotaExceededError ? "quota exhausted" : String(err instanceof Error ? err.message : err);
+      result.errors.push(`${league.name}: ${label}`);
     }
-  }
+  });
 
-  // ---- Pass 2: per-team TeamStats, stalest first, time-boxed --------------
-  const startedPass2 = Date.now();
-  const teamStatsQueue = [...leagues]
-    .filter((l) => !isCupLeague(l.apiId))
-    .sort((a, b) => {
-      const at = a.statsSyncedAt?.getTime() ?? 0;
-      const bt = b.statsSyncedAt?.getTime() ?? 0;
-      return at - bt;
-    });
+  return result;
+}
 
+/**
+ * Per-team TeamStats (goals for/against, form, clean sheets) - the stage-1
+ * model's inputs. A statistics call per team, so it can't cover every league in
+ * one run: stalest-first, time-boxed, `League.statsSyncedAt` is the cursor.
+ * Delay-tolerant - generate-predictions tops these up from the API anyway.
+ */
+export async function syncTeamStats(): Promise<TeamStatsResult> {
+  const result: TeamStatsResult = {
+    leaguesRefreshed: 0,
+    leaguesDeferred: 0,
+    teamsUpdated: 0,
+    errors: [],
+  };
+
+  const leagues = await prisma.league.findMany({
+    where: { isFeatured: true },
+    orderBy: [{ statsSyncedAt: { sort: "asc", nulls: "first" } }, { priority: "asc" }],
+  });
+  const queue = leagues.filter((l) => !isCupLeague(l.apiId));
+
+  const allTeams = await prisma.team.findMany({ select: { id: true, apiId: true } });
+  const teamIdByApiId = new Map(allTeams.map((t) => [t.apiId, t.id]));
+
+  const startedAt = Date.now();
   let attempted = 0;
-  for (const league of teamStatsQueue) {
-    if (Date.now() - startedPass2 > TEAM_STATS_BUDGET_MS) {
-      result.teamStatsDeferred = teamStatsQueue.length - attempted;
+  for (const league of queue) {
+    if (Date.now() - startedAt > TEAM_STATS_BUDGET_MS) {
+      result.leaguesDeferred = queue.length - attempted;
       break;
     }
     attempted++;
@@ -187,7 +210,7 @@ export async function syncStats(): Promise<SyncStatsResult> {
       const apiTeams = await getTeamsByLeague(league.apiId, season);
       for (const t of apiTeams) {
         const teamId = teamIdByApiId.get(t.team.id);
-        if (!teamId) continue; // team without any synced fixture yet - skip
+        if (!teamId) continue;
         try {
           const stats = await getTeamStatistics(league.apiId, season, t.team.id);
           if (!stats) continue;
@@ -223,14 +246,13 @@ export async function syncStats(): Promise<SyncStatsResult> {
         }
       }
       await prisma.league.update({ where: { id: league.id }, data: { statsSyncedAt: new Date() } });
-      result.teamStatsRefreshed++;
+      result.leaguesRefreshed++;
     } catch (err) {
       if (err instanceof ApiFootballQuotaExceededError) {
-        result.errors.push(`${league.name}: quota exhausted, stopping team-stats pass`);
+        result.errors.push(`${league.name}: quota exhausted, stopping`);
         return result;
       }
-      result.errors.push(`${league.name} team-stats: ${err instanceof Error ? err.message : String(err)}`);
-      // Stamp anyway so a consistently-failing league can't starve the queue.
+      result.errors.push(`${league.name}: ${err instanceof Error ? err.message : String(err)}`);
       await prisma.league
         .update({ where: { id: league.id }, data: { statsSyncedAt: new Date() } })
         .catch(() => {});
@@ -238,4 +260,11 @@ export async function syncStats(): Promise<SyncStatsResult> {
   }
 
   return result;
+}
+
+/** Both passes - for the `npm run sync:stats` CLI runner. The cron endpoints call each separately. */
+export async function syncStats() {
+  const tables = await syncLeagueTables();
+  const teamStats = await syncTeamStats();
+  return { tables, teamStats };
 }

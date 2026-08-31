@@ -10,7 +10,8 @@ We are on the Vercel **Hobby** plan, so Vercel Cron is not an option (Hobby =
 | Job | Endpoint | Schedule | Runs on | Why |
 |---|---|---|---|---|
 | sync-results | `/api/cron/sync-results` | every 3 min | **cron-job.org** | Timing matters — this is what clears a finished match's live minute. Fast (<10s). |
-| sync-stats | `/api/cron/sync-stats` | every 30 min | **cron-job.org** | Standings + top scorers need to be current within the hour after a matchday. Pass 1 finishes in ~20s; pass 2 (per-team stats) is time-boxed. |
+| sync-stats | `/api/cron/sync-stats` | every 30 min | **cron-job.org** | Standings + top scorers only. Skips rows that didn't change, so a between-matchday run is a few seconds; a busy one stays well under the 30s timeout. |
+| sync-team-stats | `/api/cron/sync-team-stats` | every 2h | GitHub Actions | Per-team stats (model inputs). One statistics call per team → can't finish all leagues in one run, so it's stalest-first + time-boxed. Delay-tolerant. |
 | sync-fixtures | `/api/cron/sync-fixtures` | every 6h | GitHub Actions | A 20-min delay is irrelevant. |
 | generate-predictions | `/api/cron/generate-predictions` | hourly | GitHub Actions | Can run longer than cron-job.org's 30s response timeout. |
 
@@ -36,17 +37,21 @@ We are on the Vercel **Hobby** plan, so Vercel Cron is not an option (Hobby =
    - **Headers**: add one — name `Authorization`, value
      `Bearer <the CRON_SECRET value from Vercel>`
    - **Treat redirects as success**: off
-   - **Request timeout**: raise to the max (30s on free tier). sync-stats pass 2
-     may still be running server-side when cron-job.org gives up waiting — that's
-     fine, Vercel runs it to `maxDuration` (60s) regardless; the job just shows a
-     timeout in cron-job.org history without the work being lost.
+   - **Request timeout**: raise to the max (30s on free tier).
    - **Notifications**: enable "on failure".
 4. Save. Check **History** after a few minutes — `200` with a JSON body
-   (`{"fixturesChecked":0,...}` / `{"tablesRefreshed":32,...}`). `401` = bad
+   (`{"fixturesChecked":0,...}` / `{"tablesChecked":32,...}`). `401` = bad
    header, `404` = bad URL.
 5. Once green, disable the GitHub fallbacks so they don't double-run: GitHub →
    **Actions** → **Cron - Sync Results** and **Cron - Sync Stats** → `···` →
    **Disable workflow**. Leave the files in the repo for `workflow_dispatch`.
+
+> **If cron-job.org logs occasional timeouts on sync-stats:** the work still
+> completed on Vercel (it runs to `maxDuration` regardless of the client
+> hanging up). But if it's frequent, the matchday write volume is the cause —
+> check the Vercel function duration for `/api/cron/sync-stats`. The
+> change-detection in `syncLeagueTables` should keep it fast; a persistent
+> problem means something is rewriting every row every run.
 
 ## Rotating CRON_SECRET
 

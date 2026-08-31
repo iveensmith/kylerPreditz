@@ -1,0 +1,20 @@
+name: Cron - Sync Team Stats
+
+# Per-team TeamStats (stage-1 model inputs). Stalest-first + time-boxed, so it
+# needs several runs to cover every league - delay-tolerant, which is why it's
+# on GitHub Actions and not the 30s-timeout scheduler. GitHub only actually
+# fires this every few hours; that's fine here.
+on:
+  schedule:
+    - cron: "23 */2 * * *"
+  workflow_dispatch: {}
+
+jobs:
+  trigger:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Call /api/cron/sync-team-stats
+        run: |
+          curl -sf --max-time 90 \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+            "${{ secrets.SITE_URL }}/api/cron/sync-team-stats"
