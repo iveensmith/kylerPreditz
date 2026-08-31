@@ -8,6 +8,13 @@ type TrackedLeague = {
   priority: number;
   /** Leagues whose season doesn't follow the Aug-May European cycle. Defaults to "european". */
   calendarType?: SeasonCalendar;
+  /**
+   * Knockout/group competitions (UCL, UEL). syncStats skips the per-team
+   * statistics loop for these - the field is 40-80 teams from many domestic
+   * leagues, each of which already carries its own league's TeamStats - and
+   * only refreshes the competition's standings + top scorers.
+   */
+  isCup?: boolean;
 };
 
 // apiId values are API-Football's stable league IDs, confirmed via a live
@@ -99,7 +106,22 @@ export const TRACKED_LEAGUES: TrackedLeague[] = [
   // calendar for now. Not fully correct (each half-season resets mid-cycle),
   // flagged here as a known gap rather than modeled properly.
   { apiId: 262, name: "Liga MX", country: "Mexico", slug: "liga-mx", priority: 30 },
+
+  // European club competitions. Lower priority than every domestic league, so
+  // they sit at the bottom of the homepage board and table tabs. isCup: see
+  // the TrackedLeague type. Predictions still work - buildTeamContextStats
+  // looks up each side's stats by team+season, not by league, so UCL/UEL
+  // fixtures use the teams' domestic form.
+  { apiId: 2, name: "UEFA Champions League", country: "World", slug: "champions-league", priority: 31, isCup: true },
+  { apiId: 3, name: "UEFA Europa League", country: "World", slug: "europa-league", priority: 32, isCup: true },
 ];
+
+const CUP_API_IDS = new Set(TRACKED_LEAGUES.filter((l) => l.isCup).map((l) => l.apiId));
+
+/** True for knockout/group competitions (UCL, UEL) - see TrackedLeague.isCup. */
+export function isCupLeague(apiId: number): boolean {
+  return CUP_API_IDS.has(apiId);
+}
 
 const CALENDAR_TYPE_BY_API_ID = new Map<number, SeasonCalendar>(
   TRACKED_LEAGUES.filter((l) => l.calendarType).map((l) => [l.apiId, l.calendarType!]),

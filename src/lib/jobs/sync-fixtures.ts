@@ -5,7 +5,12 @@ import { mapApiFixtureStatus } from "@/lib/api-football/status";
 import { ApiFootballQuotaExceededError } from "@/lib/api-football/client";
 import { apiTeamLogoUrl, seasonCalendarForApiId } from "@/lib/leagues.config";
 
-const SYNC_WINDOW_DAYS = 7;
+// 21, not 7: one /fixtures call covers the whole window regardless of width, and
+// cup competitions (UCL, UEL) run on a ~3-week matchday cycle - a 7-day window
+// left them invisible until days before kickoff, and even 14 missed the first
+// Europa League round. Predictions still only generate 48h out, so this is just
+// schedule visibility on the date strip.
+const SYNC_WINDOW_DAYS = 21;
 
 function toDateParam(date: Date): string {
   return date.toISOString().slice(0, 10);

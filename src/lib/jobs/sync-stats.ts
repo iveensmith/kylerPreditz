@@ -7,7 +7,7 @@ import {
 } from "@/lib/api-football/endpoints";
 import { getCurrentSeason } from "@/lib/api-football/season";
 import { ApiFootballQuotaExceededError } from "@/lib/api-football/client";
-import { seasonCalendarForApiId } from "@/lib/leagues.config";
+import { isCupLeague, seasonCalendarForApiId } from "@/lib/leagues.config";
 
 export type SyncStatsResult = {
   leaguesProcessed: number;
@@ -15,6 +15,7 @@ export type SyncStatsResult = {
   teamsUpdated: number;
   standingsUpdated: number;
   topScorersUpdated: number;
+  staleRowsPruned: number;
   errors: string[];
 };
 
@@ -41,6 +42,7 @@ export async function syncStats(): Promise<SyncStatsResult> {
     teamsUpdated: 0,
     standingsUpdated: 0,
     topScorersUpdated: 0,
+    staleRowsPruned: 0,
     errors: [],
   };
 
@@ -71,7 +73,14 @@ export async function syncStats(): Promise<SyncStatsResult> {
         teamIdByApiId.set(t.team.id, team.id);
       }
 
-      for (const [apiTeamId, teamId] of teamIdByApiId) {
+      // Cup competitions field 40-80 teams from many domestic leagues; each
+      // already carries its own league's TeamStats. Skip the per-team loop
+      // (its API cost is what the time budget is mostly spent on) and just
+      // refresh the competition's standings + scorers below.
+      const teamStatsTargets: Array<[number, string]> = isCupLeague(league.apiId)
+        ? []
+        : [...teamIdByApiId];
+      for (const [apiTeamId, teamId] of teamStatsTargets) {
         try {
           const stats = await getTeamStatistics(league.apiId, season, apiTeamId);
           if (!stats) continue; // no stats published for this team/league/season
@@ -124,6 +133,7 @@ export async function syncStats(): Promise<SyncStatsResult> {
       }
 
       const standings = await getStandings(league.apiId, season);
+      const seenStandingTeamIds: string[] = [];
       for (const row of standings) {
         const teamId = teamIdByApiId.get(row.team.id);
         if (!teamId) continue;
@@ -145,16 +155,28 @@ export async function syncStats(): Promise<SyncStatsResult> {
             goalDiff: row.goalsDiff ?? 0,
           },
         });
+        seenStandingTeamIds.push(teamId);
         result.standingsUpdated++;
+      }
+      // Drop rows for teams no longer in this season's table (relegated last
+      // season, wrong-season data from an earlier sync, etc.). Only when the
+      // API actually returned a table - an empty response (pre-season cup)
+      // must not wipe an existing one.
+      if (seenStandingTeamIds.length > 0) {
+        const pruned = await prisma.standing.deleteMany({
+          where: { leagueId: league.id, season, teamId: { notIn: seenStandingTeamIds } },
+        });
+        result.staleRowsPruned += pruned.count;
       }
 
       const topScorers = await getTopScorers(league.apiId, season);
+      const seenScorerIds: string[] = [];
       for (const entry of topScorers) {
         const stat = entry.statistics[0];
         if (!stat) continue;
         const teamId = teamIdByApiId.get(stat.team.id);
         if (!teamId) continue;
-        await prisma.topScorer.upsert({
+        const scorer = await prisma.topScorer.upsert({
           where: {
             leagueId_teamId_playerName_season: {
               leagueId: league.id,
@@ -179,8 +201,19 @@ export async function syncStats(): Promise<SyncStatsResult> {
             goals: stat.goals.total ?? 0,
             appearances: stat.games.appearences ?? 0,
           },
+          select: { id: true },
         });
+        seenScorerIds.push(scorer.id);
         result.topScorersUpdated++;
+      }
+      // The API returns only the current top ~20; a player who has since
+      // dropped out keeps a stale row (and stale goal count) that pollutes the
+      // "top 10" list. Remove anyone no longer on the list.
+      if (seenScorerIds.length > 0) {
+        const pruned = await prisma.topScorer.deleteMany({
+          where: { leagueId: league.id, season, id: { notIn: seenScorerIds } },
+        });
+        result.staleRowsPruned += pruned.count;
       }
 
       await prisma.league.update({
