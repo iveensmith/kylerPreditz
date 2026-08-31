@@ -4,6 +4,7 @@ import { Suspense, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { getSession, signIn } from "next-auth/react";
+import { PasswordInput } from "@/components/ui/PasswordInput";
 
 const fieldClass =
   "rounded-[var(--radius-control)] border border-line bg-surface px-3 py-2 text-sm outline-none focus:border-brand";
@@ -55,8 +56,7 @@ function LoginForm() {
         </label>
         <label className="flex flex-col gap-1.5 text-sm">
           <span className={labelText}>Password</span>
-          <input
-            type="password"
+          <PasswordInput
             autoComplete="current-password"
             required
             value={password}

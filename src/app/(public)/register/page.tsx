@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { signIn } from "next-auth/react";
 import { registerUser } from "@/lib/actions/auth";
+import { PasswordInput } from "@/components/ui/PasswordInput";
 
 const fieldClass =
   "rounded-[var(--radius-control)] border border-line bg-surface px-3 py-2 text-sm outline-none focus:border-brand";
@@ -59,8 +60,7 @@ function RegisterForm() {
         </label>
         <label className="flex flex-col gap-1.5 text-sm">
           <span className={labelText}>Password</span>
-          <input
-            type="password"
+          <PasswordInput
             autoComplete="new-password"
             required
             minLength={8}
@@ -71,8 +71,7 @@ function RegisterForm() {
         </label>
         <label className="flex flex-col gap-1.5 text-sm">
           <span className={labelText}>Confirm password</span>
-          <input
-            type="password"
+          <PasswordInput
             autoComplete="new-password"
             required
             value={confirm}
