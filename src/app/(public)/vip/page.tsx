@@ -36,6 +36,16 @@ export default async function VipPage({ searchParams }: Props) {
       title="Go Premium"
       intro={`The free board covers every fixture. Premium is the short list our model rates highest — anything at ${PREMIUM_CONFIDENCE_FLOOR}% confidence — kept off the public site and published to members each morning.`}
     >
+      {checkout === "unavailable" && (
+        <div className="rounded-[var(--radius-card)] border border-loss/40 bg-loss/[0.08] p-4 text-sm">
+          We couldn&apos;t start the checkout just now — nothing was charged. Please try again in a moment. If it
+          keeps happening,{" "}
+          <a href={CONTACT.whatsapp.href} target="_blank" rel="noopener noreferrer" className="font-medium text-brand-hover underline dark:text-brand-light">
+            message us
+          </a>
+          .
+        </div>
+      )}
       {checkout === "failed" && (
         <div className="rounded-[var(--radius-card)] border border-loss/40 bg-loss/[0.08] p-4 text-sm">
           That payment didn&apos;t go through. Nothing was charged — pick a plan below to try again.
@@ -43,8 +53,8 @@ export default async function VipPage({ searchParams }: Props) {
       )}
       {checkout === "error" && (
         <div className="rounded-[var(--radius-card)] border border-loss/40 bg-loss/[0.08] p-4 text-sm">
-          Something went wrong confirming that payment. If you were charged, message us with your email and
-          we&apos;ll sort it out.
+          Your payment went through but we couldn&apos;t activate your membership automatically. Send us your
+          account email and we&apos;ll switch it on right away — you won&apos;t be charged again.
         </div>
       )}
 

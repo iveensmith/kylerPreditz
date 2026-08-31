@@ -17,7 +17,8 @@ export async function GET(request: Request) {
   const reference = url.searchParams.get("reference") ?? url.searchParams.get("trxref");
 
   if (!reference) {
-    return NextResponse.redirect(absoluteUrl("/vip?checkout=error"));
+    // Not a real Paystack redirect - it always carries reference/trxref.
+    return NextResponse.redirect(absoluteUrl("/vip?checkout=unavailable"));
   }
 
   try {

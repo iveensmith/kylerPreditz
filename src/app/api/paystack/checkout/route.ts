@@ -21,7 +21,7 @@ export const dynamic = "force-dynamic";
 export async function GET(request: Request) {
   const planRaw = new URL(request.url).searchParams.get("plan") ?? "";
   if (!isPlan(planRaw)) {
-    return NextResponse.redirect(absoluteUrl("/vip?checkout=error"));
+    return NextResponse.redirect(absoluteUrl("/vip?checkout=unavailable"));
   }
   const plan = PLANS[planRaw];
 
@@ -43,7 +43,7 @@ export async function GET(request: Request) {
     },
   });
   if (!user?.email) {
-    return NextResponse.redirect(absoluteUrl("/vip?checkout=error"));
+    return NextResponse.redirect(absoluteUrl("/vip?checkout=unavailable"));
   }
   if (user.subscriptions.length > 0) {
     return NextResponse.redirect(absoluteUrl("/premium")); // lifetime member
@@ -69,6 +69,6 @@ export async function GET(request: Request) {
     return NextResponse.redirect(authorizationUrl);
   } catch (err) {
     console.error(`[checkout] initTransaction failed for ${userId} / ${plan.plan}:`, err);
-    return NextResponse.redirect(absoluteUrl("/vip?checkout=error"));
+    return NextResponse.redirect(absoluteUrl("/vip?checkout=unavailable"));
   }
 }
