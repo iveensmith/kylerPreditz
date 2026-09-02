@@ -9,18 +9,26 @@ export async function getUncoveredMarketPages(): Promise<MarketPageConfig[]> {
   const now = new Date();
   const windowEnd = new Date(now.getTime() + UPCOMING_WINDOW_DAYS * 24 * 60 * 60 * 1000);
 
-  const uncovered: MarketPageConfig[] = [];
-  for (const page of MARKET_PAGES) {
-    if (page.filter.type !== "market") continue;
-    const count = await prisma.prediction.count({
-      where: {
-        market: { in: page.filter.markets },
-        fixture: { kickoffUtc: { gte: now, lte: windowEnd } },
-      },
-    });
-    if (count === 0) uncovered.push(page);
-  }
-  return uncovered;
+  const marketPages = MARKET_PAGES.filter((p) => p.filter.type === "market");
+  const trackedMarkets = [
+    ...new Set(marketPages.flatMap((p) => (p.filter.type === "market" ? p.filter.markets : []))),
+  ];
+
+  // One grouped count for every market a market-type page cares about, instead
+  // of one count() per page.
+  const grouped = await prisma.prediction.groupBy({
+    by: ["market"],
+    where: {
+      market: { in: trackedMarkets },
+      fixture: { kickoffUtc: { gte: now, lte: windowEnd } },
+    },
+    _count: { _all: true },
+  });
+  const coveredMarkets = new Set(grouped.filter((g) => g._count._all > 0).map((g) => g.market));
+
+  return marketPages.filter((page) =>
+    page.filter.type === "market" ? !page.filter.markets.some((m) => coveredMarkets.has(m)) : false,
+  );
 }
 
 export type CoverageCandidate = { fixtureId: string; markets: MarketProbability[] };
