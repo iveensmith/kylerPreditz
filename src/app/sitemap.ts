@@ -3,7 +3,7 @@ import { prisma } from "@/lib/db/prisma";
 import { MARKET_PAGES } from "@/lib/markets.config";
 import { matchSlug } from "@/lib/queries/match-detail";
 import { slugify } from "@/lib/slugs";
-import { getSitemapPosts } from "@/lib/queries/blog";
+import { getListedPostPageCount, getSitemapPosts } from "@/lib/queries/blog";
 import { getSitemapLeagues } from "@/lib/queries/league-detail";
 import { absoluteUrl } from "@/lib/seo";
 
@@ -18,13 +18,14 @@ const DAY_SLUGS = [
 ];
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const [leagues, fixtures, posts] = await Promise.all([
+  const [leagues, fixtures, posts, blogPageCount] = await Promise.all([
     getSitemapLeagues(),
     prisma.fixture.findMany({
       where: { prediction: { isNot: null } },
       select: { id: true, updatedAt: true, homeTeam: { select: { name: true } }, awayTeam: { select: { name: true } } },
     }),
     getSitemapPosts(),
+    getListedPostPageCount(),
   ]);
 
   const entries: MetadataRoute.Sitemap = [
@@ -46,6 +47,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       changeFrequency: "monthly",
       priority: 0.5,
     });
+  }
+
+  // Paginated blog index: page 1 is /blog (above), pages 2..N are their own routes.
+  for (let page = 2; page <= blogPageCount; page++) {
+    entries.push({ url: absoluteUrl(`/blog/page/${page}`), changeFrequency: "weekly", priority: 0.3 });
   }
 
   for (const m of MARKET_PAGES) {
