@@ -11,6 +11,18 @@ export async function getLeagueIndex() {
 
 export type LeagueIndexEntry = Awaited<ReturnType<typeof getLeagueIndex>>[number];
 
+/**
+ * Every league that has a public detail page. Wider than getLeagueIndex():
+ * the [country]/[league] route renders for any league (dynamicParams), not
+ * just featured ones, so the sitemap lists them all.
+ */
+export async function getSitemapLeagues() {
+  return prisma.league.findMany({
+    select: { country: true, slug: true, updatedAt: true },
+    orderBy: { priority: "asc" },
+  });
+}
+
 /** cache()'d - both generateMetadata and the page component need this per request/render pass. */
 export const getLeagueBySlug = cache(async (slug: string) => {
   const season = getCurrentSeason(new Date(), seasonCalendarForSlug(slug));

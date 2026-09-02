@@ -4,6 +4,7 @@ import { MARKET_PAGES } from "@/lib/markets.config";
 import { matchSlug } from "@/lib/queries/match-detail";
 import { slugify } from "@/lib/slugs";
 import { getSitemapPosts } from "@/lib/queries/blog";
+import { getSitemapLeagues } from "@/lib/queries/league-detail";
 import { absoluteUrl } from "@/lib/seo";
 
 const DAY_SLUGS = [
@@ -18,7 +19,7 @@ const DAY_SLUGS = [
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const [leagues, fixtures, posts] = await Promise.all([
-    prisma.league.findMany({ where: { isFeatured: true } }),
+    getSitemapLeagues(),
     prisma.fixture.findMany({
       where: { prediction: { isNot: null } },
       select: { id: true, updatedAt: true, homeTeam: { select: { name: true } }, awayTeam: { select: { name: true } } },
@@ -56,7 +57,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   }
 
   for (const league of leagues) {
-    entries.push({ url: absoluteUrl(`/leagues/${slugify(league.country)}/${league.slug}`), changeFrequency: "daily", priority: 0.6 });
+    entries.push({
+      url: absoluteUrl(`/leagues/${slugify(league.country)}/${league.slug}`),
+      lastModified: league.updatedAt,
+      changeFrequency: "daily",
+      priority: 0.6,
+    });
   }
 
   for (const fixture of fixtures) {
