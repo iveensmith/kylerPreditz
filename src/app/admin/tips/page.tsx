@@ -1,12 +1,17 @@
 import Link from "next/link";
 import { getAllPredictionsForAdmin } from "@/lib/queries/admin";
 import { formatKickoffTime, formatMarketLabel } from "@/lib/format";
+import { parsePageParam } from "@/lib/pagination";
 import { DeleteTipButton } from "@/components/admin/DeleteTipButton";
 import { AdminHeader } from "@/components/admin/AdminHeader";
+import { Pagination } from "@/components/ui/Pagination";
 import { adminBtnLink } from "@/lib/admin-ui";
 
-export default async function AdminTipsPage() {
-  const predictions = await getAllPredictionsForAdmin();
+type Props = { searchParams: Promise<{ page?: string }> };
+
+export default async function AdminTipsPage({ searchParams }: Props) {
+  const page = parsePageParam((await searchParams).page);
+  const { items: predictions, meta } = await getAllPredictionsForAdmin(page);
 
   return (
     <div className="flex flex-col gap-6">
@@ -33,6 +38,13 @@ export default async function AdminTipsPage() {
             </tr>
           </thead>
           <tbody>
+            {predictions.length === 0 && (
+              <tr>
+                <td colSpan={7} className="px-3 py-6 text-center text-muted">
+                  {meta.total === 0 ? "No tips yet." : "No tips on this page."}
+                </td>
+              </tr>
+            )}
             {predictions.map((p) => (
               <tr key={p.id} className="border-t border-line">
                 <td className="whitespace-nowrap px-3 py-2 font-mono tabular-nums text-muted">
@@ -67,6 +79,8 @@ export default async function AdminTipsPage() {
           </tbody>
         </table>
       </div>
+
+      <Pagination meta={meta} basePath="/admin/tips" />
     </div>
   );
 }

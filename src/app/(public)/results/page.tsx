@@ -4,7 +4,9 @@ import { PredictionMarket, SettledStatus } from "@/generated/prisma/enums";
 import { formatKickoffTime, formatMarketLabel } from "@/lib/format";
 import { parseDateParam, toDateParam } from "@/lib/format";
 import { getSettledCounts, getSettledPredictions, isValidMarket } from "@/lib/queries/results-archive";
+import { parsePageParam } from "@/lib/pagination";
 import { absoluteUrl, SITE_NAME } from "@/lib/seo";
+import { Pagination } from "@/components/ui/Pagination";
 import { TeamBadge } from "@/components/ui/TeamBadge";
 
 export const revalidate = 900;
@@ -26,15 +28,16 @@ const SETTLED_BADGE: Record<Exclude<SettledStatus, "PENDING">, string> = {
   VOID: "bg-surface-2 text-muted",
 };
 
-type Props = { searchParams: Promise<{ date?: string; market?: string }> };
+type Props = { searchParams: Promise<{ date?: string; market?: string; page?: string }> };
 
 export default async function ResultsPage({ searchParams }: Props) {
   const params = await searchParams;
   const date = params.date ? parseDateParam(params.date) : undefined;
   const market = params.market && isValidMarket(params.market) ? params.market : undefined;
+  const page = parsePageParam(params.page);
 
-  const [predictions, counts] = await Promise.all([
-    getSettledPredictions({ date, market }),
+  const [{ items: predictions, meta }, counts] = await Promise.all([
+    getSettledPredictions({ date, market }, page),
     getSettledCounts({ date, market }),
   ]);
 
@@ -104,7 +107,11 @@ export default async function ResultsPage({ searchParams }: Props) {
       </form>
 
       {predictions.length === 0 ? (
-        <p className="text-muted text-sm">No settled predictions match this filter yet.</p>
+        <p className="text-muted text-sm">
+          {meta.total === 0
+            ? "No settled predictions match this filter yet."
+            : "No results on this page."}
+        </p>
       ) : (
         <div className="overflow-hidden rounded-[var(--radius-card)] border border-line">
           {predictions.map((p) => (
@@ -130,6 +137,8 @@ export default async function ResultsPage({ searchParams }: Props) {
           ))}
         </div>
       )}
+
+      <Pagination meta={meta} basePath="/results" query={{ date: date ? toDateParam(date) : undefined, market }} />
     </main>
   );
 }

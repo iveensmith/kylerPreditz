@@ -1,14 +1,16 @@
 import { SubscriptionStatus } from "@/generated/prisma/enums";
-import { prisma } from "@/lib/db/prisma";
+import { getSubscribersForAdmin } from "@/lib/queries/admin";
+import { parsePageParam } from "@/lib/pagination";
 import { adminBtn, adminInput, adminLabel, adminLabelText } from "@/lib/admin-ui";
 import { grantTestSubscription, revokeSubscription } from "@/lib/actions/subscriptions";
 import { AdminHeader } from "@/components/admin/AdminHeader";
+import { Pagination } from "@/components/ui/Pagination";
 
-export default async function AdminSubscribersPage() {
-  const subscriptions = await prisma.subscription.findMany({
-    orderBy: { createdAt: "desc" },
-    include: { user: true },
-  });
+type Props = { searchParams: Promise<{ page?: string }> };
+
+export default async function AdminSubscribersPage({ searchParams }: Props) {
+  const page = parsePageParam((await searchParams).page);
+  const { items: subscriptions, meta } = await getSubscribersForAdmin(page);
 
   return (
     <div className="flex flex-col gap-8">
@@ -41,7 +43,9 @@ export default async function AdminSubscribersPage() {
       </section>
 
       {subscriptions.length === 0 ? (
-        <p className="text-sm text-muted">No subscribers yet.</p>
+        <p className="text-sm text-muted">
+          {meta.total === 0 ? "No subscribers yet." : "No subscribers on this page."}
+        </p>
       ) : (
         <div className="overflow-x-auto rounded-[var(--radius-card)] border border-line">
           <table className="w-full text-sm">
@@ -79,6 +83,8 @@ export default async function AdminSubscribersPage() {
           </table>
         </div>
       )}
+
+      <Pagination meta={meta} basePath="/admin/subscribers" />
     </div>
   );
 }

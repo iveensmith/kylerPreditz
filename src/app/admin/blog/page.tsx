@@ -1,7 +1,9 @@
 import Link from "next/link";
-import { prisma } from "@/lib/db/prisma";
+import { getAllPostsForAdmin } from "@/lib/queries/blog";
+import { parsePageParam } from "@/lib/pagination";
 import { DeletePostButton } from "@/components/admin/DeletePostButton";
 import { AdminHeader } from "@/components/admin/AdminHeader";
+import { Pagination } from "@/components/ui/Pagination";
 import { adminBtnLink } from "@/lib/admin-ui";
 
 function Badge({ children, tone }: { children: React.ReactNode; tone: "zinc" | "amber" | "red" | "blue" }) {
@@ -18,8 +20,11 @@ function Badge({ children, tone }: { children: React.ReactNode; tone: "zinc" | "
   );
 }
 
-export default async function AdminBlogPage() {
-  const posts = await prisma.post.findMany({ orderBy: { createdAt: "desc" } });
+type Props = { searchParams: Promise<{ page?: string }> };
+
+export default async function AdminBlogPage({ searchParams }: Props) {
+  const page = parsePageParam((await searchParams).page);
+  const { items: posts, meta } = await getAllPostsForAdmin(page);
 
   return (
     <div className="flex flex-col gap-6">
@@ -69,6 +74,8 @@ export default async function AdminBlogPage() {
           ))}
         </div>
       )}
+
+      <Pagination meta={meta} basePath="/admin/blog" />
     </div>
   );
 }

@@ -1,5 +1,6 @@
 import { PostType } from "@/generated/prisma/enums";
 import { prisma } from "@/lib/db/prisma";
+import { pageArgs, pageMeta } from "@/lib/pagination";
 
 // Single source of truth for "shows in the /blog index, homepage latest, and
 // counts as a listed entry". Unlisted posts (guest / sponsored) still resolve at
@@ -11,11 +12,16 @@ const LISTED_WHERE = {
   type: PostType.ARTICLE,
 } as const;
 
-export async function getListedPosts() {
-  return prisma.post.findMany({
-    where: LISTED_WHERE,
-    orderBy: { publishedAt: "desc" },
-  });
+export async function getListedPosts(page = 1) {
+  const [items, total] = await Promise.all([
+    prisma.post.findMany({
+      where: LISTED_WHERE,
+      orderBy: { publishedAt: "desc" },
+      ...pageArgs(page),
+    }),
+    prisma.post.count({ where: LISTED_WHERE }),
+  ]);
+  return { items, meta: pageMeta(total, page) };
 }
 
 export async function getLatestListedPosts(n: number) {
@@ -48,4 +54,13 @@ export async function getSitemapPosts() {
     where: { publishedAt: { not: null }, noindex: false },
     select: { slug: true, updatedAt: true },
   });
+}
+
+/** Every post (drafts included), newest first - the admin blog list. */
+export async function getAllPostsForAdmin(page = 1) {
+  const [items, total] = await Promise.all([
+    prisma.post.findMany({ orderBy: { createdAt: "desc" }, ...pageArgs(page) }),
+    prisma.post.count(),
+  ]);
+  return { items, meta: pageMeta(total, page) };
 }

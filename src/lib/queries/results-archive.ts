@@ -1,12 +1,11 @@
 import type { Prisma } from "@/generated/prisma/client";
 import { PredictionMarket, SettledStatus } from "@/generated/prisma/enums";
 import { prisma } from "@/lib/db/prisma";
+import { pageArgs, pageMeta } from "@/lib/pagination";
 import { fixtureListInclude } from "./types";
 import { dayRangeUtc } from "./homepage";
 
 export type ResultsFilters = { date?: Date; market?: PredictionMarket };
-
-const RESULTS_PAGE_SIZE = 50;
 
 function whereForFilters(filters: ResultsFilters): Prisma.PredictionWhereInput {
   const where: Prisma.PredictionWhereInput = { settledAs: { not: SettledStatus.PENDING } };
@@ -18,13 +17,18 @@ function whereForFilters(filters: ResultsFilters): Prisma.PredictionWhereInput {
   return where;
 }
 
-export async function getSettledPredictions(filters: ResultsFilters) {
-  return prisma.prediction.findMany({
-    where: whereForFilters(filters),
-    orderBy: { fixture: { kickoffUtc: "desc" } },
-    take: RESULTS_PAGE_SIZE,
-    include: { fixture: { include: fixtureListInclude } },
-  });
+export async function getSettledPredictions(filters: ResultsFilters, page = 1) {
+  const where = whereForFilters(filters);
+  const [items, total] = await Promise.all([
+    prisma.prediction.findMany({
+      where,
+      orderBy: { fixture: { kickoffUtc: "desc" } },
+      ...pageArgs(page),
+      include: { fixture: { include: fixtureListInclude } },
+    }),
+    prisma.prediction.count({ where }),
+  ]);
+  return { items, meta: pageMeta(total, page) };
 }
 
 export async function getSettledCounts(filters: ResultsFilters) {
