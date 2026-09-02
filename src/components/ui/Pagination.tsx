@@ -3,15 +3,17 @@ import type { PageMeta } from "@/lib/pagination";
 
 type Props = {
   meta: PageMeta;
-  /** Path the links point at, e.g. "/results". */
-  basePath: string;
+  /** Path the links point at, e.g. "/results". Used with the default `?page=N` scheme. */
+  basePath?: string;
   /** Other query params to carry across page changes (e.g. active filters). */
   query?: Record<string, string | number | undefined | null>;
+  /** Full override: given a page number, return its href. Use for segment routes (/blog/page/2). */
+  pageHref?: (page: number) => string;
   className?: string;
 };
 
 /** Builds `${basePath}?<query>&page=N`, dropping `page` when N === 1 so page 1 stays canonical. */
-function hrefForPage(basePath: string, query: Props["query"], page: number): string {
+function queryHref(basePath: string, query: Props["query"], page: number): string {
   const sp = new URLSearchParams();
   for (const [key, value] of Object.entries(query ?? {})) {
     if (value !== undefined && value !== null && value !== "") sp.set(key, String(value));
@@ -19,6 +21,12 @@ function hrefForPage(basePath: string, query: Props["query"], page: number): str
   if (page > 1) sp.set("page", String(page));
   const qs = sp.toString();
   return qs ? `${basePath}?${qs}` : basePath;
+}
+
+function makeHrefForPage({ basePath, query, pageHref }: Props): (page: number) => string {
+  if (pageHref) return pageHref;
+  if (!basePath) throw new Error("<Pagination> needs either `basePath` or `pageHref`");
+  return (page) => queryHref(basePath, query, page);
 }
 
 /** Compact page-number window: 1 … p-1 p p+1 … last (no gaps when the list is short). */
@@ -30,8 +38,10 @@ function pageWindow(page: number, pageCount: number): number[] {
 const linkBase =
   "inline-flex min-w-9 items-center justify-center rounded-[var(--radius-control)] border border-line px-3 py-1.5 text-sm tabular-nums transition-colors hover:border-brand hover:text-ink";
 
-export function Pagination({ meta, basePath, query, className }: Props) {
+export function Pagination(props: Props) {
+  const { meta, className } = props;
   if (meta.pageCount <= 1) return null;
+  const hrefForPage = makeHrefForPage(props);
   const windowed = pageWindow(meta.page, meta.pageCount);
 
   return (
@@ -40,7 +50,7 @@ export function Pagination({ meta, basePath, query, className }: Props) {
       className={`flex flex-wrap items-center justify-center gap-1.5 ${className ?? ""}`}
     >
       {meta.hasPrev ? (
-        <Link href={hrefForPage(basePath, query, meta.page - 1)} rel="prev" className={linkBase}>
+        <Link href={hrefForPage(meta.page - 1)} rel="prev" className={linkBase}>
           ← Prev
         </Link>
       ) : (
@@ -57,7 +67,7 @@ export function Pagination({ meta, basePath, query, className }: Props) {
                 {p}
               </span>
             ) : (
-              <Link href={hrefForPage(basePath, query, p)} className={linkBase}>
+              <Link href={hrefForPage(p)} className={linkBase}>
                 {p}
               </Link>
             )}
@@ -66,7 +76,7 @@ export function Pagination({ meta, basePath, query, className }: Props) {
       })}
 
       {meta.hasNext ? (
-        <Link href={hrefForPage(basePath, query, meta.page + 1)} rel="next" className={linkBase}>
+        <Link href={hrefForPage(meta.page + 1)} rel="next" className={linkBase}>
           Next →
         </Link>
       ) : (

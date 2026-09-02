@@ -24,6 +24,12 @@ export async function getListedPosts(page = 1) {
   return { items, meta: pageMeta(total, page) };
 }
 
+/** How many pages the /blog index spans - for generateStaticParams of /blog/page/[n]. */
+export async function getListedPostPageCount() {
+  const total = await prisma.post.count({ where: LISTED_WHERE });
+  return pageMeta(total, 1).pageCount;
+}
+
 export async function getLatestListedPosts(n: number) {
   return prisma.post.findMany({
     where: LISTED_WHERE,

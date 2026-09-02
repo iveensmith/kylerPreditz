@@ -1,10 +1,7 @@
 import type { Metadata } from "next";
 import { getListedPosts } from "@/lib/queries/blog";
-import { parsePageParam } from "@/lib/pagination";
 import { absoluteUrl } from "@/lib/seo";
-import { PostCard } from "@/components/blog/PostCard";
-import { PageHeader } from "@/components/ui/PageHeader";
-import { Pagination } from "@/components/ui/Pagination";
+import { BlogIndexView } from "@/components/blog/BlogIndexView";
 
 const TITLE = "Football Blog & Analysis";
 const DESCRIPTION =
@@ -19,29 +16,7 @@ export const metadata: Metadata = {
 
 export const revalidate = 3600;
 
-type Props = { searchParams: Promise<{ page?: string }> };
-
-export default async function BlogIndexPage({ searchParams }: Props) {
-  const page = parsePageParam((await searchParams).page);
-  const { items: posts, meta } = await getListedPosts(page);
-
-  return (
-    <main className="mx-auto flex w-full max-w-5xl flex-col gap-8 px-4 py-12 sm:px-6">
-      <PageHeader eyebrow="Blog" title="Analysis & explainers" subtitle={DESCRIPTION} />
-
-      {posts.length === 0 ? (
-        <p className="text-sm text-muted">
-          {meta.total === 0 ? "No articles published yet." : "No articles on this page."}
-        </p>
-      ) : (
-        <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-          {posts.map((post) => (
-            <PostCard key={post.id} post={post} />
-          ))}
-        </div>
-      )}
-
-      <Pagination meta={meta} basePath="/blog" />
-    </main>
-  );
+export default async function BlogIndexPage() {
+  const { items: posts, meta } = await getListedPosts(1);
+  return <BlogIndexView posts={posts} meta={meta} />;
 }
