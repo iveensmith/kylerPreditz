@@ -6,12 +6,13 @@ import { prisma } from "@/lib/db/prisma";
 import { buildContextPacket, buildFallbackPick, DEFAULT_AI_MODEL, reviewFixturesWithMode } from "@/lib/predictions/ai";
 import type { AiLayerMode, ContextPacket } from "@/lib/predictions/ai";
 import { buildH2hEntries, buildInjuries, buildTeamContextStats } from "@/lib/predictions/context-input";
-import { buildTeamHistory, computeLeagueAverages } from "@/lib/predictions/history";
+import { buildTeamHistory, computeLeagueAverages, finishedFixtureSelect, type FinishedFixtureRow } from "@/lib/predictions/history";
 import { assignCoverageFills, getUncoveredMarketPages } from "@/lib/predictions/market-coverage";
 import { DEFAULT_CONFIDENCE_FLOOR, MIN_MATCHES_REQUIRED, predictFixture, selectTopPick, type MarketProbability } from "@/lib/predictions/model";
 
 const GENERATE_WINDOW_HOURS = 48;
 const VALID_MODES: AiLayerMode[] = ["full", "reasoning_only", "off"];
+const EMPTY_ROWS: FinishedFixtureRow[] = [];
 
 function getAiLayerMode(): AiLayerMode {
   const raw = process.env.AI_LAYER_MODE;
@@ -89,6 +90,50 @@ export async function generatePredictions(
   const floor = getConfidenceFloor();
   const leagueAveragesCache = new Map<string, Awaited<ReturnType<typeof computeLeagueAverages>>>();
 
+  // --- batch every DB input the per-fixture context builders need, so the loop
+  //     below issues zero per-team queries (H2H / injuries stay per-fixture -
+  //     those are API-Football lookups, not ours to batch). ---
+  const teamIds = [...new Set(fixtures.flatMap((f) => [f.homeTeamId, f.awayTeamId]))];
+  const leagueIds = [...new Set(fixtures.map((f) => f.leagueId))];
+  const seasonByFixtureId = new Map(
+    fixtures.map((f) => [f.id, getCurrentSeason(f.kickoffUtc, seasonCalendarForApiId(f.league.apiId))] as const),
+  );
+  const seasons = [...new Set(seasonByFixtureId.values())];
+
+  const [allStats, allStandings, allFinished] = await Promise.all([
+    prisma.teamStats.findMany({ where: { teamId: { in: teamIds }, season: { in: seasons } } }),
+    prisma.standing.findMany({
+      where: { teamId: { in: teamIds }, leagueId: { in: leagueIds }, season: { in: seasons } },
+      select: { leagueId: true, teamId: true, season: true, rank: true },
+    }),
+    prisma.fixture.findMany({
+      where: {
+        status: FixtureStatus.FINISHED,
+        homeScore: { not: null },
+        awayScore: { not: null },
+        OR: [{ homeTeamId: { in: teamIds } }, { awayTeamId: { in: teamIds } }],
+      },
+      orderBy: { kickoffUtc: "desc" },
+      select: finishedFixtureSelect,
+    }),
+  ]);
+
+  const statsByTeamSeason = new Map(allStats.map((s) => [`${s.teamId}:${s.season}`, s]));
+  const standingByKey = new Map(allStandings.map((s) => [`${s.leagueId}:${s.teamId}:${s.season}`, s]));
+  const teamIdSet = new Set(teamIds);
+  const finishedByTeam = new Map<string, FinishedFixtureRow[]>();
+  for (const row of allFinished) {
+    for (const tid of [row.homeTeamId, row.awayTeamId]) {
+      if (!teamIdSet.has(tid)) continue;
+      let arr = finishedByTeam.get(tid);
+      if (!arr) {
+        arr = [];
+        finishedByTeam.set(tid, arr);
+      }
+      arr.push(row);
+    }
+  }
+
   type Built = {
     fixtureId: string;
     markets: MarketProbability[];
@@ -104,9 +149,11 @@ export async function generatePredictions(
         leagueAveragesCache.set(fixture.leagueId, leagueAverages);
       }
 
+      const homeFinished = finishedByTeam.get(fixture.homeTeamId) ?? EMPTY_ROWS;
+      const awayFinished = finishedByTeam.get(fixture.awayTeamId) ?? EMPTY_ROWS;
       const [homeMatches, awayMatches] = await Promise.all([
-        buildTeamHistory({ teamDbId: fixture.homeTeamId, teamApiId: fixture.homeTeam.apiId, leagueApiId: fixture.league.apiId }),
-        buildTeamHistory({ teamDbId: fixture.awayTeamId, teamApiId: fixture.awayTeam.apiId, leagueApiId: fixture.league.apiId }),
+        buildTeamHistory({ teamDbId: fixture.homeTeamId, teamApiId: fixture.homeTeam.apiId, leagueApiId: fixture.league.apiId, preloadedDbRows: homeFinished }),
+        buildTeamHistory({ teamDbId: fixture.awayTeamId, teamApiId: fixture.awayTeam.apiId, leagueApiId: fixture.league.apiId, preloadedDbRows: awayFinished }),
       ]);
 
       if (homeMatches.length < MIN_MATCHES_REQUIRED || awayMatches.length < MIN_MATCHES_REQUIRED) {
@@ -125,10 +172,24 @@ export async function generatePredictions(
       );
       if (modelResult.skip) continue;
 
-      const season = getCurrentSeason(fixture.kickoffUtc, seasonCalendarForApiId(fixture.league.apiId));
+      const season = seasonByFixtureId.get(fixture.id)!;
       const [homeStats, awayStats, h2h, injuries] = await Promise.all([
-        buildTeamContextStats({ teamDbId: fixture.homeTeamId, leagueDbId: fixture.leagueId, season, kickoffUtc: fixture.kickoffUtc }),
-        buildTeamContextStats({ teamDbId: fixture.awayTeamId, leagueDbId: fixture.leagueId, season, kickoffUtc: fixture.kickoffUtc }),
+        buildTeamContextStats({
+          teamDbId: fixture.homeTeamId, leagueDbId: fixture.leagueId, season, kickoffUtc: fixture.kickoffUtc,
+          preload: {
+            stats: statsByTeamSeason.get(`${fixture.homeTeamId}:${season}`) ?? null,
+            standing: standingByKey.get(`${fixture.leagueId}:${fixture.homeTeamId}:${season}`) ?? null,
+            recent: homeFinished,
+          },
+        }),
+        buildTeamContextStats({
+          teamDbId: fixture.awayTeamId, leagueDbId: fixture.leagueId, season, kickoffUtc: fixture.kickoffUtc,
+          preload: {
+            stats: statsByTeamSeason.get(`${fixture.awayTeamId}:${season}`) ?? null,
+            standing: standingByKey.get(`${fixture.leagueId}:${fixture.awayTeamId}:${season}`) ?? null,
+            recent: awayFinished,
+          },
+        }),
         buildH2hEntries(fixture.homeTeam.apiId, fixture.awayTeam.apiId),
         buildInjuries(fixture.league.apiId, season, fixture.homeTeam.apiId, fixture.awayTeam.apiId),
       ]);
