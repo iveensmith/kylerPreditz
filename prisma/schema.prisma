@@ -117,7 +117,14 @@ model Fixture {
 
   @@index([leagueId])
   @@index([kickoffUtc])
-  @@index([status])
+  // Team recent-form / H2H lookups filter ("homeTeamId" = x OR "awayTeamId" = x);
+  // Postgres BitmapOrs these two. Prisma doesn't auto-index relation FKs on PG.
+  @@index([homeTeamId])
+  @@index([awayTeamId])
+  // sync-results (status IN (...) AND kickoffUtc <= now) and generate-predictions
+  // (status = SCHEDULED AND kickoffUtc BETWEEN ...) both filter status + kickoff.
+  // Leftmost prefix still serves plain status lookups, so this replaces @@index([status]).
+  @@index([status, kickoffUtc])
 }
 
 model TeamStats {
@@ -270,6 +277,8 @@ model Prediction {
   @@index([settledAs])
   @@index([premium])
   @@index([isBanker])
+  // market-coverage groupBy(market) and the results archive's market filter.
+  @@index([market])
 }
 
 // ---------------------------------------------------------------------------
