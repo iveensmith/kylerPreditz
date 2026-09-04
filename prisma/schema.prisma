@@ -28,6 +28,16 @@ model ApiQuotaUsage {
   count Int    @default(0)
 }
 
+// Single-row, cross-process per-minute counter. The build, cron syncs, and
+// serverless requests each run in their own process, so an in-memory counter
+// can't see what the others are using against the same account-wide cap -
+// this table is the shared source of truth.
+model ApiRateLimitWindow {
+  id          String   @id
+  windowStart DateTime
+  count       Int      @default(0)
+}
+
 // ---------------------------------------------------------------------------
 // Football data (synced from API-Football via /lib/api-football/client.ts)
 // ---------------------------------------------------------------------------

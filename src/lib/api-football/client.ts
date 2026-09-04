@@ -6,26 +6,35 @@ export const DAILY_QUOTA = 7500; // api-sports.io Pro plan (confirmed via /statu
 const MAX_RETRIES = 4;
 
 // api-sports.io Pro plan caps at 300 requests/minute (see x-ratelimit-limit on
-// any response), and that cap is per account, not per process - cron jobs and
-// a build can be pulling from it at the same time. Leave real headroom rather
-// than budgeting this process up to the full 300.
+// any response), and that cap is per account, not per process - the build,
+// cron syncs, and live serverless requests can all be pulling from it at the
+// same time. The counter lives in Postgres (see ApiRateLimitWindow) so every
+// process shares one real budget instead of each guessing at its own share.
 const RATE_LIMIT_PER_MINUTE = 300;
 const RATE_LIMIT_WINDOW_MS = 60_000;
-const RATE_LIMIT_SAFETY_MARGIN = 100;
-const requestTimestamps: number[] = [];
+const RATE_LIMIT_SAFETY_MARGIN = 30;
+const RATE_LIMIT_WINDOW_ID = "global";
 
 async function throttleForRateLimit(): Promise<void> {
   const maxRequests = RATE_LIMIT_PER_MINUTE - RATE_LIMIT_SAFETY_MARGIN;
   for (;;) {
-    const now = Date.now();
-    while (requestTimestamps.length > 0 && now - requestTimestamps[0] >= RATE_LIMIT_WINDOW_MS) {
-      requestTimestamps.shift();
-    }
-    if (requestTimestamps.length < maxRequests) {
-      requestTimestamps.push(now);
-      return;
-    }
-    const waitMs = RATE_LIMIT_WINDOW_MS - (now - requestTimestamps[0]) + 50;
+    const [row] = await prisma.$queryRaw<{ count: number; windowStart: Date }[]>`
+      INSERT INTO "ApiRateLimitWindow" (id, "windowStart", count)
+      VALUES (${RATE_LIMIT_WINDOW_ID}, now(), 1)
+      ON CONFLICT (id) DO UPDATE SET
+        count = CASE
+          WHEN "ApiRateLimitWindow"."windowStart" <= now() - interval '60 seconds' THEN 1
+          ELSE "ApiRateLimitWindow".count + 1
+        END,
+        "windowStart" = CASE
+          WHEN "ApiRateLimitWindow"."windowStart" <= now() - interval '60 seconds' THEN now()
+          ELSE "ApiRateLimitWindow"."windowStart"
+        END
+      RETURNING count, "windowStart"
+    `;
+    if (row.count <= maxRequests) return;
+    const elapsedMs = Date.now() - row.windowStart.getTime();
+    const waitMs = Math.max(RATE_LIMIT_WINDOW_MS - elapsedMs, 0) + 50;
     await new Promise((resolve) => setTimeout(resolve, waitMs));
   }
 }
