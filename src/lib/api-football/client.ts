@@ -3,14 +3,15 @@ import type { z } from "zod";
 
 const BASE_URL = "https://v3.football.api-sports.io";
 export const DAILY_QUOTA = 7500; // api-sports.io Pro plan (confirmed via /status: x-ratelimit-requests-limit)
-const MAX_RETRIES = 2;
+const MAX_RETRIES = 4;
 
 // api-sports.io Pro plan caps at 300 requests/minute (see x-ratelimit-limit on
-// any response). Loops that hit many endpoints in quick succession (e.g.
-// syncing stats for every team in a league) need throttling, or they 429.
+// any response), and that cap is per account, not per process - cron jobs and
+// a build can be pulling from it at the same time. Leave real headroom rather
+// than budgeting this process up to the full 300.
 const RATE_LIMIT_PER_MINUTE = 300;
 const RATE_LIMIT_WINDOW_MS = 60_000;
-const RATE_LIMIT_SAFETY_MARGIN = 1;
+const RATE_LIMIT_SAFETY_MARGIN = 100;
 const requestTimestamps: number[] = [];
 
 async function throttleForRateLimit(): Promise<void> {
@@ -144,6 +145,12 @@ async function fetchFromUpstream(path: string, params: Record<string, string | n
   throw lastError instanceof Error ? lastError : new Error("API-Football request failed");
 }
 
+// Concurrent callers asking for the same not-yet-cached resource (e.g. several
+// match-detail pages rendering for the same team during a build) share one
+// upstream request instead of each firing their own - the duplicates were a
+// major contributor to blowing through the per-minute cap.
+const inFlightRequests = new Map<string, Promise<unknown>>();
+
 /**
  * The only entry point for talking to API-Football. Every call is cached in
  * Postgres and counted against the daily quota; cache hits are free.
@@ -161,17 +168,30 @@ export async function apiFootballRequest<T extends z.ZodTypeAny>(
     return schema.parse(cached.response);
   }
 
-  const allowed = await tryReserveQuota();
-  if (!allowed) {
-    if (cached) {
-      console.warn(`[api-football] quota exhausted, serving stale cache for ${cacheKey}`);
-      return schema.parse(cached.response);
-    }
-    throw new ApiFootballQuotaExceededError();
+  const inFlight = inFlightRequests.get(cacheKey);
+  if (inFlight) {
+    return schema.parse(await inFlight);
   }
 
-  const raw = await fetchFromUpstream(path, params);
-  const parsed = schema.parse(raw);
-  await writeCache(cacheKey, path, raw, ttlSeconds);
-  return parsed;
+  const requestPromise = (async () => {
+    const allowed = await tryReserveQuota();
+    if (!allowed) {
+      if (cached) {
+        console.warn(`[api-football] quota exhausted, serving stale cache for ${cacheKey}`);
+        return cached.response;
+      }
+      throw new ApiFootballQuotaExceededError();
+    }
+
+    const raw = await fetchFromUpstream(path, params);
+    await writeCache(cacheKey, path, raw, ttlSeconds);
+    return raw;
+  })();
+
+  inFlightRequests.set(cacheKey, requestPromise);
+  try {
+    return schema.parse(await requestPromise);
+  } finally {
+    inFlightRequests.delete(cacheKey);
+  }
 }
