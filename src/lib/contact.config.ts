@@ -11,8 +11,8 @@ export const CONTACT = {
     href: "https://wa.me/2349044560336",
   },
   telegramChat: {
-    handle: "@CEO_kylerpredict",
-    href: "https://t.me/CEO_kylerpredict",
+    handle: "@CEO_Uniquepredict",
+    href: "https://t.me/CEO_Uniquepredict",
   },
   telegramChannel: {
     href: "https://t.me/+EErgpui1zBowYzE8",

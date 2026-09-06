@@ -70,7 +70,7 @@ export default function AboutPage() {
           <br />
           Telegram:{" "}
           <a href={CONTACT.telegramChat.href} target="_blank" rel="noopener noreferrer" className="text-brand-hover dark:text-brand-light underline">
-            {CONTACT.telegramChat.handle}
+            click here to chat
           </a>
           <br />
           Telegram channel:{" "}

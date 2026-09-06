@@ -116,7 +116,7 @@ export default async function VipPage({ searchParams }: Props) {
           <br />
           Telegram:{" "}
           <a href={CONTACT.telegramChat.href} target="_blank" rel="noopener noreferrer" className="text-brand-hover underline dark:text-brand-light">
-            {CONTACT.telegramChat.handle}
+            click here to chat
           </a>
         </p>
       </Section>
