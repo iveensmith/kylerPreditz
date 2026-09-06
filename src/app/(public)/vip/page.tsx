@@ -111,7 +111,7 @@ export default async function VipPage({ searchParams }: Props) {
           <br />
           WhatsApp:{" "}
           <a href={CONTACT.whatsapp.href} target="_blank" rel="noopener noreferrer" className="text-brand-hover underline dark:text-brand-light">
-            {CONTACT.whatsapp.number}
+            click here to chat
           </a>
           <br />
           Telegram:{" "}

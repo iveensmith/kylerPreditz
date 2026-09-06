@@ -42,8 +42,8 @@ export function FooterContact() {
           <WhatsAppIcon />
           <span>
             WhatsApp Only:{" "}
-            <a href={CONTACT.whatsapp.href} target="_blank" rel="noopener noreferrer" className={valueClass}>
-              {CONTACT.whatsapp.number}
+            <a href={CONTACT.whatsapp.href} target="_blank" rel="noopener noreferrer" className={linkClass}>
+              click here to chat
             </a>
           </span>
         </li>

@@ -65,7 +65,7 @@ export default function AboutPage() {
         <p>
           WhatsApp:{" "}
           <a href={CONTACT.whatsapp.href} target="_blank" rel="noopener noreferrer" className="text-brand-hover dark:text-brand-light underline">
-            {CONTACT.whatsapp.number}
+            click here to chat
           </a>
           <br />
           Telegram:{" "}
