@@ -41,7 +41,7 @@ export default async function VipPage({ searchParams }: Props) {
           We couldn&apos;t start the checkout just now — nothing was charged. Please try again in a moment. If it
           keeps happening,{" "}
           <a href={CONTACT.whatsapp.href} target="_blank" rel="noopener noreferrer" className="font-medium text-brand-hover underline dark:text-brand-light">
-            message us
+            click here to chat
           </a>
           .
         </div>
