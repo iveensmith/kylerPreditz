@@ -57,15 +57,6 @@ export function FooterContact() {
           </span>
         </li>
         <li className="flex items-center gap-2 whitespace-nowrap">
-          <TelegramIcon />
-          <span>
-            Telegram Channel:{" "}
-            <a href={CONTACT.telegramChannel.href} target="_blank" rel="noopener noreferrer" className={linkClass}>
-              click here
-            </a>
-          </span>
-        </li>
-        <li className="flex items-center gap-2 whitespace-nowrap">
           <MailIcon />
           <span>
             Email Us:{" "}
