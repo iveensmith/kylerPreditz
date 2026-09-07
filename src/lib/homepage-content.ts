@@ -13,18 +13,13 @@ export type ContentSection = {
 // All body copy is our own and describes our actual model.
 
 export const HOMEPAGE_INTRO: string[] = [
-  `${SITE_NAME} publishes free football predictions every day, each with a suggested betting market, fair odds, and a confidence rating, for matches across 30 leagues around the world. Every tip is the output of our own statistical model rather than a tipster's hunch, and the platform gives fans and bettors a clearer picture of how a match might go before kickoff.`,
-  `The site is built to be quick to read and easy to check. Predictions are analysed with a consistent method and written plainly, so you can follow the reasoning, see how each call has performed, and enjoy the game with more context. ${SITE_NAME} also keeps a public results archive of every settled tip - wins and losses alike, never edited after the fact.`,
+  `${SITE_NAME} publishes free football predictions every day - each with a suggested betting market, fair odds, and a confidence rating - for matches across 30 leagues worldwide. Every tip comes straight from our own statistical model, not a tipster's hunch, so fans and bettors get a clearer read on how a match might go before kickoff.`,
+  `The site is built to be quick to read and easy to check. Every fixture is analysed the same way and written in plain language, so you can follow the reasoning and see how each call has performed. We also keep a public results archive of every settled tip - wins and losses alike - that is never edited after the result is in.`,
+  `${SITE_NAME} provides free football predictions and betting tips for today's and tomorrow's matches, along with match analysis, team statistics, form guides and league tables. Coverage spans leagues and cups worldwide, from the biggest European divisions to selected competitions in the Americas, Asia and elsewhere.`,
+  `Many prediction sites overcomplicate things or make promises they cannot keep. ${SITE_NAME} is straightforward to navigate on a phone or a desktop, every tip is analysed with the same method, and the confidence figure next to each pick tells you exactly how strongly the model rates it.`,
 ];
 
 export const HOW_IT_WORKS: ContentSection[] = [
-  {
-    heading: "Accurate Football Predicting Site",
-    body: [
-      `${SITE_NAME} provides free football predictions and betting tips for today's and tomorrow's matches, along with match analysis, team statistics, form guides and league tables. Coverage spans leagues and cups worldwide, from the biggest European divisions to selected competitions in the Americas, Asia and elsewhere.`,
-      `The site was built to keep football predictions simple. Many prediction sites overcomplicate things or make promises they cannot keep. ${SITE_NAME} is straightforward to navigate on a phone or a desktop, every tip is analysed with the same method, and the confidence figure next to each pick tells you exactly how strongly the model rates it.`,
-    ],
-  },
   {
     heading: "Our Services",
     body: [

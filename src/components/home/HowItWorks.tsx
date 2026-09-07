@@ -4,7 +4,7 @@ import { SectionHeading } from "@/components/ui/SectionHeading";
 export function HowItWorks() {
   return (
     <section className="text-sm leading-relaxed text-muted">
-      <SectionHeading eyebrow="How it works" title="A prediction site built on a real model" />
+      <SectionHeading title="Accurate Football Prediction Site" />
       <div className="space-y-6">
         {HOMEPAGE_INTRO.map((p, i) => (
           <p key={i}>{p}</p>
