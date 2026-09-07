@@ -47,23 +47,23 @@ export function FooterContact() {
             </a>
           </span>
         </li>
-        <li className="flex items-center gap-2 whitespace-nowrap">
-          <TelegramIcon />
-          <span>
-            Telegram Only:{" "}
-            <a href={CONTACT.telegramChat.href} target="_blank" rel="noopener noreferrer" className={linkClass}>
-              click here to chat
-            </a>
-          </span>
+        <li className="whitespace-nowrap">
+          <a
+            href={CONTACT.telegramChat.href}
+            target="_blank"
+            rel="noopener noreferrer"
+            className={`flex items-center gap-2 ${linkClass}`}
+          >
+            <TelegramIcon />
+            Textlink/Quest: Reach Us on telegram
+          </a>
         </li>
         <li className="flex items-center gap-2 whitespace-nowrap">
+          <span>For adverts:</span>
           <MailIcon />
-          <span>
-            Email Us:{" "}
-            <a href={CONTACT.email.href} className={valueClass}>
-              {CONTACT.email.address}
-            </a>
-          </span>
+          <a href={CONTACT.email.href} className={valueClass}>
+            {CONTACT.email.address}
+          </a>
         </li>
       </ul>
     </div>
