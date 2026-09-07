@@ -8,6 +8,7 @@ import { parsePageParam } from "@/lib/pagination";
 import { absoluteUrl, SITE_NAME } from "@/lib/seo";
 import { Pagination } from "@/components/ui/Pagination";
 import { TeamBadge } from "@/components/ui/TeamBadge";
+import { Breadcrumbs } from "@/components/seo/Breadcrumbs";
 
 export const revalidate = 900;
 
@@ -47,6 +48,13 @@ export default async function ResultsPage({ searchParams }: Props) {
   return (
     <main className="mx-auto flex w-full max-w-3xl flex-col gap-8 px-4 py-12 sm:px-6">
       <header className="border-b border-line pb-5">
+        <Breadcrumbs
+          className="mb-4"
+          items={[
+            { name: "Home", href: "/" },
+            { name: "Results Archive", href: "/results" },
+          ]}
+        />
         <div className="eyebrow mb-2">Every settled tip</div>
         <h1 className="text-[2rem] leading-[1.05] sm:text-4xl">Results archive</h1>
         <p className="mt-3 text-[15px] leading-relaxed text-muted">

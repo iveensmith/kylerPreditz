@@ -4,6 +4,7 @@ import Image from "next/image";
 import { getLeagueIndex } from "@/lib/queries/league-detail";
 import { slugify } from "@/lib/slugs";
 import { absoluteUrl, SITE_NAME } from "@/lib/seo";
+import { Breadcrumbs } from "@/components/seo/Breadcrumbs";
 
 export const revalidate = 3600;
 
@@ -22,6 +23,13 @@ export default async function LeaguesIndexPage() {
   return (
     <main className="mx-auto flex w-full max-w-4xl flex-col gap-8 px-4 py-12 sm:px-6">
       <header className="border-b border-line pb-5">
+        <Breadcrumbs
+          className="mb-4"
+          items={[
+            { name: "Home", href: "/" },
+            { name: "Leagues", href: "/leagues" },
+          ]}
+        />
         <div className="eyebrow mb-2">Coverage</div>
         <h1 className="text-[2rem] leading-[1.05] sm:text-4xl">Leagues</h1>
         <p className="mt-3 text-[15px] text-muted">Fixtures, tables, and top scorers for every league we track.</p>

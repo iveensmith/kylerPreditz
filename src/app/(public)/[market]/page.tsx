@@ -11,6 +11,7 @@ import { BankerCard } from "@/components/home/BankerCard";
 import { FaqSection } from "@/components/home/FaqSection";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { MatchListJsonLd } from "@/components/seo/MatchListJsonLd";
+import { Breadcrumbs } from "@/components/seo/Breadcrumbs";
 
 export const revalidate = 900;
 
@@ -48,6 +49,13 @@ export default async function MarketPage({ params }: Props) {
       <JsonLd data={buildFaqPageJsonLd(faq)} />
       {config.filter.type !== "banker" && <MatchListJsonLd leagues={leagues} />}
       <header className="border-b border-line pb-5">
+        <Breadcrumbs
+          className="mb-4"
+          items={[
+            { name: "Home", href: "/" },
+            { name: config.h1, href: `/${config.slug}` },
+          ]}
+        />
         <div className="eyebrow mb-2">Market</div>
         <h1 className="text-[2rem] leading-[1.05] sm:text-4xl">{config.h1}</h1>
         <p className="mt-3 max-w-2xl text-[15px] leading-relaxed text-muted">{config.intro}</p>

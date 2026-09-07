@@ -5,6 +5,7 @@ import { formatArticleDate } from "@/lib/format";
 import { absoluteUrl, SITE_NAME } from "@/lib/seo";
 import { buildArticleJsonLd } from "@/lib/structured-data";
 import { JsonLd } from "@/components/seo/JsonLd";
+import { Breadcrumbs } from "@/components/seo/Breadcrumbs";
 import { PostBody } from "@/components/blog/PostBody";
 import { SponsoredNotice } from "@/components/blog/SponsoredNotice";
 
@@ -75,6 +76,13 @@ export default async function BlogPostPage({ params }: Props) {
       />
 
       <header className="flex flex-col gap-4 border-b border-line pb-6">
+        <Breadcrumbs
+          items={[
+            { name: "Home", href: "/" },
+            { name: "Blog", href: "/blog" },
+            { name: post.title, href: `/blog/${post.slug}` },
+          ]}
+        />
         <div className="eyebrow">
           {post.author}
           {post.publishedAt ? ` · ${formatArticleDate(post.publishedAt)}` : ""}
