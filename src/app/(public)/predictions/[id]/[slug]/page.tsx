@@ -4,9 +4,11 @@ import { FixtureStatus } from "@/generated/prisma/enums";
 import { prisma } from "@/lib/db/prisma";
 import { getMatchDetail, matchSlug } from "@/lib/queries/match-detail";
 import { buildMatchAnalysis } from "@/lib/match-analysis";
-import { formatKickoffTime, formatMarketLabel } from "@/lib/format";
+import { formatDayMonthYear, formatKickoffTime, formatMarketLabel } from "@/lib/format";
+import { slugify } from "@/lib/slugs";
 import { absoluteUrl } from "@/lib/seo";
 import { buildSportsEventJsonLd } from "@/lib/structured-data";
+import { Breadcrumbs } from "@/components/seo/Breadcrumbs";
 import { TeamBadge } from "@/components/ui/TeamBadge";
 import { MatchStatus } from "@/components/ui/MatchStatus";
 import { SectionHeading } from "@/components/ui/SectionHeading";
@@ -51,13 +53,15 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const detail = await getMatchDetail(id);
   if (!detail) return {};
   const { homeTeam, awayTeam, league } = detail.fixture;
-  const description = `${homeTeam.name} vs ${awayTeam.name} prediction, 1X2 odds, head-to-head, recent form and league table - ${league.name}.`;
+  const matchDate = formatDayMonthYear(detail.fixture.kickoffUtc);
+  const title = `${homeTeam.name} vs ${awayTeam.name} Prediction & Betting Tips — ${matchDate}`;
+  const description = `${homeTeam.name} vs ${awayTeam.name} prediction for ${matchDate}: our model's ${league.name} pick, 1X2 odds, head-to-head record, recent form and the league table.`;
   const url = absoluteUrl(`/predictions/${id}/${slug}`);
   return {
-    title: `${homeTeam.name} vs ${awayTeam.name} Prediction`,
+    title,
     description,
     alternates: { canonical: url },
-    openGraph: { title: `${homeTeam.name} vs ${awayTeam.name}`, description, url, type: "article" },
+    openGraph: { title: `${homeTeam.name} vs ${awayTeam.name} Prediction`, description, url, type: "article" },
   };
 }
 
@@ -84,6 +88,14 @@ export default async function MatchDetailPage({ params }: Props) {
       />
 
       <header className="border-b border-line pb-6">
+        <Breadcrumbs
+          className="mb-4"
+          items={[
+            { name: "Home", href: "/" },
+            { name: league.name, href: `/leagues/${slugify(league.country)}/${league.slug}` },
+            { name: `${homeTeam.name} v ${awayTeam.name}`, href: `/predictions/${id}/${slug}` },
+          ]}
+        />
         <div className="eyebrow flex flex-wrap items-center gap-x-2 gap-y-1">
           <span>{league.name}</span>
           <span aria-hidden>&middot;</span>

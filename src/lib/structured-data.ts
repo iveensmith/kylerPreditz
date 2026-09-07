@@ -51,6 +51,21 @@ export function buildFaqPageJsonLd(entries: FaqEntry[]) {
   };
 }
 
+/** BreadcrumbList for a page's trail. `items` must be in order, root first,
+ *  current page last; every `url` absolute. */
+export function buildBreadcrumbJsonLd(items: { name: string; url: string }[]) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: items.map((item, i) => ({
+      "@type": "ListItem",
+      position: i + 1,
+      name: item.name,
+      item: item.url,
+    })),
+  };
+}
+
 export function buildArticleJsonLd(params: {
   title: string;
   description: string;

@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { getLeagueBySlug, getLeagueIndex } from "@/lib/queries/league-detail";
 import { slugify } from "@/lib/slugs";
 import { absoluteUrl, SITE_NAME } from "@/lib/seo";
+import { Breadcrumbs } from "@/components/seo/Breadcrumbs";
 import { LeagueTipGroup } from "@/components/home/LeagueTipGroup";
 import { StandingsTable } from "@/components/league/StandingsTable";
 import { TeamBadge } from "@/components/ui/TeamBadge";
@@ -34,19 +35,29 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 }
 
 export default async function LeagueDetailPage({ params }: Props) {
-  const { league: slug } = await params;
+  const { country, league: slug } = await params;
   const league = await getLeagueBySlug(slug);
   if (!league) notFound();
 
   return (
     <main className="mx-auto flex w-full max-w-3xl flex-col gap-10 px-4 py-12 sm:px-6">
-      <header className="flex items-center gap-4 border-b border-line pb-5">
-        {league.logoUrl && <Image src={league.logoUrl} alt="" width={40} height={40} />}
-        <div>
-          <div className="eyebrow mb-1">{league.country}</div>
-          <h1 className="text-[2rem] leading-none sm:text-4xl">{league.name}</h1>
-        </div>
-      </header>
+      <div>
+        <Breadcrumbs
+          className="mb-4"
+          items={[
+            { name: "Home", href: "/" },
+            { name: "Leagues", href: "/leagues" },
+            { name: league.name, href: `/leagues/${country}/${slug}` },
+          ]}
+        />
+        <header className="flex items-center gap-4 border-b border-line pb-5">
+          {league.logoUrl && <Image src={league.logoUrl} alt="" width={40} height={40} />}
+          <div>
+            <div className="eyebrow mb-1">{league.country}</div>
+            <h1 className="text-[2rem] leading-none sm:text-4xl">{league.name}</h1>
+          </div>
+        </header>
+      </div>
 
       <section>
         <SectionHeading eyebrow="Next 7 days" title="Upcoming fixtures" />
