@@ -17,6 +17,10 @@ export const CONTACT = {
   telegramChannel: {
     href: "https://t.me/+EErgpui1zBowYzE8",
   },
+  x: {
+    handle: "@Kyler_TL29",
+    href: "https://x.com/Kyler_TL29",
+  },
   email: {
     address: "uniquepredict539@gmail.com",
     href: "mailto:uniquepredict539@gmail.com",

@@ -1,8 +1,26 @@
 import Link from "next/link";
 import { MARKET_PAGES } from "@/lib/markets.config";
 import { SITE_NAME } from "@/lib/seo";
+import { CONTACT } from "@/lib/contact.config";
 import { FooterContact } from "./FooterContact";
 import { Logo } from "./Logo";
+
+const SOCIALS = [
+  {
+    label: "Follow us on X",
+    href: CONTACT.x.href,
+    icon: (
+      <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+    ),
+  },
+  {
+    label: "Join our Telegram channel",
+    href: CONTACT.telegramChannel.href,
+    icon: (
+      <path d="M21.94 4.6l-3.02 14.26c-.23 1.01-.83 1.26-1.68.78l-4.64-3.42-2.24 2.16c-.25.25-.46.46-.94.46l.33-4.73L18.7 6.3c.37-.33-.08-.51-.58-.18L6.66 13.4l-4.66-1.46c-1.01-.32-1.03-1.01.21-1.5l18.22-7.02c.84-.31 1.58.2 1.31 1.47z" />
+    ),
+  },
+];
 
 const DAYS = [
   { label: "Monday", slug: "monday-predictions" },
@@ -80,6 +98,22 @@ export function Footer() {
         </div>
 
         <div className="mt-12 flex flex-col gap-3 border-t border-white/10 pt-8 text-xs">
+          <div className="flex items-center gap-3">
+            {SOCIALS.map((s) => (
+              <a
+                key={s.href}
+                href={s.href}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label={s.label}
+                className="flex h-9 w-9 items-center justify-center rounded-full border border-white/15 text-white/70 transition-colors hover:border-white/40 hover:text-white"
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+                  {s.icon}
+                </svg>
+              </a>
+            ))}
+          </div>
           <p className="font-mono text-[11px] font-semibold uppercase tracking-[0.14em] text-white/80">
             18+ &middot; Gamble responsibly
           </p>
