@@ -29,14 +29,8 @@ export function Hero() {
           </p>
           <div className="mt-7 flex flex-wrap items-center gap-3">
             <Link
-              href="#todays-tips"
-              className="inline-flex items-center rounded-[var(--radius-control)] bg-brand px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-brand-hover"
-            >
-              See today&rsquo;s tips
-            </Link>
-            <Link
               href="/vip"
-              className="inline-flex items-center rounded-[var(--radius-control)] border border-white/15 px-5 py-3 text-sm font-semibold text-white/80 transition-colors hover:border-white/35 hover:text-white"
+              className="inline-flex items-center rounded-[var(--radius-control)] bg-brand px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-brand-hover"
             >
               Go Premium
             </Link>
