@@ -86,15 +86,16 @@ export const HOW_IT_WORKS: ContentSection[] = [
   {
     heading: "Top 10 Football Prediction Site 2026",
     body: [
-      `A few things we try to get right, and that we think a good prediction site should:`,
+      `"Best of 2026" and "top 10" lists get passed around constantly, and most are just advertising. Rather than claim a ranking we cannot prove, here is what we think actually earns a prediction site a place on one - and where ${SITE_NAME} stands on each.`,
+      `The common thread is that you can check every point yourself. Our method, our full results archive and our daily predictions are all open, so nothing here rests on taking our word for it.`,
     ],
     bullets: [
-      "Free predictions with no hidden charges on the main site",
-      "Coverage across the major leagues - the Premier League, La Liga, Bundesliga, Serie A, Ligue 1 and more",
-      "One consistent method applied to every fixture, not a different story each day",
-      "Free access to the daily predictions without signing up",
-      "A public results archive where losing tips are never removed or edited",
-      "Predictions published early each day, so you have time to check them",
+      "A single, stated method: a Poisson model with a Dixon-Coles adjustment, applied to every fixture the same way",
+      "A public, unedited results archive - every settled tip stays up, win or lose, with no quiet deletions",
+      "Free daily predictions with no sign-up and no hidden charges on the main site",
+      "Broad coverage - 30 leagues and cups, from the Premier League, La Liga, Bundesliga, Serie A and Ligue 1 to the Americas and Asia",
+      "A confidence figure on every pick, capped at 92%, so you can see how strongly the model rates it",
+      "Predictions published early each day, with the reasoning shown, so you have time to check them before kickoff",
     ],
   },
   {
