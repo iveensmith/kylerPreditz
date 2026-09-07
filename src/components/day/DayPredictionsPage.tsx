@@ -2,6 +2,7 @@ import { getFixturesForDate } from "@/lib/queries/homepage";
 import { nextOccurrenceOfWeekday } from "@/lib/queries/day-predictions";
 import { formatDayMonth } from "@/lib/format";
 import { LeagueTipGroup } from "@/components/home/LeagueTipGroup";
+import { MatchListJsonLd } from "@/components/seo/MatchListJsonLd";
 
 const WEEKDAY_NAMES = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 
@@ -13,6 +14,7 @@ export async function DayPredictionsPage({ weekday }: { weekday: number }) {
 
   return (
     <main className="mx-auto flex w-full max-w-5xl flex-col gap-8 px-4 py-12 sm:px-6">
+      <MatchListJsonLd leagues={leagues} />
       <header className="border-b border-line pb-4">
         <div className="eyebrow mb-1.5">{formatDayMonth(date)}</div>
         <h1 className="text-[2rem] leading-[1.05] sm:text-4xl">{dayName} predictions</h1>

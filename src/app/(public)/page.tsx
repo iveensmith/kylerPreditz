@@ -25,6 +25,7 @@ import { LatestPosts } from "@/components/home/LatestPosts";
 import { FaqSection } from "@/components/home/FaqSection";
 import { HowItWorks } from "@/components/home/HowItWorks";
 import { JsonLd } from "@/components/seo/JsonLd";
+import { MatchListJsonLd } from "@/components/seo/MatchListJsonLd";
 
 const DESCRIPTION =
   "Today's football predictions with suggested betting markets, odds, and model-generated confidence, across the Premier League, La Liga, Serie A, Bundesliga, and Ligue 1.";
@@ -77,6 +78,7 @@ export default async function Home({ searchParams }: PageProps<"/">) {
         })}
       />
       <JsonLd data={buildFaqPageJsonLd(HOMEPAGE_FAQ)} />
+      <MatchListJsonLd leagues={leagues} />
       <Hero />
 
       <main id="todays-tips" className="max-w-6xl mx-auto w-full px-4 py-8 flex flex-col md:flex-row gap-6">

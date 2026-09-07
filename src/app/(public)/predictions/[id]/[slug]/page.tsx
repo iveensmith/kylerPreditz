@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { FixtureStatus } from "@/generated/prisma/enums";
 import { prisma } from "@/lib/db/prisma";
@@ -9,6 +10,7 @@ import { slugify } from "@/lib/slugs";
 import { absoluteUrl } from "@/lib/seo";
 import { buildSportsEventJsonLd } from "@/lib/structured-data";
 import { Breadcrumbs } from "@/components/seo/Breadcrumbs";
+import { RelatedMatches } from "@/components/match/RelatedMatches";
 import { TeamBadge } from "@/components/ui/TeamBadge";
 import { MatchStatus } from "@/components/ui/MatchStatus";
 import { SectionHeading } from "@/components/ui/SectionHeading";
@@ -70,8 +72,9 @@ export default async function MatchDetailPage({ params }: Props) {
   const detail = await getMatchDetail(id);
   if (!detail) notFound();
 
-  const { fixture, homeStats, awayStats, h2hFixtures, homeRecent, awayRecent, standings } = detail;
+  const { fixture, homeStats, awayStats, h2hFixtures, homeRecent, awayRecent, standings, relatedMatches } = detail;
   const { homeTeam, awayTeam, league, prediction } = fixture;
+  const leagueHref = `/leagues/${slugify(league.country)}/${league.slug}`;
   const analysis = buildMatchAnalysis(detail);
 
   return (
@@ -92,12 +95,14 @@ export default async function MatchDetailPage({ params }: Props) {
           className="mb-4"
           items={[
             { name: "Home", href: "/" },
-            { name: league.name, href: `/leagues/${slugify(league.country)}/${league.slug}` },
+            { name: league.name, href: leagueHref },
             { name: `${homeTeam.name} v ${awayTeam.name}`, href: `/predictions/${id}/${slug}` },
           ]}
         />
         <div className="eyebrow flex flex-wrap items-center gap-x-2 gap-y-1">
-          <span>{league.name}</span>
+          <Link href={leagueHref} className="transition-colors hover:text-ink">
+            {league.name}
+          </Link>
           <span aria-hidden>&middot;</span>
           <span>{formatKickoffTime(fixture.kickoffUtc)}</span>
           {fixture.venue && (
@@ -237,6 +242,24 @@ export default async function MatchDetailPage({ params }: Props) {
         <section>
           <SectionHeading eyebrow="Standings" title={`${league.name} table`} />
           <StandingsTable rows={standings} highlightTeamIds={[homeTeam.id, awayTeam.id]} />
+        </section>
+      )}
+
+      {relatedMatches.length > 0 && (
+        <section>
+          <SectionHeading eyebrow="More predictions" title="Other matches to check" />
+          <RelatedMatches matches={relatedMatches} />
+          <p className="mt-3 text-xs text-faint">
+            See the full board on the{" "}
+            <Link href="/" className="underline hover:text-ink">
+              homepage
+            </Link>{" "}
+            or browse{" "}
+            <Link href={leagueHref} className="underline hover:text-ink">
+              {league.name}
+            </Link>
+            .
+          </p>
         </section>
       )}
 

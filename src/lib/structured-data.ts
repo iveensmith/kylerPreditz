@@ -66,6 +66,23 @@ export function buildBreadcrumbJsonLd(items: { name: string; url: string }[]) {
   };
 }
 
+/**
+ * ItemList in Google's "summary page" form: an ordered list of URLs, each
+ * ListItem carrying only its position and the page it points to. Use for a
+ * board of tips that links out to individual match pages.
+ */
+export function buildItemListJsonLd(urls: string[]) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "ItemList",
+    itemListElement: urls.map((url, i) => ({
+      "@type": "ListItem",
+      position: i + 1,
+      url,
+    })),
+  };
+}
+
 export function buildArticleJsonLd(params: {
   title: string;
   description: string;

@@ -10,6 +10,7 @@ import { LeagueTipGroup } from "@/components/home/LeagueTipGroup";
 import { BankerCard } from "@/components/home/BankerCard";
 import { FaqSection } from "@/components/home/FaqSection";
 import { JsonLd } from "@/components/seo/JsonLd";
+import { MatchListJsonLd } from "@/components/seo/MatchListJsonLd";
 
 export const revalidate = 900;
 
@@ -45,6 +46,7 @@ export default async function MarketPage({ params }: Props) {
   return (
     <main className="mx-auto flex w-full max-w-5xl flex-col gap-8 px-4 py-12 sm:px-6">
       <JsonLd data={buildFaqPageJsonLd(faq)} />
+      {config.filter.type !== "banker" && <MatchListJsonLd leagues={leagues} />}
       <header className="border-b border-line pb-5">
         <div className="eyebrow mb-2">Market</div>
         <h1 className="text-[2rem] leading-[1.05] sm:text-4xl">{config.h1}</h1>
