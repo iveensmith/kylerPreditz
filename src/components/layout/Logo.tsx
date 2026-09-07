@@ -1,11 +1,12 @@
 import { SITE_NAME } from "@/lib/seo";
 
 /**
- * Brand wordmark + "UP" monogram. Rendered as a single flat colour that tracks
- * `--brand-light` - the exact green used by the header's "Premium" link - so the
- * logo and that link always match, in both themes. Ball seams and the lightning
- * bolt are dark knockouts (not another colour) so the mark still reads on the
- * dark header/footer chrome. Inline SVG so it stays crisp at any size.
+ * Brand wordmark + "UP" monogram, on the dark header/footer chrome.
+ * "U" + "UNIQUE" are white; "P" + "PREDICT" + the underline + the swoosh track
+ * `--brand-light` (the header's "Premium" link green) so those always match in
+ * both themes. The ball on the "UP" is a white-to-green gradient; its seams and
+ * the lightning bolt stay dark knockouts so the mark still reads. Inline SVG so
+ * it stays crisp at any size.
  *
  * IDs are prefixed so the two instances (header + footer) don't collide.
  */
@@ -24,6 +25,11 @@ export function Logo({ className }: { className?: string }) {
         <filter id="up-dropShadow" x="-20%" y="-20%" width="140%" height="140%">
           <feDropShadow dx="3" dy="6" stdDeviation="5" floodColor="#000000" floodOpacity="0.5" />
         </filter>
+        <linearGradient id="up-ball" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stopColor="#ffffff" />
+          <stop offset="55%" stopColor="#ffffff" />
+          <stop offset="100%" stopColor="var(--brand-light)" />
+        </linearGradient>
       </defs>
 
       <g transform="translate(10, 0)" filter="url(#up-dropShadow)">
@@ -36,7 +42,7 @@ export function Logo({ className }: { className?: string }) {
           strokeOpacity="0.55"
         />
         <g transform="translate(130, 68)">
-          <circle cx="0" cy="0" r="34" fill="var(--brand-light)" />
+          <circle cx="0" cy="0" r="34" fill="url(#up-ball)" />
           <polygon points="0,-14 -13,-4 -8,11 8,11 13,-4" fill="#08110D" fillOpacity="0.55" />
           <g stroke="#08110D" strokeOpacity="0.55" strokeWidth="3">
             <line x1="0" y1="-14" x2="0" y2="-34" />
@@ -48,7 +54,7 @@ export function Logo({ className }: { className?: string }) {
         </g>
         <path
           d="M 45 75 L 82 75 L 82 145 C 82 158 92 165 107 165 C 122 165 132 158 132 145 L 132 105 L 168 105 L 168 145 C 168 185 138 200 107 200 C 76 200 45 185 45 145 Z"
-          fill="var(--brand-light)"
+          fill="#ffffff"
         />
         <path
           d="M 148 75 L 205 75 C 238 75 255 92 255 117 C 255 142 238 158 205 158 L 184 158 L 184 200 L 148 200 Z M 184 103 L 184 130 L 202 130 C 216 130 222 124 222 116 C 222 108 216 103 202 103 Z"
@@ -70,7 +76,7 @@ export function Logo({ className }: { className?: string }) {
           fontWeight="900"
           fontStyle="italic"
           letterSpacing="2"
-          fill="var(--brand-light)"
+          fill="#ffffff"
         >
           UNIQUE
         </text>
