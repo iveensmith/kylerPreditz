@@ -9,8 +9,9 @@ import {
 } from "@/lib/queries/homepage";
 import { getLatestListedPosts } from "@/lib/queries/blog";
 import { HOMEPAGE_FAQ } from "@/lib/faq.config";
-import { buildFaqPageJsonLd } from "@/lib/structured-data";
-import { absoluteUrl, SITE_NAME, SITE_TAGLINE } from "@/lib/seo";
+import { buildFaqPageJsonLd, buildSiteIdentityJsonLd } from "@/lib/structured-data";
+import { absoluteUrl, SITE_NAME, SITE_TAGLINE, SITE_URL } from "@/lib/seo";
+import { CONTACT } from "@/lib/contact.config";
 import { Hero } from "@/components/home/Hero";
 import { MarketSidebar } from "@/components/home/MarketSidebar";
 import { DateStrip } from "@/components/home/DateStrip";
@@ -66,6 +67,15 @@ export default async function Home({ searchParams }: PageProps<"/">) {
 
   return (
     <>
+      <JsonLd
+        data={buildSiteIdentityJsonLd({
+          siteUrl: SITE_URL,
+          siteName: SITE_NAME,
+          description: DESCRIPTION,
+          logoUrl: absoluteUrl("/icon.svg"),
+          sameAs: [CONTACT.telegramChat.href, CONTACT.telegramChannel.href, CONTACT.whatsapp.href],
+        })}
+      />
       <JsonLd data={buildFaqPageJsonLd(HOMEPAGE_FAQ)} />
       <Hero />
 

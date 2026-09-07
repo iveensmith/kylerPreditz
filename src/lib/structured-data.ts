@@ -1,5 +1,44 @@
 export type FaqEntry = { question: string; answer: string };
 
+/**
+ * Organization + WebSite schema for the homepage, emitted as a single @graph so
+ * the two nodes can cross-reference by @id. Tells Google that uniquepredict.com
+ * and the "Unique Predict" brand are one entity, and links out to the channels
+ * we control (`sameAs`) - the signal behind a branded result with sitelinks.
+ */
+export function buildSiteIdentityJsonLd(params: {
+  siteUrl: string;
+  siteName: string;
+  description: string;
+  logoUrl: string;
+  sameAs: string[];
+}) {
+  const orgId = `${params.siteUrl}/#organization`;
+  const siteId = `${params.siteUrl}/#website`;
+  return {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Organization",
+        "@id": orgId,
+        name: params.siteName,
+        url: params.siteUrl,
+        logo: { "@type": "ImageObject", url: params.logoUrl },
+        ...(params.sameAs.length > 0 ? { sameAs: params.sameAs } : {}),
+      },
+      {
+        "@type": "WebSite",
+        "@id": siteId,
+        name: params.siteName,
+        url: params.siteUrl,
+        description: params.description,
+        publisher: { "@id": orgId },
+        inLanguage: "en",
+      },
+    ],
+  };
+}
+
 export function buildFaqPageJsonLd(entries: FaqEntry[]) {
   return {
     "@context": "https://schema.org",
