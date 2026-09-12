@@ -15,6 +15,8 @@ export type LeagueTablesResult = {
   standingsWritten: number;
   topScorersWritten: number;
   staleRowsPruned: number;
+  /** Leagues that actually had a standings/top-scorer/prune write this run - lets the caller revalidate just these league pages instead of every league page. */
+  changedLeagues: Array<{ country: string; slug: string }>;
   errors: string[];
 };
 
@@ -52,6 +54,7 @@ export async function syncLeagueTables(): Promise<LeagueTablesResult> {
     standingsWritten: 0,
     topScorersWritten: 0,
     staleRowsPruned: 0,
+    changedLeagues: [],
     errors: [],
   };
 
@@ -65,6 +68,10 @@ export async function syncLeagueTables(): Promise<LeagueTablesResult> {
 
   await inChunks(leagues, LEAGUE_CONCURRENCY, async (league) => {
     const season = getCurrentSeason(new Date(), seasonCalendarForApiId(league.apiId));
+    // Local to this league's iteration (closed over by the row-level callbacks below),
+    // not the shared `result` counters - leagues run concurrently within a chunk, so
+    // diffing a shared counter here would misattribute another league's writes.
+    let changed = false;
     try {
       const [standings, topScorers, existingStandings, existingScorers] = await Promise.all([
         getStandings(league.apiId, season),
@@ -104,6 +111,7 @@ export async function syncLeagueTables(): Promise<LeagueTablesResult> {
             update: next,
           });
           result.standingsWritten++;
+          changed = true;
         },
       );
       // Drop rows for teams no longer in the table - but only when the API
@@ -113,6 +121,7 @@ export async function syncLeagueTables(): Promise<LeagueTablesResult> {
         if (stale.length > 0) {
           const pruned = await prisma.standing.deleteMany({ where: { id: { in: stale } } });
           result.staleRowsPruned += pruned.count;
+          changed = true;
         }
       }
 
@@ -144,6 +153,7 @@ export async function syncLeagueTables(): Promise<LeagueTablesResult> {
             }
             await prisma.topScorer.update({ where: { id: current.id }, data: next });
             result.topScorersWritten++;
+            changed = true;
             return;
           }
           const created = await prisma.topScorer.create({
@@ -152,6 +162,7 @@ export async function syncLeagueTables(): Promise<LeagueTablesResult> {
           });
           seenScorerIds.add(created.id);
           result.topScorersWritten++;
+          changed = true;
         },
       );
       // The API only returns the current top ~20; anyone who dropped out keeps a
@@ -161,10 +172,12 @@ export async function syncLeagueTables(): Promise<LeagueTablesResult> {
         if (stale.length > 0) {
           const pruned = await prisma.topScorer.deleteMany({ where: { id: { in: stale } } });
           result.staleRowsPruned += pruned.count;
+          changed = true;
         }
       }
 
       result.tablesChecked++;
+      if (changed) result.changedLeagues.push({ country: league.country, slug: league.slug });
     } catch (err) {
       const label = err instanceof ApiFootballQuotaExceededError ? "quota exhausted" : String(err instanceof Error ? err.message : err);
       result.errors.push(`${league.name}: ${label}`);

@@ -13,10 +13,19 @@ function toVoidOutcome(): MatchOutcome {
   return "VOID";
 }
 
+export type TransitionedFixture = {
+  fixtureId: string;
+  homeTeamName: string;
+  awayTeamName: string;
+  leagueCountry: string;
+  leagueSlug: string;
+};
+
 export type SyncResultsResult = {
   fixturesChecked: number;
   fixturesUpdated: number;
-  /** Fixtures whose status actually changed value this run (e.g. LIVE -> FINISHED) - the caller uses this to decide whether to revalidate public pages. */
+  /** Fixtures whose status actually changed value this run (e.g. LIVE -> FINISHED) - lets the caller revalidate just these pages instead of every prediction/league page. */
+  transitioned: TransitionedFixture[];
   fixturesTransitioned: number;
   predictionsSettled: number;
   errors: string[];
@@ -27,6 +36,7 @@ export async function syncResults(): Promise<SyncResultsResult> {
   const result: SyncResultsResult = {
     fixturesChecked: 0,
     fixturesUpdated: 0,
+    transitioned: [],
     fixturesTransitioned: 0,
     predictionsSettled: 0,
     errors: [],
@@ -34,7 +44,7 @@ export async function syncResults(): Promise<SyncResultsResult> {
 
   const candidates = await prisma.fixture.findMany({
     where: { status: { in: NOT_YET_FINAL }, kickoffUtc: { lte: new Date() } },
-    include: { league: true, prediction: true },
+    include: { league: true, prediction: true, homeTeam: true, awayTeam: true },
   });
   result.fixturesChecked = candidates.length;
   if (candidates.length === 0) return result;
@@ -71,7 +81,16 @@ export async function syncResults(): Promise<SyncResultsResult> {
           },
         });
         result.fixturesUpdated++;
-        if (newStatus !== existing.status) result.fixturesTransitioned++;
+        if (newStatus !== existing.status) {
+          result.fixturesTransitioned++;
+          result.transitioned.push({
+            fixtureId: existing.id,
+            homeTeamName: existing.homeTeam.name,
+            awayTeamName: existing.awayTeam.name,
+            leagueCountry: existing.league.country,
+            leagueSlug: existing.league.slug,
+          });
+        }
 
         const prediction = existing.prediction;
         if (!prediction || prediction.settledAs !== SettledStatus.PENDING) continue;

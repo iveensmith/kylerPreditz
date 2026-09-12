@@ -2,17 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { revalidatePath } from "next/cache";
 import { isAuthorizedCronRequest } from "@/lib/cron-auth";
 import { syncLeagueTables } from "@/lib/jobs/sync-stats";
+import { slugify } from "@/lib/slugs";
 
 export const maxDuration = 60;
-
-// Pages that render standings / top scorers. syncLeagueTables has no ISR window
-// of its own, so without this a refreshed table only shows once the page's own
-// revalidate timer (15 min on league detail) next elapses.
-const STATS_FACING_PATHS: Array<[string, "page"]> = [
-  ["/", "page"],
-  ["/leagues", "page"],
-  ["/leagues/[country]/[league]", "page"],
-];
 
 export async function GET(request: NextRequest) {
   if (!isAuthorizedCronRequest(request)) {
@@ -21,9 +13,13 @@ export async function GET(request: NextRequest) {
 
   const result = await syncLeagueTables();
 
-  if (result.standingsWritten > 0 || result.topScorersWritten > 0 || result.staleRowsPruned > 0) {
-    for (const [path, type] of STATS_FACING_PATHS) {
-      revalidatePath(path, type);
+  // Revalidate only the specific leagues that actually changed, not every league
+  // page site-wide - see the note on LeagueTablesResult.changedLeagues.
+  if (result.changedLeagues.length > 0) {
+    revalidatePath("/", "page");
+    revalidatePath("/leagues", "page");
+    for (const league of result.changedLeagues) {
+      revalidatePath(`/leagues/${slugify(league.country)}/${league.slug}`, "page");
     }
   }
 

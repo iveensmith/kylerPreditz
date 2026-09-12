@@ -2,16 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { revalidatePath } from "next/cache";
 import { isAuthorizedCronRequest } from "@/lib/cron-auth";
 import { syncResults } from "@/lib/jobs/sync-results";
+import { matchSlug } from "@/lib/queries/match-detail";
+import { slugify } from "@/lib/slugs";
 
 export const maxDuration = 60;
-
-// Public pages that render a fixture's live/final state. When a fixture changes
-// status we revalidate these immediately rather than waiting out their ISR window.
-const FIXTURE_FACING_PATHS: Array<[string, "page"]> = [
-  ["/", "page"],
-  ["/predictions/[id]/[slug]", "page"],
-  ["/leagues/[country]/[league]", "page"],
-];
 
 export async function GET(request: NextRequest) {
   if (!isAuthorizedCronRequest(request)) {
@@ -20,9 +14,23 @@ export async function GET(request: NextRequest) {
 
   const result = await syncResults();
 
-  if (result.fixturesTransitioned > 0) {
-    for (const [path, type] of FIXTURE_FACING_PATHS) {
-      revalidatePath(path, type);
+  // Revalidate only the specific fixtures/leagues that actually transitioned this
+  // run, not every prediction/league page site-wide - see the note on
+  // SyncResultsResult.transitioned. Previously this used revalidatePath with the
+  // bracketed route pattern (e.g. "/predictions/[id]/[slug]"), which regenerates
+  // every page matching that pattern - the main driver behind the ISR write spike.
+  if (result.transitioned.length > 0) {
+    revalidatePath("/", "page");
+    const seenLeagues = new Set<string>();
+    for (const f of result.transitioned) {
+      const slug = matchSlug(f.homeTeamName, f.awayTeamName);
+      revalidatePath(`/predictions/${f.fixtureId}/${slug}`, "page");
+
+      const leaguePath = `/leagues/${slugify(f.leagueCountry)}/${f.leagueSlug}`;
+      if (!seenLeagues.has(leaguePath)) {
+        seenLeagues.add(leaguePath);
+        revalidatePath(leaguePath, "page");
+      }
     }
   }
 
