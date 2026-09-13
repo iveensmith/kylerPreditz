@@ -1,9 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { revalidatePath } from "next/cache";
 import { isAuthorizedCronRequest } from "@/lib/cron-auth";
 import { syncResults } from "@/lib/jobs/sync-results";
-import { matchSlug } from "@/lib/queries/match-detail";
-import { slugify } from "@/lib/slugs";
 
 export const maxDuration = 60;
 
@@ -14,25 +11,11 @@ export async function GET(request: NextRequest) {
 
   const result = await syncResults();
 
-  // Revalidate only the specific fixtures/leagues that actually transitioned this
-  // run, not every prediction/league page site-wide - see the note on
-  // SyncResultsResult.transitioned. Previously this used revalidatePath with the
-  // bracketed route pattern (e.g. "/predictions/[id]/[slug]"), which regenerates
-  // every page matching that pattern - the main driver behind the ISR write spike.
-  if (result.transitioned.length > 0) {
-    revalidatePath("/", "page");
-    const seenLeagues = new Set<string>();
-    for (const f of result.transitioned) {
-      const slug = matchSlug(f.homeTeamName, f.awayTeamName);
-      revalidatePath(`/predictions/${f.fixtureId}/${slug}`, "page");
-
-      const leaguePath = `/leagues/${slugify(f.leagueCountry)}/${f.leagueSlug}`;
-      if (!seenLeagues.has(leaguePath)) {
-        seenLeagues.add(leaguePath);
-        revalidatePath(leaguePath, "page");
-      }
-    }
-  }
+  // No on-demand revalidatePath here on purpose: the homepage, prediction, and
+  // league pages already time-revalidate every 120s/900s, which is fast enough
+  // given this cron itself only runs every 3 min. On-demand revalidation on every
+  // transition was forcing an extra rebuild on top of that timer and was the
+  // main driver behind exceeding the Vercel Hobby ISR Writes quota (200k/month).
 
   return NextResponse.json(result);
 }

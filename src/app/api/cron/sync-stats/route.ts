@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { revalidatePath } from "next/cache";
 import { isAuthorizedCronRequest } from "@/lib/cron-auth";
 import { syncLeagueTables } from "@/lib/jobs/sync-stats";
-import { slugify } from "@/lib/slugs";
 
 export const maxDuration = 60;
 
@@ -13,15 +11,10 @@ export async function GET(request: NextRequest) {
 
   const result = await syncLeagueTables();
 
-  // Revalidate only the specific leagues that actually changed, not every league
-  // page site-wide - see the note on LeagueTablesResult.changedLeagues.
-  if (result.changedLeagues.length > 0) {
-    revalidatePath("/", "page");
-    revalidatePath("/leagues", "page");
-    for (const league of result.changedLeagues) {
-      revalidatePath(`/leagues/${slugify(league.country)}/${league.slug}`, "page");
-    }
-  }
+  // No on-demand revalidatePath here on purpose: league pages already
+  // time-revalidate every 900s, which is fine for standings. On-demand
+  // revalidation on every change was extra ISR writes on top of that timer -
+  // see the matching note in sync-results/route.ts.
 
   return NextResponse.json(result);
 }
