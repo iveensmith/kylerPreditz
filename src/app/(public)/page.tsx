@@ -40,8 +40,11 @@ export const metadata: Metadata = {
 };
 
 // Backstop only: sync-results calls revalidatePath("/") the moment a fixture
-// changes status, so live scores refresh well inside this window.
-export const revalidate = 120;
+// changes status, so live scores refresh well inside this window. Widened
+// 120s -> 900s (2026-09-17): this is the highest-traffic page on the site, so
+// a 2-minute window meant real visits alone re-triggered ISR writes on top of
+// the targeted revalidatePath, which already handles real freshness.
+export const revalidate = 900;
 
 export default async function Home({ searchParams }: PageProps<"/">) {
   const params = await searchParams;

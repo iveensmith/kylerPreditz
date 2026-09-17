@@ -26,7 +26,12 @@ import { JsonLd } from "@/components/seo/JsonLd";
 
 // Backstop only: sync-results revalidates this route as soon as a fixture
 // changes status, so the live/final line refreshes well inside this window.
-export const revalidate = 120;
+// Widened 120s -> 900s (2026-09-17): with ~150+ prerendered pages, a 2-minute
+// window meant any real traffic on a page re-triggered its own ISR write on
+// top of the targeted revalidatePath from sync-results, which was already
+// the actual freshness mechanism - this is only the safety net for a missed
+// or failed targeted revalidation.
+export const revalidate = 900;
 
 // Pre-render only a rolling window: recently-settled fixtures (results links)
 // plus the next ~2 weeks. Each page now makes 3 API-Football calls at render
