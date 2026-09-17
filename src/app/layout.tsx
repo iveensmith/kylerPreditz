@@ -1,9 +1,11 @@
 import type { Metadata } from "next";
+import Script from "next/script";
 import { Archivo, Hanken_Grotesk, Geist_Mono, Montserrat } from "next/font/google";
 import "./globals.css";
 import { SessionProviderWrapper } from "@/components/providers/SessionProviderWrapper";
 import { ThemeScript } from "@/components/theme/ThemeScript";
 import { SITE_NAME, SITE_TAGLINE, SITE_URL } from "@/lib/seo";
+import { ADSENSE_CLIENT_ID } from "@/lib/ads.config";
 
 // Display face: a grotesque with a width axis, run slightly expanded for headlines
 // and big numbers - a back-page / matchday-programme voice rather than another
@@ -68,6 +70,14 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     >
       <body className="min-h-full flex flex-col">
         <ThemeScript />
+        {ADSENSE_CLIENT_ID && (
+          <Script
+            async
+            src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${ADSENSE_CLIENT_ID}`}
+            crossOrigin="anonymous"
+            strategy="afterInteractive"
+          />
+        )}
         <SessionProviderWrapper>{children}</SessionProviderWrapper>
       </body>
     </html>
