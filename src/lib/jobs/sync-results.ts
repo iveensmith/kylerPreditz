@@ -9,6 +9,14 @@ import { evaluateOutcome, type MatchOutcome } from "@/lib/predictions/model";
 
 const NOT_YET_FINAL: FixtureStatus[] = [FixtureStatus.SCHEDULED, FixtureStatus.LIVE, FixtureStatus.HALFTIME];
 
+// A fixture that never receives a terminal status (bad API status code, a
+// season/date mismatch that makes the live-update call miss it, a league
+// dropping out of coverage mid-match) would otherwise stay a "candidate"
+// forever - re-fetched with its full league/team/prediction rows on every
+// 3-minute run indefinitely. This bounds the hot query and hands anything
+// older off to abandonStaleFixtures() to settle once and stop tracking.
+const MAX_CANDIDATE_AGE_DAYS = 5;
+
 function toVoidOutcome(): MatchOutcome {
   return "VOID";
 }
@@ -28,8 +36,31 @@ export type SyncResultsResult = {
   transitioned: TransitionedFixture[];
   fixturesTransitioned: number;
   predictionsSettled: number;
+  fixturesAbandoned: number;
   errors: string[];
 };
+
+/**
+ * Fixtures that fell out of the live-tracking window (see MAX_CANDIDATE_AGE_DAYS)
+ * without ever reaching a terminal status. Marks them ABANDONED and voids any
+ * still-PENDING prediction so they stop being re-fetched by syncResults forever.
+ */
+async function abandonStaleFixtures(): Promise<{ fixturesAbandoned: number }> {
+  const cutoff = new Date(Date.now() - MAX_CANDIDATE_AGE_DAYS * 24 * 60 * 60 * 1000);
+  const stale = await prisma.fixture.findMany({
+    where: { status: { in: NOT_YET_FINAL }, kickoffUtc: { lt: cutoff } },
+    select: { id: true, prediction: { select: { id: true, settledAs: true } } },
+  });
+
+  for (const f of stale) {
+    await prisma.fixture.update({ where: { id: f.id }, data: { status: FixtureStatus.ABANDONED } });
+    if (f.prediction && f.prediction.settledAs === SettledStatus.PENDING) {
+      await prisma.prediction.update({ where: { id: f.prediction.id }, data: { settledAs: SettledStatus.VOID } });
+    }
+  }
+
+  return { fixturesAbandoned: stale.length };
+}
 
 /** Refreshes in-progress/recently-kicked-off fixtures and settles any PENDING prediction whose fixture just finished. */
 export async function syncResults(): Promise<SyncResultsResult> {
@@ -39,12 +70,26 @@ export async function syncResults(): Promise<SyncResultsResult> {
     transitioned: [],
     fixturesTransitioned: 0,
     predictionsSettled: 0,
+    fixturesAbandoned: 0,
     errors: [],
   };
 
+  const { fixturesAbandoned } = await abandonStaleFixtures();
+  result.fixturesAbandoned = fixturesAbandoned;
+
+  const cutoff = new Date(Date.now() - MAX_CANDIDATE_AGE_DAYS * 24 * 60 * 60 * 1000);
   const candidates = await prisma.fixture.findMany({
-    where: { status: { in: NOT_YET_FINAL }, kickoffUtc: { lte: new Date() } },
-    include: { league: true, prediction: true, homeTeam: true, awayTeam: true },
+    where: { status: { in: NOT_YET_FINAL }, kickoffUtc: { lte: new Date(), gte: cutoff } },
+    select: {
+      id: true,
+      apiId: true,
+      kickoffUtc: true,
+      status: true,
+      league: { select: { apiId: true, country: true, slug: true } },
+      homeTeam: { select: { name: true } },
+      awayTeam: { select: { name: true } },
+      prediction: { select: { id: true, market: true, selection: true, settledAs: true } },
+    },
   });
   result.fixturesChecked = candidates.length;
   if (candidates.length === 0) return result;
