@@ -3,7 +3,9 @@ import { redirect } from "next/navigation";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
 import { getViewerPremium } from "@/lib/premium";
+import { prisma } from "@/lib/db/prisma";
 import { PageHeader } from "@/components/ui/PageHeader";
+import { VerifyEmailBanner } from "@/components/account/VerifyEmailBanner";
 
 // Members-only account page. The picks themselves live on /premium.
 export const dynamic = "force-dynamic";
@@ -16,11 +18,19 @@ export default async function DashboardPage() {
   const session = await getServerSession(authOptions);
   if (!session) redirect("/login?next=/dashboard");
 
-  const { isPremium, expiresAt } = await getViewerPremium();
+  // Looked up fresh rather than cached on the JWT (same reasoning as premium
+  // status below) - a session token issued before verification shouldn't
+  // keep showing the banner after the user actually verifies.
+  const [{ isPremium, expiresAt }, user] = await Promise.all([
+    getViewerPremium(),
+    prisma.user.findUnique({ where: { id: session.user.id }, select: { email: true, emailVerified: true } }),
+  ]);
 
   return (
     <main className="mx-auto flex w-full max-w-2xl flex-col gap-8 px-4 py-14 sm:px-6">
       <PageHeader eyebrow="Membership" title="Your dashboard" />
+
+      {user && !user.emailVerified && <VerifyEmailBanner email={user.email} />}
 
       {isPremium ? (
         <div className="flex flex-col gap-4">

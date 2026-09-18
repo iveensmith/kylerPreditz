@@ -63,6 +63,9 @@ function LoginForm() {
             onChange={(e) => setPassword(e.target.value)}
             className={fieldClass}
           />
+          <Link href="/reset-password" className="self-end text-xs text-brand underline">
+            Forgot password?
+          </Link>
         </label>
         {error && <p className="text-sm text-loss">{error}</p>}
         <button

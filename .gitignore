@@ -45,3 +45,6 @@ next-env.d.ts
 
 # design reference screenshots - internal reference only, not part of the app
 /project
+
+.vercel
+.env*

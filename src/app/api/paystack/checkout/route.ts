@@ -36,6 +36,7 @@ export async function GET(request: Request) {
     where: { id: userId },
     select: {
       email: true,
+      emailVerified: true,
       subscriptions: {
         where: { status: SubscriptionStatus.ACTIVE, plan: "LIFETIME" },
         select: { id: true },
@@ -44,6 +45,9 @@ export async function GET(request: Request) {
   });
   if (!user?.email) {
     return NextResponse.redirect(absoluteUrl("/vip?checkout=unavailable"));
+  }
+  if (!user.emailVerified) {
+    return NextResponse.redirect(absoluteUrl("/dashboard?verify=required"));
   }
   if (user.subscriptions.length > 0) {
     return NextResponse.redirect(absoluteUrl("/premium")); // lifetime member
