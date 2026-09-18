@@ -58,6 +58,10 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary_large_image",
   },
+  // Rendered as a plain static <meta> tag - no JS required - so Google's
+  // AdSense site-verification crawl can find it even if it doesn't execute
+  // the loader script (which only appears in the DOM after hydration).
+  ...(ADSENSE_CLIENT_ID ? { other: { "google-adsense-account": ADSENSE_CLIENT_ID } } : {}),
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
