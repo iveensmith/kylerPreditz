@@ -8,6 +8,7 @@ import {
   getTopScorersForFeaturedLeagues,
 } from "@/lib/queries/homepage";
 import { getLatestListedPosts } from "@/lib/queries/blog";
+import { getGamesToday } from "@/lib/site-settings";
 import { HOMEPAGE_FAQ } from "@/lib/faq.config";
 import { buildFaqPageJsonLd, buildSiteIdentityJsonLd } from "@/lib/structured-data";
 import { absoluteUrl, SITE_NAME, SITE_TAGLINE, SITE_URL } from "@/lib/seo";
@@ -51,7 +52,12 @@ export default async function Home({ searchParams }: PageProps<"/">) {
   const dateParam = Array.isArray(params.date) ? params.date[0] : params.date;
   const selectedDate = parseDateParam(dateParam);
 
-  const [leagues, banker, recentWinners, standings, topScorers, latestPosts] = await Promise.all([
+  const gamesToday = await getGamesToday();
+  const isToday = selectedDate.getTime() === parseDateParam(undefined).getTime();
+  // Admin "no matches today" switch: only affects the today view, other dates render normally.
+  const noMatchesNotice = !gamesToday && isToday;
+
+  const [fetchedLeagues, fetchedBanker, recentWinners, standings, topScorers, latestPosts] = await Promise.all([
     getFixturesForDate(selectedDate),
     getBankerOfTheDay(selectedDate),
     getRecentWinningTips(),
@@ -59,6 +65,9 @@ export default async function Home({ searchParams }: PageProps<"/">) {
     getTopScorersForFeaturedLeagues(),
     getLatestListedPosts(4),
   ]);
+
+  const leagues = noMatchesNotice ? [] : fetchedLeagues;
+  const banker = noMatchesNotice ? null : fetchedBanker;
 
   // Fills the space below the sticky Tip of the Day card on desktop, where a
   // stretched flex sidebar would otherwise just be empty background. Reuses
@@ -109,7 +118,11 @@ export default async function Home({ searchParams }: PageProps<"/">) {
               ))}
             </div>
           ) : (
-            <p className="text-muted text-sm">No fixtures tracked for this date yet.</p>
+            <p className="text-muted text-sm">
+              {noMatchesNotice
+                ? "There are no matches with a published tip today. Check tomorrow's predictions or browse the results archive."
+                : "No fixtures tracked for this date yet."}
+            </p>
           )}
 
           <RecentWinners tips={recentWinners} />

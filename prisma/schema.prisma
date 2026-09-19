@@ -291,6 +291,13 @@ model Prediction {
   @@index([market])
 }
 
+// Small admin-controlled key/value flags (e.g. "gamesToday" - see lib/site-settings.ts).
+model SiteSetting {
+  key       String   @id
+  value     String
+  updatedAt DateTime @default(now()) @updatedAt
+}
+
 // ---------------------------------------------------------------------------
 // Content
 // ---------------------------------------------------------------------------

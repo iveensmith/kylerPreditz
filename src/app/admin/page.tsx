@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { getDashboardStats } from "@/lib/queries/admin";
+import { getGamesToday } from "@/lib/site-settings";
 import { RefreshSystemButton } from "@/components/admin/RefreshSystemButton";
+import { GamesTodayToggle } from "@/components/admin/GamesTodayToggle";
 
 export const dynamic = "force-dynamic";
 
@@ -14,7 +16,7 @@ function ago(d: Date | null): string {
 }
 
 export default async function AdminDashboardPage() {
-  const stats = await getDashboardStats();
+  const [stats, gamesToday] = await Promise.all([getDashboardStats(), getGamesToday()]);
   const quotaPct = Math.round((stats.quotaUsed / stats.quotaLimit) * 100);
   const today = new Date().toLocaleDateString("en-GB", {
     weekday: "short", day: "numeric", month: "long", year: "numeric", timeZone: "UTC",
@@ -48,6 +50,8 @@ export default async function AdminDashboardPage() {
           Clears cached public pages so tip, post and league edits show immediately. Uses no API quota.
         </p>
       </section>
+
+      <GamesTodayToggle initial={gamesToday} />
 
       <section className="rounded-[var(--radius-card)] border border-line bg-surface-2 px-5 py-4 text-sm">
         <div className="eyebrow mb-3">System status</div>
