@@ -4,7 +4,8 @@ import { getServerSession } from "next-auth/next";
 import { SubscriptionStatus } from "@/generated/prisma/enums";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db/prisma";
-import { isPlan, PLANS } from "@/lib/plans.config";
+import { isPlan } from "@/lib/plans.config";
+import { getPlans } from "@/lib/plans.server";
 import { initTransaction } from "@/lib/paystack/client";
 import { absoluteUrl } from "@/lib/seo";
 
@@ -23,7 +24,7 @@ export async function GET(request: Request) {
   if (!isPlan(planRaw)) {
     return NextResponse.redirect(absoluteUrl("/vip?checkout=unavailable"));
   }
-  const plan = PLANS[planRaw];
+  const plan = (await getPlans())[planRaw];
 
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) {

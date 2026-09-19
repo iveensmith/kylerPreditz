@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { withPageSeo } from "@/lib/page-seo";
 import Link from "next/link";
 import { PredictionMarket, SettledStatus } from "@/generated/prisma/enums";
 import { formatKickoffTime, formatMarketLabel } from "@/lib/format";
@@ -14,7 +15,7 @@ export const revalidate = 900;
 
 const DESCRIPTION = "Every settled prediction, win or lose. Nothing is ever removed or edited.";
 
-export const metadata: Metadata = {
+const baseMetadata: Metadata = {
   title: "Results Archive",
   description: DESCRIPTION,
   // Canonical points at the unfiltered archive - filter combinations (?date=&market=) aren't
@@ -22,6 +23,10 @@ export const metadata: Metadata = {
   alternates: { canonical: absoluteUrl("/results") },
   openGraph: { title: `Results Archive | ${SITE_NAME}`, description: DESCRIPTION, url: absoluteUrl("/results") },
 };
+
+export async function generateMetadata(): Promise<Metadata> {
+  return withPageSeo(baseMetadata, "/results");
+}
 
 const SETTLED_BADGE: Record<Exclude<SettledStatus, "PENDING">, string> = {
   WON: "bg-win/12 text-win",

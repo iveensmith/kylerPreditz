@@ -41,6 +41,21 @@ const GROUPS: Group[] = [
     ],
   },
   {
+    label: "Payments",
+    icon: svg("M3 6h18v12H3zM3 10h18M7 15h3"),
+    items: [{ href: "/admin/payments", label: "Payments & prices" }],
+  },
+  {
+    label: "Ads",
+    icon: svg("M4 5h16v10H4zM8 19h8M12 15v4"),
+    items: [{ href: "/admin/ads", label: "AdSense" }],
+  },
+  {
+    label: "SEO",
+    icon: svg("M11 19a8 8 0 100-16 8 8 0 000 16zM21 21l-4.3-4.3"),
+    items: [{ href: "/admin/seo", label: "Titles & sitemap" }],
+  },
+  {
     label: "Leagues",
     icon: svg("M12 21a9 9 0 100-18 9 9 0 000 18zM12 7l4 3-1.5 5h-5L8 10z"),
     items: [{ href: "/admin/leagues", label: "League manager" }],

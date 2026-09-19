@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { withPageSeo } from "@/lib/page-seo";
 import Link from "next/link";
 import { absoluteUrl, SITE_NAME } from "@/lib/seo";
 import { CONTACT } from "@/lib/contact.config";
@@ -6,12 +7,16 @@ import { LegalPageShell, Section } from "@/components/layout/LegalPageShell";
 
 const DESCRIPTION = `How ${SITE_NAME} builds its football predictions - a statistical goals model, an honest results archive, and a VIP tier.`;
 
-export const metadata: Metadata = {
+const baseMetadata: Metadata = {
   title: "About Us",
   description: DESCRIPTION,
   alternates: { canonical: absoluteUrl("/about") },
   openGraph: { title: `About Us | ${SITE_NAME}`, description: DESCRIPTION, url: absoluteUrl("/about") },
 };
+
+export async function generateMetadata(): Promise<Metadata> {
+  return withPageSeo(baseMetadata, "/about");
+}
 
 export default function AboutPage() {
   return (

@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { withPageSeo } from "@/lib/page-seo";
 import { parseDateParam } from "@/lib/format";
 import {
   getBankerOfTheDay,
@@ -31,7 +32,7 @@ import { MatchListJsonLd } from "@/components/seo/MatchListJsonLd";
 const DESCRIPTION =
   "Today's football predictions with suggested betting markets, odds, and model-generated confidence, across the Premier League, La Liga, Serie A, Bundesliga, and Ligue 1.";
 
-export const metadata: Metadata = {
+const baseMetadata: Metadata = {
   // absolute bypasses the root layout's `%s | SITE_NAME` template - this title already
   // includes the site name, so the template would otherwise duplicate it in the tab title.
   title: { absolute: `${SITE_NAME} - ${SITE_TAGLINE}` },
@@ -39,6 +40,10 @@ export const metadata: Metadata = {
   alternates: { canonical: absoluteUrl("/") },
   openGraph: { title: `${SITE_NAME} - ${SITE_TAGLINE}`, description: DESCRIPTION, url: absoluteUrl("/") },
 };
+
+export async function generateMetadata(): Promise<Metadata> {
+  return withPageSeo(baseMetadata, "/", { absoluteTitle: true });
+}
 
 // Backstop only: sync-results calls revalidatePath("/") the moment a fixture
 // changes status, so live scores refresh well inside this window. Widened

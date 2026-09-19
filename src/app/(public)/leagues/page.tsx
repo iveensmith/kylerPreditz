@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { withPageSeo } from "@/lib/page-seo";
 import Link from "next/link";
 import Image from "next/image";
 import { getLeagueIndex } from "@/lib/queries/league-detail";
@@ -10,12 +11,16 @@ export const revalidate = 3600;
 
 const DESCRIPTION = "Fixtures, tables, and top scorers for every league we track.";
 
-export const metadata: Metadata = {
+const baseMetadata: Metadata = {
   title: "Leagues",
   description: DESCRIPTION,
   alternates: { canonical: absoluteUrl("/leagues") },
   openGraph: { title: `Leagues | ${SITE_NAME}`, description: DESCRIPTION, url: absoluteUrl("/leagues") },
 };
+
+export async function generateMetadata(): Promise<Metadata> {
+  return withPageSeo(baseMetadata, "/leagues");
+}
 
 export default async function LeaguesIndexPage() {
   const leagues = await getLeagueIndex();

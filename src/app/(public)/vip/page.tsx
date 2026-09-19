@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { withPageSeo } from "@/lib/page-seo";
 import Link from "next/link";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
@@ -10,12 +11,16 @@ import { PlanCards } from "@/components/premium/PlanCards";
 
 const DESCRIPTION = `${SITE_NAME} Premium - our highest-rated football selections, published every morning behind a small subscription.`;
 
-export const metadata: Metadata = {
+const baseMetadata: Metadata = {
   title: "Premium Plans",
   description: DESCRIPTION,
   alternates: { canonical: absoluteUrl("/vip") },
   openGraph: { title: `Premium Plans | ${SITE_NAME}`, description: DESCRIPTION, url: absoluteUrl("/vip") },
 };
+
+export async function generateMetadata(): Promise<Metadata> {
+  return withPageSeo(baseMetadata, "/vip");
+}
 
 // Session-dependent (shows your membership state + a checkout button).
 export const dynamic = "force-dynamic";

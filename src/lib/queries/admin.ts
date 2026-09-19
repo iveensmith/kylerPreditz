@@ -140,3 +140,31 @@ export async function getSubscribersForAdmin(page = 1) {
   ]);
   return { items, meta: pageMeta(total, page) };
 }
+
+/** Real Paystack payments only - admin-granted subscriptions carry a synthetic "admin-grant-" reference. */
+const PAID_WHERE = { paystackRef: { not: { startsWith: "admin-grant-" } } } as const;
+
+export async function getPaymentsForAdmin(page = 1) {
+  const [items, total, agg, last30] = await Promise.all([
+    prisma.subscription.findMany({
+      where: PAID_WHERE,
+      orderBy: { createdAt: "desc" },
+      ...pageArgs(page),
+      include: { user: { select: { email: true } } },
+    }),
+    prisma.subscription.count({ where: PAID_WHERE }),
+    prisma.subscription.aggregate({ where: { ...PAID_WHERE, amountKobo: { not: null } }, _sum: { amountKobo: true }, _count: true }),
+    prisma.subscription.aggregate({
+      where: { ...PAID_WHERE, amountKobo: { not: null }, createdAt: { gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) } },
+      _sum: { amountKobo: true },
+    }),
+  ]);
+  return {
+    items,
+    meta: pageMeta(total, page),
+    totalPayments: total,
+    recordedCount: agg._count,
+    revenueKobo: agg._sum.amountKobo ?? 0,
+    revenue30dKobo: last30._sum.amountKobo ?? 0,
+  };
+}

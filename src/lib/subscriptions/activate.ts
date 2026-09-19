@@ -15,6 +15,8 @@ export async function activateSubscription(params: {
   reference: string;
   userId: string;
   plan: SubscriptionPlan;
+  /** Amount Paystack reports as paid, in kobo - stored for the admin payments list. */
+  amountKobo?: number;
 }): Promise<{ id: string; created: boolean }> {
   const existing = await prisma.subscription.findUnique({ where: { paystackRef: params.reference } });
   if (existing) return { id: existing.id, created: false };
@@ -41,6 +43,7 @@ export async function activateSubscription(params: {
       startsAt: now,
       expiresAt,
       paystackRef: params.reference,
+      amountKobo: params.amountKobo ?? null,
     },
   });
   return { id: sub.id, created: true };

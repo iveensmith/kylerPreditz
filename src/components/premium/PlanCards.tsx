@@ -1,15 +1,17 @@
 import Link from "next/link";
-import { PLAN_LIST, formatNaira } from "@/lib/plans.config";
+import { formatNaira } from "@/lib/plans.config";
+import { getPlanList } from "@/lib/plans.server";
 
 /**
  * The three subscription plans with prices. When `subscribable` is true each
  * card links to the checkout route (which 303s to Paystack); otherwise it
  * points the visitor at registration first.
  */
-export function PlanCards({ subscribable }: { subscribable: boolean }) {
+export async function PlanCards({ subscribable }: { subscribable: boolean }) {
+  const planList = await getPlanList();
   return (
     <div className="grid gap-3 sm:grid-cols-3">
-      {PLAN_LIST.map((p) => (
+      {planList.map((p) => (
         <div key={p.plan} className="flex flex-col gap-2 rounded-xl border border-line p-4">
           <div className="font-semibold text-ink">{p.label}</div>
           <div className="font-mono text-xl font-semibold tabular-nums text-ink">

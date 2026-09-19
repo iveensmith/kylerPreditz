@@ -5,7 +5,7 @@ import "./globals.css";
 import { SessionProviderWrapper } from "@/components/providers/SessionProviderWrapper";
 import { ThemeScript } from "@/components/theme/ThemeScript";
 import { SITE_NAME, SITE_TAGLINE, SITE_URL } from "@/lib/seo";
-import { ADSENSE_CLIENT_ID } from "@/lib/ads.config";
+import { getAdsSettings } from "@/lib/ads.server";
 
 // Display face: a grotesque with a width axis, run slightly expanded for headlines
 // and big numbers - a back-page / matchday-programme voice rather than another
@@ -43,28 +43,32 @@ const montserrat = Montserrat({
 
 const DESCRIPTION = "Statistical football predictions, odds, and confidence ratings, backed by a public results archive.";
 
-export const metadata: Metadata = {
-  metadataBase: new URL(SITE_URL),
-  title: {
-    default: `${SITE_NAME} - ${SITE_TAGLINE}`,
-    template: `%s | ${SITE_NAME}`,
-  },
-  description: DESCRIPTION,
-  openGraph: {
-    siteName: SITE_NAME,
-    type: "website",
-    locale: "en_US",
-  },
-  twitter: {
-    card: "summary_large_image",
-  },
-  // Rendered as a plain static <meta> tag - no JS required - so Google's
-  // AdSense site-verification crawl can find it even if it doesn't execute
-  // the loader script (which only appears in the DOM after hydration).
-  ...(ADSENSE_CLIENT_ID ? { other: { "google-adsense-account": ADSENSE_CLIENT_ID } } : {}),
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const { clientId } = await getAdsSettings();
+  return {
+    metadataBase: new URL(SITE_URL),
+    title: {
+      default: `${SITE_NAME} - ${SITE_TAGLINE}`,
+      template: `%s | ${SITE_NAME}`,
+    },
+    description: DESCRIPTION,
+    openGraph: {
+      siteName: SITE_NAME,
+      type: "website",
+      locale: "en_US",
+    },
+    twitter: {
+      card: "summary_large_image",
+    },
+    // Rendered as a plain static <meta> tag - no JS required - so Google's
+    // AdSense site-verification crawl can find it even if it doesn't execute
+    // the loader script (which only appears in the DOM after hydration).
+    ...(clientId ? { other: { "google-adsense-account": clientId } } : {}),
+  };
+}
 
-export default function RootLayout({ children }: LayoutProps<"/">) {
+export default async function RootLayout({ children }: LayoutProps<"/">) {
+  const ads = await getAdsSettings();
   return (
     <html
       lang="en"
@@ -74,10 +78,10 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     >
       <body className="min-h-full flex flex-col">
         <ThemeScript />
-        {ADSENSE_CLIENT_ID && (
+        {ads.enabled && ads.clientId && (
           <Script
             async
-            src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${ADSENSE_CLIENT_ID}`}
+            src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${ads.clientId}`}
             crossOrigin="anonymous"
             strategy="afterInteractive"
           />

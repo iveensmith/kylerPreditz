@@ -298,6 +298,15 @@ model SiteSetting {
   updatedAt DateTime @default(now()) @updatedAt
 }
 
+// Admin-editable <title>/<meta description> overrides, keyed by public path ("/", "/leagues", ...).
+// A null field means "use the page's built-in default". See lib/page-seo.ts.
+model PageSeo {
+  path        String   @id
+  title       String?
+  description String?
+  updatedAt   DateTime @default(now()) @updatedAt
+}
+
 // ---------------------------------------------------------------------------
 // Content
 // ---------------------------------------------------------------------------
@@ -426,6 +435,8 @@ model Subscription {
   startsAt   DateTime
   expiresAt  DateTime
   paystackRef String            @unique
+  /// Amount actually paid, in kobo. Null for admin grants and pre-existing rows.
+  amountKobo  Int?
 
   user User @relation(fields: [userId], references: [id])
 

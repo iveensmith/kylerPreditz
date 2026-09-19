@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
-import { isPlan, PLANS } from "@/lib/plans.config";
+import { isPlan } from "@/lib/plans.config";
+import { minAcceptableKobo } from "@/lib/plans.server";
 import { verifyWebhookSignature } from "@/lib/paystack/webhook";
 import { activateSubscription } from "@/lib/subscriptions/activate";
 
@@ -46,13 +47,14 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: false });
   }
 
-  if (amount < PLANS[planRaw].priceKobo) {
-    console.error(`[paystack:webhook] ${reference} underpaid: ${amount} < ${PLANS[planRaw].priceKobo}`);
+  const floor = await minAcceptableKobo(planRaw);
+  if (amount < floor) {
+    console.error(`[paystack:webhook] ${reference} underpaid: ${amount} < ${floor}`);
     return NextResponse.json({ ok: false });
   }
 
   try {
-    const { created } = await activateSubscription({ reference, userId, plan: planRaw });
+    const { created } = await activateSubscription({ reference, userId, plan: planRaw, amountKobo: amount });
     return NextResponse.json({ ok: true, created });
   } catch (err) {
     console.error(`[paystack:webhook] ${reference} activation failed:`, err);

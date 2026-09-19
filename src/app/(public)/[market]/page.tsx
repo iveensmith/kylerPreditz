@@ -1,3 +1,4 @@
+import { withPageSeo } from "@/lib/page-seo";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -26,12 +27,15 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const config = getMarketPageConfig(market);
   if (!config) return {};
   const url = absoluteUrl(`/${config.slug}`);
-  return {
-    title: config.metaTitle,
-    description: config.metaDescription,
-    alternates: { canonical: url },
-    openGraph: { title: config.metaTitle, description: config.metaDescription, url },
-  };
+  return withPageSeo(
+    {
+      title: config.metaTitle,
+      description: config.metaDescription,
+      alternates: { canonical: url },
+      openGraph: { title: config.metaTitle, description: config.metaDescription, url },
+    },
+    `/${config.slug}`,
+  );
 }
 
 export default async function MarketPage({ params }: Props) {

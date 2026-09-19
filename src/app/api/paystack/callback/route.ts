@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { isPlan } from "@/lib/plans.config";
-import { PLANS } from "@/lib/plans.config";
+import { minAcceptableKobo } from "@/lib/plans.server";
 import { verifyTransaction } from "@/lib/paystack/client";
 import { activateSubscription } from "@/lib/subscriptions/activate";
 import { absoluteUrl } from "@/lib/seo";
@@ -37,12 +37,13 @@ export async function GET(request: Request) {
     }
 
     // Guard against a tampered amount - the plan must have been paid in full.
-    if (txn.amountKobo < PLANS[planRaw].priceKobo) {
-      console.error(`[paystack:callback] ${reference} underpaid: got ${txn.amountKobo}, expected ${PLANS[planRaw].priceKobo}`);
+    const floor = await minAcceptableKobo(planRaw);
+    if (txn.amountKobo < floor) {
+      console.error(`[paystack:callback] ${reference} underpaid: got ${txn.amountKobo}, expected ${floor}`);
       return NextResponse.redirect(absoluteUrl("/vip?checkout=error"));
     }
 
-    await activateSubscription({ reference, userId, plan: planRaw });
+    await activateSubscription({ reference, userId, plan: planRaw, amountKobo: txn.amountKobo });
     return NextResponse.redirect(absoluteUrl("/premium?welcome=1"));
   } catch (err) {
     console.error(`[paystack:callback] ${reference} failed:`, err);
