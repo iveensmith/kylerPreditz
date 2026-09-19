@@ -1,3 +1,5 @@
+import { UserFacingError } from "@/lib/actions/result";
+
 // Phrases banned from all UI copy, meta tags, and blog content per CLAUDE.md's
 // content rules. Predictions are statistical estimates, never certainties.
 const BANNED_PHRASES = [
@@ -18,7 +20,7 @@ export function assertNoBannedPhrases(...texts: (string | null | undefined)[]): 
   const haystack = texts.filter(Boolean).join("\n").toLowerCase();
   const hit = BANNED_PHRASES.find((phrase) => haystack.includes(phrase));
   if (hit) {
-    throw new Error(
+    throw new UserFacingError(
       `Content contains a disallowed phrase ("${hit}"). Predictions are statistical estimates - remove any "sure win" / "guaranteed" / "fixed match" wording.`,
     );
   }

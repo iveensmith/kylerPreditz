@@ -3,7 +3,8 @@ import { createManualTip } from "@/lib/actions/tips";
 import { formatKickoffTime, formatMarketLabel } from "@/lib/format";
 import { PredictionMarket } from "@/generated/prisma/enums";
 import { AdminHeader } from "@/components/admin/AdminHeader";
-import { adminInput, adminLabel, adminLabelText, adminBtn } from "@/lib/admin-ui";
+import { adminInput, adminLabel, adminLabelText } from "@/lib/admin-ui";
+import { ActionForm } from "@/components/admin/ActionForm";
 
 export default async function NewManualTipPage() {
   const fixtures = await getSkippedFixtures();
@@ -18,7 +19,7 @@ export default async function NewManualTipPage() {
       {fixtures.length === 0 ? (
         <p className="text-sm text-muted">No skipped upcoming fixtures right now.</p>
       ) : (
-        <form action={createManualTip} className="flex flex-col gap-4">
+        <ActionForm action={createManualTip} submitLabel="Create Tip" className="flex flex-col gap-4">
           <label className={adminLabel}>
             <span className={adminLabelText}>Fixture</span>
             <select name="fixtureId" required className={adminInput}>
@@ -62,10 +63,7 @@ export default async function NewManualTipPage() {
             <textarea name="reasoning" required rows={4} className={adminInput} />
           </label>
 
-          <button type="submit" className={adminBtn}>
-            Create Tip
-          </button>
-        </form>
+        </ActionForm>
       )}
     </div>
   );

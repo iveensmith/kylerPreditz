@@ -1,7 +1,8 @@
 import { SubscriptionStatus } from "@/generated/prisma/enums";
 import { getSubscribersForAdmin } from "@/lib/queries/admin";
 import { parsePageParam } from "@/lib/pagination";
-import { adminBtn, adminInput, adminLabel, adminLabelText } from "@/lib/admin-ui";
+import { adminInput, adminLabel, adminLabelText } from "@/lib/admin-ui";
+import { ActionForm } from "@/components/admin/ActionForm";
 import { grantTestSubscription, revokeSubscription } from "@/lib/actions/subscriptions";
 import { AdminHeader } from "@/components/admin/AdminHeader";
 import { Pagination } from "@/components/ui/Pagination";
@@ -20,10 +21,10 @@ export default async function AdminSubscribersPage({ searchParams }: Props) {
         <div>
           <h2 className="text-sm font-semibold">Grant a test subscription</h2>
           <p className="mt-1 text-xs text-muted">
-            Stand-in until Paystack checkout is live. The user account must already exist.
+            Comp a member (or test the premium view). The user account must already exist.
           </p>
         </div>
-        <form action={grantTestSubscription} className="flex flex-col gap-3">
+        <ActionForm action={grantTestSubscription} submitLabel="Grant subscription" className="flex flex-col gap-3">
           <label className={adminLabel}>
             <span className={adminLabelText}>User email</span>
             <input name="email" type="email" required placeholder="member@example.com" className={adminInput} />
@@ -36,10 +37,7 @@ export default async function AdminSubscribersPage({ searchParams }: Props) {
               <option value="LIFETIME">Lifetime</option>
             </select>
           </label>
-          <button type="submit" className={adminBtn}>
-            Grant subscription
-          </button>
-        </form>
+        </ActionForm>
       </section>
 
       {subscriptions.length === 0 ? (
@@ -63,7 +61,9 @@ export default async function AdminSubscribersPage({ searchParams }: Props) {
                 <tr key={sub.id} className="border-t border-line">
                   <td className="px-3 py-2 font-mono text-xs">{sub.user.email}</td>
                   <td className="px-3 py-2">{sub.plan}</td>
-                  <td className="px-3 py-2 font-mono text-xs uppercase text-muted">{sub.status}</td>
+                  <td className="px-3 py-2 font-mono text-xs uppercase text-muted">
+                    {sub.status === SubscriptionStatus.ACTIVE && sub.expiresAt < new Date() ? "EXPIRED" : sub.status}
+                  </td>
                   <td className="px-3 py-2 font-mono tabular-nums">{sub.expiresAt.toISOString().slice(0, 10)}</td>
                   <td className="px-3 py-2 text-right">
                     {sub.status === SubscriptionStatus.ACTIVE ? (

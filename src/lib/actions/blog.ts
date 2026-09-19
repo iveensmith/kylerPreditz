@@ -7,6 +7,7 @@ import { prisma } from "@/lib/db/prisma";
 import { requireAdmin } from "@/lib/auth-guard";
 import { slugify } from "@/lib/slugs";
 import { assertNoBannedPhrases } from "@/lib/content-rules";
+import { toActionError, UserFacingError, type ActionResult } from "@/lib/actions/result";
 
 function parsePostFields(formData: FormData) {
   const title = String(formData.get("title") ?? "").trim();
@@ -25,31 +26,44 @@ function parsePostFields(formData: FormData) {
   const listedRaw = formData.get("listed");
   const listed = listedRaw === null ? type === PostType.ARTICLE : listedRaw === "on";
 
-  if (!title) throw new Error("Title is required");
-  if (!body) throw new Error("Body is required");
-  if (!author) throw new Error("Author is required");
+  if (!title) throw new UserFacingError("Title is required");
+  if (!body) throw new UserFacingError("Body is required");
+  if (!author) throw new UserFacingError("Author is required");
 
   assertNoBannedPhrases(title, body, excerpt, metaTitle, metaDescription);
 
   const slug = slugInput ? slugify(slugInput) : slugify(title);
-  if (!slug) throw new Error("Could not derive a valid slug - set one explicitly");
+  if (!slug) throw new UserFacingError("Could not derive a valid slug - set one explicitly");
 
   return { title, body, author, coverImage, excerpt, metaTitle, metaDescription, slug, type, publish, sponsored, noindex, listed };
+}
+
+/** Cache invalidation must never turn a successful save into an error page. */
+function revalidateBlog(slug: string) {
+  try {
+    revalidatePath("/admin/blog");
+    revalidatePath("/blog");
+    revalidatePath(`/blog/${slug}`);
+    revalidatePath("/");
+    revalidatePath("/sitemap.xml");
+  } catch (e) {
+    console.error("[blog] revalidate failed", e);
+  }
 }
 
 async function assertSlugFree(slug: string, exceptId?: string) {
   const existing = await prisma.post.findUnique({ where: { slug } });
   if (existing && existing.id !== exceptId) {
-    throw new Error(`Slug "${slug}" is already used by another post`);
+    throw new UserFacingError(`Slug "${slug}" is already used by another post`);
   }
 }
 
-export async function createPost(formData: FormData) {
+export async function createPost(formData: FormData): Promise<ActionResult> {
   await requireAdmin();
-  const f = parsePostFields(formData);
-  await assertSlugFree(f.slug);
-
-  await prisma.post.create({
+  try {
+    const f = parsePostFields(formData);
+    await assertSlugFree(f.slug);
+    await prisma.post.create({
     data: {
       title: f.title,
       slug: f.slug,
@@ -65,21 +79,23 @@ export async function createPost(formData: FormData) {
       noindex: f.noindex,
       publishedAt: f.publish ? new Date() : null,
     },
-  });
-
-  revalidatePath("/admin/blog");
-  revalidatePath("/blog");
+    });
+    revalidateBlog(f.slug);
+  } catch (e) {
+    return toActionError(e);
+  }
   redirect("/admin/blog");
 }
 
-export async function updatePost(id: string, formData: FormData) {
+export async function updatePost(id: string, formData: FormData): Promise<ActionResult> {
   await requireAdmin();
-  const f = parsePostFields(formData);
-  const existing = await prisma.post.findUnique({ where: { id } });
-  if (!existing) throw new Error("Post not found");
-  await assertSlugFree(f.slug, id);
+  try {
+    const f = parsePostFields(formData);
+    const existing = await prisma.post.findUnique({ where: { id } });
+    if (!existing) throw new UserFacingError("Post not found");
+    await assertSlugFree(f.slug, id);
 
-  await prisma.post.update({
+    await prisma.post.update({
     where: { id },
     data: {
       title: f.title,
@@ -96,19 +112,21 @@ export async function updatePost(id: string, formData: FormData) {
       noindex: f.noindex,
       publishedAt: f.publish ? (existing.publishedAt ?? new Date()) : null,
     },
-  });
-
-  revalidatePath("/admin/blog");
-  revalidatePath("/blog");
-  revalidatePath(`/blog/${existing.slug}`);
-  if (f.slug !== existing.slug) revalidatePath(`/blog/${f.slug}`);
+    });
+    revalidateBlog(existing.slug);
+    if (f.slug !== existing.slug) revalidateBlog(f.slug);
+  } catch (e) {
+    return toActionError(e);
+  }
   redirect("/admin/blog");
 }
 
-export async function deletePost(id: string) {
+export async function deletePost(id: string): Promise<ActionResult> {
   await requireAdmin();
-  const post = await prisma.post.delete({ where: { id } });
-  revalidatePath("/admin/blog");
-  revalidatePath("/blog");
-  revalidatePath(`/blog/${post.slug}`);
+  try {
+    const post = await prisma.post.delete({ where: { id } });
+    revalidateBlog(post.slug);
+  } catch (e) {
+    return toActionError(e, "Could not delete this post.");
+  }
 }

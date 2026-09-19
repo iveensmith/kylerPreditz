@@ -1,4 +1,5 @@
-import { SettledStatus } from "@/generated/prisma/enums";
+import { Prisma } from "@/generated/prisma/client";
+import { SettledStatus, SubscriptionStatus } from "@/generated/prisma/enums";
 import { DAILY_QUOTA } from "@/lib/api-football/client";
 import { prisma } from "@/lib/db/prisma";
 import { pageArgs, pageMeta } from "@/lib/pagination";
@@ -22,7 +23,14 @@ export async function getDashboardStats() {
   const monthAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
   const settledOnly = { in: [SettledStatus.WON, SettledStatus.LOST] };
 
-  const [todayTipCount, weekSettled, monthSettled, quota] = await Promise.all([
+  const now = new Date();
+  const activeSub = { status: SubscriptionStatus.ACTIVE, expiresAt: { gt: now } };
+
+  const [
+    todayTipCount, weekSettled, monthSettled, quota,
+    totalTips, premiumTips, publishedPosts, draftPosts, members,
+    activeSubscribers, everSubscribed, lastFixtureSync, lastPrediction,
+  ] = await Promise.all([
     prisma.prediction.count({ where: { fixture: { kickoffUtc: { gte: today.gte, lt: today.lt } } } }),
     prisma.prediction.groupBy({
       by: ["settledAs"],
@@ -35,6 +43,15 @@ export async function getDashboardStats() {
       _count: true,
     }),
     prisma.apiQuotaUsage.findUnique({ where: { date: toDateParam(new Date()) } }),
+    prisma.prediction.count(),
+    prisma.prediction.count({ where: { premium: "ALWAYS" } }),
+    prisma.post.count({ where: { publishedAt: { not: null } } }),
+    prisma.post.count({ where: { publishedAt: null } }),
+    prisma.user.count(),
+    prisma.subscription.findMany({ where: activeSub, distinct: ["userId"], select: { userId: true } }),
+    prisma.subscription.findMany({ distinct: ["userId"], select: { userId: true } }),
+    prisma.fixture.aggregate({ _max: { updatedAt: true } }),
+    prisma.prediction.aggregate({ _max: { generatedAt: true } }),
   ]);
 
   return {
@@ -43,7 +60,31 @@ export async function getDashboardStats() {
     monthHitRate: hitRate(monthSettled),
     quotaUsed: quota?.count ?? 0,
     quotaLimit: DAILY_QUOTA,
+    totalTips,
+    premiumTips,
+    publishedPosts,
+    draftPosts,
+    members,
+    activeSubscribers: activeSubscribers.length,
+    expiredSubscribers: everSubscribed.length - activeSubscribers.length,
+    lastFixtureSync: lastFixtureSync._max.updatedAt,
+    lastPredictionRun: lastPrediction._max.generatedAt,
   };
+}
+
+/** Registered users with their latest subscription, optional email search - the admin members list. */
+export async function getMembersForAdmin(page = 1, q = "") {
+  const where: Prisma.UserWhereInput = q ? { email: { contains: q, mode: "insensitive" } } : {};
+  const [items, total] = await Promise.all([
+    prisma.user.findMany({
+      where,
+      orderBy: { createdAt: "desc" },
+      ...pageArgs(page),
+      include: { subscriptions: { orderBy: { expiresAt: "desc" }, take: 1 } },
+    }),
+    prisma.user.count({ where }),
+  ]);
+  return { items, meta: pageMeta(total, page) };
 }
 
 export async function getAllPredictionsForAdmin(page = 1) {

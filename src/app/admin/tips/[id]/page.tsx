@@ -4,7 +4,8 @@ import { updateTip } from "@/lib/actions/tips";
 import { formatMarketLabel } from "@/lib/format";
 import { PredictionMarket } from "@/generated/prisma/enums";
 import { AdminHeader } from "@/components/admin/AdminHeader";
-import { adminInput, adminLabel, adminLabelText, adminBtn } from "@/lib/admin-ui";
+import { adminInput, adminLabel, adminLabelText } from "@/lib/admin-ui";
+import { ActionForm } from "@/components/admin/ActionForm";
 import { PREMIUM_CONFIDENCE_FLOOR } from "@/lib/premium";
 
 type Props = { params: Promise<{ id: string }> };
@@ -23,7 +24,7 @@ export default async function EditTipPage({ params }: Props) {
         title={`Edit · ${prediction.fixture.homeTeam.name} v ${prediction.fixture.awayTeam.name}`}
       />
 
-      <form action={updateTipWithId} className="flex flex-col gap-4">
+      <ActionForm action={updateTipWithId} submitLabel="Save changes" className="flex flex-col gap-4">
         <label className={adminLabel}>
           <span className={adminLabelText}>Market</span>
           <select name="market" defaultValue={prediction.market} className={adminInput}>
@@ -92,10 +93,7 @@ export default async function EditTipPage({ params }: Props) {
           Banker of the Day
         </label>
 
-        <button type="submit" className={adminBtn}>
-          Save changes
-        </button>
-      </form>
+      </ActionForm>
     </div>
   );
 }

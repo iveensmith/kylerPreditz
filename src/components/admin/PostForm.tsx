@@ -1,5 +1,7 @@
 import type { PostType } from "@/generated/prisma/enums";
-import { adminInput, adminLabel, adminLabelText, adminBtn } from "@/lib/admin-ui";
+import { adminInput, adminLabel, adminLabelText } from "@/lib/admin-ui";
+import { ActionForm } from "@/components/admin/ActionForm";
+import type { ActionResult } from "@/lib/actions/result";
 
 type PostDefaults = {
   title: string;
@@ -32,12 +34,12 @@ export function PostForm({
   submitLabel,
   post = EMPTY,
 }: {
-  action: (formData: FormData) => void | Promise<void>;
+  action: (formData: FormData) => Promise<ActionResult>;
   submitLabel: string;
   post?: PostDefaults;
 }) {
   return (
-    <form action={action} className="flex max-w-xl flex-col gap-4">
+    <ActionForm action={action} submitLabel={submitLabel} className="flex max-w-xl flex-col gap-4">
       <label className={labelWrap}>
         <span className={hint}>Title</span>
         <input name="title" defaultValue={post.title} required className={input} />
@@ -110,9 +112,6 @@ export function PostForm({
         Published
       </label>
 
-      <button type="submit" className={adminBtn}>
-        {submitLabel}
-      </button>
-    </form>
+    </ActionForm>
   );
 }

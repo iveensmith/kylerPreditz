@@ -1,6 +1,8 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  // Long articles (or pasted HTML) can exceed the 1MB default and fail the whole submit.
+  experimental: { serverActions: { bodySizeLimit: "4mb" } },
   images: {
     remotePatterns: [{ protocol: "https", hostname: "media.api-sports.io" }],
     // Every remote image we render is a tiny (14-40px) team crest, league badge

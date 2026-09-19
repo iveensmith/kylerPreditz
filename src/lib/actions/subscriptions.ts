@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { SubscriptionPlan, SubscriptionStatus } from "@/generated/prisma/enums";
 import { prisma } from "@/lib/db/prisma";
 import { requireAdmin } from "@/lib/auth-guard";
+import { toActionError, UserFacingError, type ActionResult } from "@/lib/actions/result";
 
 const PLAN_DAYS: Record<SubscriptionPlan, number> = {
   WEEKLY: 7,
@@ -16,16 +17,17 @@ const PLAN_DAYS: Record<SubscriptionPlan, number> = {
  * stand-in until Paystack checkout (Phase 7.3) exists - used to test the
  * subscriber-only /premium view. The paystackRef is a synthetic marker.
  */
-export async function grantTestSubscription(formData: FormData) {
+export async function grantTestSubscription(formData: FormData): Promise<ActionResult> {
   await requireAdmin();
+  try {
 
   const email = String(formData.get("email") ?? "").trim().toLowerCase();
   const plan = String(formData.get("plan") ?? "") as SubscriptionPlan;
-  if (!email) throw new Error("Email is required");
-  if (!(plan in PLAN_DAYS)) throw new Error("Pick a valid plan");
+  if (!email) throw new UserFacingError("Email is required");
+  if (!(plan in PLAN_DAYS)) throw new UserFacingError("Pick a valid plan");
 
   const user = await prisma.user.findUnique({ where: { email } });
-  if (!user) throw new Error(`No user account with email ${email}`);
+  if (!user) throw new UserFacingError(`No user account with email ${email}`);
 
   const now = new Date();
   const expiresAt = new Date(now.getTime() + PLAN_DAYS[plan] * 24 * 60 * 60 * 1000);
@@ -42,13 +44,18 @@ export async function grantTestSubscription(formData: FormData) {
   });
 
   revalidatePath("/admin/subscribers");
+  revalidatePath("/admin");
+  return { ok: `Granted a ${plan.toLowerCase()} subscription to ${email}.` };
+  } catch (e) {
+    return toActionError(e);
+  }
 }
 
 /** Admin-only: marks a subscription cancelled (does not delete the row). */
 export async function revokeSubscription(formData: FormData) {
   await requireAdmin();
   const id = String(formData.get("id") ?? "");
-  if (!id) throw new Error("Subscription id is required");
+  if (!id) throw new UserFacingError("Subscription id is required");
   await prisma.subscription.update({
     where: { id },
     data: { status: SubscriptionStatus.CANCELLED },
