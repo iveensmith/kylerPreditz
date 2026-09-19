@@ -17,11 +17,22 @@ const DAY_SLUGS = [
   "saturday-predictions",
 ];
 
+// The fixture window below rolls with the clock, so rebuild hourly instead of only at deploy time.
+export const revalidate = 3600;
+
+// Match pages are only advertised while they're upcoming or recent. Older ones still
+// resolve (and stay in the results archive) but aren't pushed, so a new domain's small
+// crawl budget goes to pages people actually search for.
+const SITEMAP_MATCH_WINDOW_DAYS = 7;
+
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const [leagues, fixtures, posts, blogPageCount] = await Promise.all([
     getSitemapLeagues(),
     prisma.fixture.findMany({
-      where: { prediction: { isNot: null } },
+      where: {
+        prediction: { isNot: null },
+        kickoffUtc: { gte: new Date(Date.now() - SITEMAP_MATCH_WINDOW_DAYS * 24 * 60 * 60 * 1000) },
+      },
       select: { id: true, updatedAt: true, homeTeam: { select: { name: true } }, awayTeam: { select: { name: true } } },
     }),
     getSitemapPosts(),
