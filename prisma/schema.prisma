@@ -298,6 +298,23 @@ model SiteSetting {
   updatedAt DateTime @default(now()) @updatedAt
 }
 
+// Sponsors / partner sites shown in the public footer (Admin > Partners). Links are rel="sponsored nofollow"
+// unless `sponsored` is switched off.
+model Partner {
+  id          String   @id @default(cuid())
+  name        String
+  url         String
+  logoUrl     String?
+  description String?
+  sortOrder   Int      @default(0)
+  active      Boolean  @default(true)
+  sponsored   Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([active, sortOrder])
+}
+
 // Admin-editable <title>/<meta description> overrides, keyed by public path ("/", "/leagues", ...).
 // A null field means "use the page's built-in default". See lib/page-seo.ts.
 model PageSeo {

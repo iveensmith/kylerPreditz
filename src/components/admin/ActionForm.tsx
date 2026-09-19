@@ -14,11 +14,14 @@ export function ActionForm({
   action,
   submitLabel,
   className,
+  resetOnSuccess = false,
   children,
 }: {
   action: (formData: FormData) => Promise<ActionResult>;
   submitLabel: string;
   className?: string;
+  /** Clear the fields after a successful save (for "add new" forms). */
+  resetOnSuccess?: boolean;
   children: ReactNode;
 }) {
   const [pending, startTransition] = useTransition();
@@ -29,13 +32,17 @@ export function ActionForm({
       className={className}
       onSubmit={(e) => {
         e.preventDefault();
-        const formData = new FormData(e.currentTarget);
+        const form = e.currentTarget;
+        const formData = new FormData(form);
         setMessage(null);
         startTransition(async () => {
           try {
             const res = await action(formData);
             if (res && "error" in res) setMessage({ error: res.error });
-            else if (res && "ok" in res) setMessage({ ok: res.ok });
+            else if (res && "ok" in res) {
+              setMessage({ ok: res.ok });
+              if (resetOnSuccess) form.reset();
+            }
           } catch (err) {
             // redirect() from the action surfaces as a framework signal - let it through.
             if ((err as { digest?: string })?.digest?.startsWith("NEXT_REDIRECT")) throw err;

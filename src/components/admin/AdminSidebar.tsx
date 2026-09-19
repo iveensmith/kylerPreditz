@@ -56,6 +56,14 @@ const GROUPS: Group[] = [
     items: [{ href: "/admin/seo", label: "Titles & sitemap" }],
   },
   {
+    label: "Site",
+    icon: svg("M3 5h18v14H3zM3 9h18M7 15h6"),
+    items: [
+      { href: "/admin/site-content", label: "Header & footer" },
+      { href: "/admin/partners", label: "Partners" },
+    ],
+  },
+  {
     label: "Leagues",
     icon: svg("M12 21a9 9 0 100-18 9 9 0 000 18zM12 7l4 3-1.5 5h-5L8 10z"),
     items: [{ href: "/admin/leagues", label: "League manager" }],

@@ -1,4 +1,5 @@
 import Script from "next/script";
+import { AnnouncementBar } from "@/components/layout/AnnouncementBar";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { GA_MEASUREMENT_ID } from "@/lib/analytics.config";
@@ -18,6 +19,7 @@ gtag('config', '${GA_MEASUREMENT_ID}');`}
           </Script>
         </>
       )}
+      <AnnouncementBar />
       <Header />
       {children}
       <Footer />
