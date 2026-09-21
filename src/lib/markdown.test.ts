@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { renderPostBody } from "./markdown";
+import { renderPostBody, bodyToEditorHtml, looksLikeHtml } from "./markdown";
 
 describe("renderPostBody", () => {
   it("strips script tags and event handlers", () => {
@@ -47,5 +47,33 @@ describe("renderPostBody", () => {
   it("treats protocol-relative URLs as outbound", () => {
     const html = renderPostBody("[x](//evil.example.com)", { sponsored: false });
     expect(html).toContain('target="_blank"');
+  });
+
+  it("renders editor HTML as-is (sanitized), keeping text-align but dropping other styles", () => {
+    const html = renderPostBody(
+      '<p style="text-align:center;color:red" onclick="x()">Hi <strong>there</strong></p><script>1</script>',
+      { sponsored: false },
+    );
+    expect(html).toContain("text-align:center");
+    expect(html).not.toContain("color:red");
+    expect(html).not.toContain("onclick");
+    expect(html).not.toContain("<script");
+  });
+
+  it("keeps editor tables, sub/superscript and underline", () => {
+    const html = renderPostBody(
+      "<table><tbody><tr><th colspan=\"2\">H</th></tr></tbody></table><p><u>u</u> x<sub>2</sub> x<sup>2</sup></p>",
+      { sponsored: false },
+    );
+    expect(html).toContain("<table>");
+    expect(html).toContain("<sub>2</sub>");
+    expect(html).toContain("<u>u</u>");
+  });
+
+  it("detects HTML vs Markdown bodies and converts Markdown for the editor", () => {
+    expect(looksLikeHtml("<p>hi</p>")).toBe(true);
+    expect(looksLikeHtml("## Heading\n\ntext")).toBe(false);
+    expect(bodyToEditorHtml("## Heading")).toContain("<h2");
+    expect(bodyToEditorHtml("<p>hi</p>")).toBe("<p>hi</p>");
   });
 });

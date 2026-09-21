@@ -22,8 +22,25 @@ function isInternalHref(href: string | undefined): boolean {
   return href === SITE_URL || href.startsWith(`${SITE_URL}/`);
 }
 
+/** Bodies saved by the rich-text editor are HTML; older posts are Markdown. */
+export function looksLikeHtml(body: string): boolean {
+  return /^\s*<(p|h[1-6]|ul|ol|blockquote|table|hr|figure|img|pre)\b/i.test(body);
+}
+
+/** HTML for the admin editor: Markdown posts are converted, HTML posts pass through. */
+export function bodyToEditorHtml(body: string): string {
+  return looksLikeHtml(body) ? body : (marked.parse(body, { async: false, gfm: true, breaks: false }) as string);
+}
+
+/** Plain text of a body (either format), for meta-description fallbacks. */
+export function bodyToPlainText(body: string): string {
+  return bodyToEditorHtml(body).replace(/<[^>]*>/g, " ").replace(/&nbsp;/g, " ").replace(/\s+/g, " ").trim();
+}
+
 export function renderPostBody(markdown: string, opts: { sponsored: boolean }): string {
-  const rawHtml = marked.parse(markdown, { async: false, gfm: true, breaks: false }) as string;
+  const rawHtml = looksLikeHtml(markdown)
+    ? markdown
+    : (marked.parse(markdown, { async: false, gfm: true, breaks: false }) as string);
 
   const linkRel = opts.sponsored ? "sponsored nofollow noopener" : "noopener";
 
@@ -34,14 +51,20 @@ export function renderPostBody(markdown: string, opts: { sponsored: boolean }): 
       "ul", "ol", "li",
       "strong", "em", "b", "i", "del", "s",
       "a", "img", "hr", "br",
-      "table", "thead", "tbody", "tr", "th", "td",
+      "table", "thead", "tbody", "tr", "th", "td", "sub", "sup", "u",
       "figure", "figcaption",
     ],
     allowedAttributes: {
       a: ["href", "title", "target", "rel"],
       img: ["src", "alt", "title", "loading"],
-      td: ["align"],
-      th: ["align"],
+      td: ["align", "colspan", "rowspan"],
+      th: ["align", "colspan", "rowspan"],
+      p: ["style"],
+      h1: ["style"], h2: ["style"], h3: ["style"], h4: ["style"], h5: ["style"], h6: ["style"],
+    },
+    // Only editor text alignment survives; every other inline style is dropped.
+    allowedStyles: {
+      "*": { "text-align": [/^(left|right|center|justify)$/] },
     },
     allowedSchemes: ["http", "https", "mailto"],
     transformTags: {

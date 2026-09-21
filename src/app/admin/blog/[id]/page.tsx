@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/db/prisma";
 import { updatePost } from "@/lib/actions/blog";
+import { bodyToEditorHtml } from "@/lib/markdown";
 import { PostForm } from "@/components/admin/PostForm";
 import { AdminHeader } from "@/components/admin/AdminHeader";
 
@@ -25,7 +26,8 @@ export default async function EditPostPage({ params }: Props) {
           author: post.author,
           coverImage: post.coverImage,
           excerpt: post.excerpt,
-          body: post.body,
+          body: bodyToEditorHtml(post.body),
+          tags: post.tags,
           metaTitle: post.metaTitle,
           metaDescription: post.metaDescription,
           type: post.type,

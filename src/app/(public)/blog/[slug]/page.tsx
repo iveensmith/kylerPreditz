@@ -6,6 +6,7 @@ import { absoluteUrl, SITE_NAME } from "@/lib/seo";
 import { buildArticleJsonLd } from "@/lib/structured-data";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { Breadcrumbs } from "@/components/seo/Breadcrumbs";
+import { bodyToPlainText } from "@/lib/markdown";
 import { PostBody } from "@/components/blog/PostBody";
 import { SponsoredNotice } from "@/components/blog/SponsoredNotice";
 
@@ -23,7 +24,7 @@ function metaDescriptionFor(post: { metaDescription: string | null; excerpt: str
   return (
     post.metaDescription ||
     post.excerpt ||
-    post.body.replace(/[#*_>`[\]()!-]/g, "").replace(/\s+/g, " ").trim().slice(0, 155)
+    bodyToPlainText(post.body).slice(0, 155)
   );
 }
 
@@ -40,6 +41,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     title,
     description,
     alternates: { canonical: url },
+    ...(post.tags.length ? { keywords: post.tags } : {}),
     ...(post.noindex ? { robots: { index: false, follow: true } } : {}),
     openGraph: {
       title,
@@ -88,6 +90,15 @@ export default async function BlogPostPage({ params }: Props) {
           {post.publishedAt ? ` · ${formatArticleDate(post.publishedAt)}` : ""}
         </div>
         <h1 className="text-[2.25rem] leading-[1.08] sm:text-[2.75rem]">{post.title}</h1>
+        {post.tags.length > 0 && (
+          <ul className="flex flex-wrap gap-2">
+            {post.tags.map((tag) => (
+              <li key={tag} className="rounded-full border border-line px-2.5 py-0.5 text-xs text-muted">
+                {tag}
+              </li>
+            ))}
+          </ul>
+        )}
         {post.sponsored && <SponsoredNotice />}
       </header>
 

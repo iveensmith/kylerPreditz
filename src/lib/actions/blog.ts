@@ -6,6 +6,7 @@ import { PostType } from "@/generated/prisma/enums";
 import { prisma } from "@/lib/db/prisma";
 import { requireAdmin } from "@/lib/auth-guard";
 import { slugify } from "@/lib/slugs";
+import { parseTags } from "@/lib/tags";
 import { assertNoBannedPhrases } from "@/lib/content-rules";
 import { toActionError, UserFacingError, type ActionResult } from "@/lib/actions/result";
 
@@ -14,6 +15,7 @@ function parsePostFields(formData: FormData) {
   const body = String(formData.get("body") ?? "").trim();
   const author = String(formData.get("author") ?? "").trim();
   const coverImage = String(formData.get("coverImage") ?? "").trim() || null;
+  const tags = parseTags(String(formData.get("tags") ?? ""));
   const excerpt = String(formData.get("excerpt") ?? "").trim() || null;
   const metaTitle = String(formData.get("metaTitle") ?? "").trim() || null;
   const metaDescription = String(formData.get("metaDescription") ?? "").trim() || null;
@@ -30,12 +32,12 @@ function parsePostFields(formData: FormData) {
   if (!body) throw new UserFacingError("Body is required");
   if (!author) throw new UserFacingError("Author is required");
 
-  assertNoBannedPhrases(title, body, excerpt, metaTitle, metaDescription);
+  assertNoBannedPhrases(title, body, excerpt, metaTitle, metaDescription, tags.join(" "));
 
   const slug = slugInput ? slugify(slugInput) : slugify(title);
   if (!slug) throw new UserFacingError("Could not derive a valid slug - set one explicitly");
 
-  return { title, body, author, coverImage, excerpt, metaTitle, metaDescription, slug, type, publish, sponsored, noindex, listed };
+  return { title, body, author, coverImage, tags, excerpt, metaTitle, metaDescription, slug, type, publish, sponsored, noindex, listed };
 }
 
 /** Cache invalidation must never turn a successful save into an error page. */
@@ -71,6 +73,7 @@ export async function createPost(formData: FormData): Promise<ActionResult> {
       author: f.author,
       coverImage: f.coverImage,
       excerpt: f.excerpt,
+      tags: f.tags,
       metaTitle: f.metaTitle,
       metaDescription: f.metaDescription,
       type: f.type,
@@ -104,6 +107,7 @@ export async function updatePost(id: string, formData: FormData): Promise<Action
       author: f.author,
       coverImage: f.coverImage,
       excerpt: f.excerpt,
+      tags: f.tags,
       metaTitle: f.metaTitle,
       metaDescription: f.metaDescription,
       type: f.type,

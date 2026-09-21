@@ -351,6 +351,8 @@ model Post {
   /// Renders a sponsored-content disclosure and marks outbound links rel="sponsored nofollow".
   sponsored       Boolean  @default(false)
   excerpt         String?  @db.Text
+  /// Free-form topic tags shown on the post page and used as meta keywords.
+  tags            String[] @default([])
   metaTitle       String?
   metaDescription String?
 

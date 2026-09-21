@@ -2,6 +2,8 @@ import type { PostType } from "@/generated/prisma/enums";
 import { adminInput, adminLabel, adminLabelText } from "@/lib/admin-ui";
 import { ActionForm } from "@/components/admin/ActionForm";
 import type { ActionResult } from "@/lib/actions/result";
+import { RichTextEditor } from "@/components/admin/RichTextEditor";
+import { TagInput } from "@/components/admin/TagInput";
 
 type PostDefaults = {
   title: string;
@@ -9,6 +11,7 @@ type PostDefaults = {
   author: string;
   coverImage: string | null;
   excerpt: string | null;
+  tags: string[];
   body: string;
   metaTitle: string | null;
   metaDescription: string | null;
@@ -20,7 +23,7 @@ type PostDefaults = {
 };
 
 const EMPTY: PostDefaults = {
-  title: "", slug: "", author: "", coverImage: null, excerpt: "", body: "",
+  title: "", slug: "", author: "", coverImage: null, excerpt: "", tags: [], body: "",
   metaTitle: null, metaDescription: null, type: "ARTICLE", listed: true,
   sponsored: false, noindex: false, published: false,
 };
@@ -39,7 +42,7 @@ export function PostForm({
   post?: PostDefaults;
 }) {
   return (
-    <ActionForm action={action} submitLabel={submitLabel} className="flex max-w-xl flex-col gap-4">
+    <ActionForm action={action} submitLabel={submitLabel} className="flex max-w-3xl flex-col gap-4">
       <label className={labelWrap}>
         <span className={hint}>Title</span>
         <input name="title" defaultValue={post.title} required className={input} />
@@ -55,10 +58,15 @@ export function PostForm({
         <input name="coverImage" type="url" defaultValue={post.coverImage ?? ""} className={input} />
       </label>
 
-      <label className={labelWrap}>
-        <span className={hint}>Body (Markdown)</span>
-        <textarea name="body" defaultValue={post.body} required rows={14} className={input} />
-      </label>
+      <div className={labelWrap}>
+        <span className={hint}>Tags</span>
+        <TagInput defaultTags={post.tags} />
+      </div>
+
+      <div className={labelWrap}>
+        <span className={hint}>Article content</span>
+        <RichTextEditor initialHtml={post.body} />
+      </div>
 
       <fieldset className="flex flex-col gap-3 rounded-lg border border-line p-3">
         <legend className="px-1 font-mono text-[11px] font-semibold uppercase tracking-wide text-faint">SEO</legend>
