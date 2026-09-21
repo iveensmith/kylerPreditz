@@ -19,6 +19,15 @@ export function sniffImageType(b: Uint8Array): "image/jpeg" | "image/png" | "ima
   return null;
 }
 
+/** For link uploads: images plus PDF documents (checked by the "%PDF-" signature). */
+export function sniffUploadType(b: Uint8Array): ReturnType<typeof sniffImageType> | "application/pdf" {
+  const image = sniffImageType(b);
+  if (image) return image;
+  return b.length >= 5 && b[0] === 0x25 && b[1] === 0x50 && b[2] === 0x44 && b[3] === 0x46 && b[4] === 0x2d
+    ? "application/pdf"
+    : null;
+}
+
 /** A cover image must be an https/http URL or one of our own uploaded-image paths. */
 export function isValidCoverImage(value: string): boolean {
   return /^https?:\/\/\S+$/i.test(value) || new RegExp(`^${BLOG_IMAGE_PREFIX}[a-z0-9]+$`, "i").test(value);

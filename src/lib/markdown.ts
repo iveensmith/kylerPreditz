@@ -42,8 +42,6 @@ export function renderPostBody(markdown: string, opts: { sponsored: boolean }): 
     ? markdown
     : (marked.parse(markdown, { async: false, gfm: true, breaks: false }) as string);
 
-  const linkRel = opts.sponsored ? "sponsored nofollow noopener" : "noopener";
-
   return sanitizeHtml(rawHtml, {
     allowedTags: [
       "h1", "h2", "h3", "h4", "h5", "h6",
@@ -69,11 +67,25 @@ export function renderPostBody(markdown: string, opts: { sponsored: boolean }): 
     allowedSchemes: ["http", "https", "mailto"],
     transformTags: {
       a: (tagName, attribs) => {
-        if (isInternalHref(attribs.href)) {
-          const { target: _target, rel: _rel, ...rest } = attribs;
-          return { tagName, attribs: rest };
-        }
-        return { tagName, attribs: { ...attribs, target: "_blank", rel: linkRel } };
+        const href = attribs.href;
+        const internal = isInternalHref(href);
+        const mail = /^mailto:/i.test(href ?? "");
+        // Editor-chosen target: only the two safe values are honoured.
+        const chosen = attribs.target === "_blank" || attribs.target === "_self" ? attribs.target : undefined;
+        const target = mail ? undefined : internal ? (chosen === "_blank" ? "_blank" : undefined) : (chosen ?? "_blank");
+
+        // rel: sponsored posts force sponsored+nofollow on outbound links; authors may add
+        // nofollow/ugc/sponsored; noopener always accompanies a new-tab link.
+        const wanted = new Set<string>();
+        if (opts.sponsored && !internal && !mail) { wanted.add("sponsored"); wanted.add("nofollow"); }
+        for (const t of (attribs.rel ?? "").split(/\s+/)) if (t === "nofollow" || t === "ugc" || t === "sponsored") wanted.add(t);
+        if (target === "_blank") wanted.add("noopener");
+
+        const out: Record<string, string> = { href };
+        if (attribs.title) out.title = attribs.title;
+        if (target) out.target = target;
+        if (wanted.size) out.rel = [...wanted].join(" ");
+        return { tagName, attribs: out };
       },
       img: (tagName, attribs) => ({
         tagName,

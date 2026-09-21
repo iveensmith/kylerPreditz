@@ -9,6 +9,7 @@ import {
   Superscript, Table as TableIcon, Underline, Undo2,
 } from "lucide-react";
 import { adminInput } from "@/lib/admin-ui";
+import { LinkDialog } from "@/components/admin/LinkDialog";
 
 function Btn({ label, active, disabled, onClick, children }: {
   label: string; active?: boolean; disabled?: boolean; onClick: () => void; children: ReactNode;
@@ -37,7 +38,8 @@ const Sep = () => <span className="mx-1 h-5 w-px bg-line" aria-hidden />;
 export function EditorToolbar({ editor, source, onToggleSource }: {
   editor: Editor; source: boolean; onToggleSource: () => void;
 }) {
-  const [urlMode, setUrlMode] = useState<"link" | "image" | null>(null);
+  const [urlMode, setUrlMode] = useState<"image" | null>(null);
+  const [linkOpen, setLinkOpen] = useState(false);
   const [url, setUrl] = useState("");
 
   // Re-render the toolbar when the selection or formatting changes.
@@ -60,8 +62,7 @@ export function EditorToolbar({ editor, source, onToggleSource }: {
   function applyUrl() {
     const value = url.trim();
     if (value) {
-      if (urlMode === "link") chain().extendMarkRange("link").setLink({ href: value }).run();
-      else if (urlMode === "image") chain().setImage({ src: value }).run();
+      if (urlMode === "image") chain().setImage({ src: value }).run();
     }
     setUrl("");
     setUrlMode(null);
@@ -116,7 +117,7 @@ export function EditorToolbar({ editor, source, onToggleSource }: {
         <Btn label="Align right" disabled={off} onClick={() => chain().setTextAlign("right").run()}><AlignRight size={16} /></Btn>
         <Btn label="Justify" disabled={off} onClick={() => chain().setTextAlign("justify").run()}><AlignJustify size={16} /></Btn>
         <Sep />
-        <Btn label="Add link" active={s.link} disabled={off} onClick={() => setUrlMode("link")}><Link2 size={16} /></Btn>
+        <Btn label="Add link" active={s.link} disabled={off} onClick={() => setLinkOpen(true)}><Link2 size={16} /></Btn>
         <Btn label="Remove link" disabled={off || !s.link} onClick={() => chain().extendMarkRange("link").unsetLink().run()}><Link2Off size={16} /></Btn>
         <Btn label="Insert image" disabled={off} onClick={() => setUrlMode("image")}><ImageIcon size={16} /></Btn>
         <Btn label="Insert table" disabled={off} onClick={() => chain().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run()}><TableIcon size={16} /></Btn>
@@ -149,17 +150,18 @@ export function EditorToolbar({ editor, source, onToggleSource }: {
               if (e.key === "Enter") { e.preventDefault(); applyUrl(); }
               if (e.key === "Escape") { setUrl(""); setUrlMode(null); }
             }}
-            placeholder={urlMode === "link" ? "https://… or /blog/your-post (internal)" : "Image URL (https://…)"}
+            placeholder="Image URL (https://…)"
             className={`${adminInput} flex-1`}
           />
           <button type="button" onClick={applyUrl} className="rounded-md bg-brand px-3 text-xs font-semibold text-white">
-            {urlMode === "link" ? "Add link" : "Insert"}
+            Insert
           </button>
           <button type="button" onClick={() => { setUrl(""); setUrlMode(null); }} className="rounded-md border border-line px-3 text-xs">
             Cancel
           </button>
         </div>
       )}
+      {linkOpen && <LinkDialog editor={editor} onClose={() => setLinkOpen(false)} />}
     </div>
   );
 }

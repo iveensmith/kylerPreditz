@@ -4,12 +4,21 @@ import { useState } from "react";
 import { EditorContent, useEditor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import Image from "@tiptap/extension-image";
+import Link from "@tiptap/extension-link";
 import Subscript from "@tiptap/extension-subscript";
 import Superscript from "@tiptap/extension-superscript";
 import TextAlign from "@tiptap/extension-text-align";
 import { TableKit } from "@tiptap/extension-table";
 import { adminInput } from "@/lib/admin-ui";
 import { EditorToolbar } from "@/components/admin/EditorToolbar";
+
+// Link with a tooltip title, and no built-in target/rel: the link dialog sets them, and the
+// renderer decides the safe defaults (see renderPostBody).
+const ArticleLink = Link.extend({
+  addAttributes() {
+    return { ...this.parent?.(), title: { default: null } };
+  },
+}).configure({ openOnClick: false, autolink: false, HTMLAttributes: { target: null, rel: null } });
 
 /**
  * WYSIWYG body editor. The HTML it produces is submitted as the `body` field and is
@@ -22,7 +31,8 @@ export function RichTextEditor({ initialHtml }: { initialHtml: string }) {
   const editor = useEditor({
     immediatelyRender: false, // avoids an SSR hydration mismatch
     extensions: [
-      StarterKit.configure({ heading: { levels: [2, 3, 4] }, link: { openOnClick: false } }),
+      StarterKit.configure({ heading: { levels: [2, 3, 4] }, link: false }),
+      ArticleLink,
       Image,
       Subscript,
       Superscript,

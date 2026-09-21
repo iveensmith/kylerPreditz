@@ -24,3 +24,12 @@ describe("isValidCoverImage", () => {
     expect(isValidCoverImage("/api/blog-image/../../secret")).toBe(false);
   });
 });
+
+describe("sniffUploadType", () => {
+  it("accepts PDFs as well as images", async () => {
+    const { sniffUploadType } = await import("./image-upload");
+    expect(sniffUploadType(new TextEncoder().encode("%PDF-1.7 ..."))).toBe("application/pdf");
+    expect(sniffUploadType(Uint8Array.from([0xff, 0xd8, 0xff]))).toBe("image/jpeg");
+    expect(sniffUploadType(new TextEncoder().encode("MZ executable"))).toBeNull();
+  });
+});
