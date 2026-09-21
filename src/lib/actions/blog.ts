@@ -7,6 +7,7 @@ import { prisma } from "@/lib/db/prisma";
 import { requireAdmin } from "@/lib/auth-guard";
 import { slugify } from "@/lib/slugs";
 import { parseTags } from "@/lib/tags";
+import { isValidCoverImage } from "@/lib/image-upload";
 import { assertNoBannedPhrases } from "@/lib/content-rules";
 import { toActionError, UserFacingError, type ActionResult } from "@/lib/actions/result";
 
@@ -31,6 +32,9 @@ function parsePostFields(formData: FormData) {
   if (!title) throw new UserFacingError("Title is required");
   if (!body) throw new UserFacingError("Body is required");
   if (!author) throw new UserFacingError("Author is required");
+  if (coverImage && !isValidCoverImage(coverImage)) {
+    throw new UserFacingError("Cover image must be an uploaded image or a link starting with https://");
+  }
 
   assertNoBannedPhrases(title, body, excerpt, metaTitle, metaDescription, tags.join(" "));
 

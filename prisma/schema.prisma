@@ -464,3 +464,12 @@ model Subscription {
   @@index([userId])
   @@index([status])
 }
+
+/// Cover images uploaded from the admin editor. Bytes live in Postgres and are served
+/// (immutably cached) from /api/blog-image/[id]; the id is the only handle, never reused.
+model PostImage {
+  id          String   @id @default(cuid())
+  contentType String
+  data        Bytes
+  createdAt   DateTime @default(now())
+}

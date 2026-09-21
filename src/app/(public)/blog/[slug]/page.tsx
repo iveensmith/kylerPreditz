@@ -50,7 +50,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       type: "article",
       publishedTime: post.publishedAt?.toISOString(),
       modifiedTime: post.updatedAt.toISOString(),
-      ...(post.coverImage ? { images: [post.coverImage] } : {}),
+      ...(post.coverImage ? { images: [absoluteUrl(post.coverImage)] } : {}),
     },
   };
 }
@@ -69,7 +69,7 @@ export default async function BlogPostPage({ params }: Props) {
           title: post.metaTitle || post.title,
           description: metaDescriptionFor(post),
           url,
-          image: post.coverImage,
+          image: post.coverImage ? absoluteUrl(post.coverImage) : null,
           author: post.author,
           datePublished: post.publishedAt ?? post.createdAt,
           dateModified: post.updatedAt,

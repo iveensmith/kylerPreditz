@@ -1,0 +1,31 @@
+import { NextResponse } from "next/server";
+import { getServerSession } from "next-auth/next";
+import { UserRole } from "@/generated/prisma/enums";
+import { authOptions } from "@/lib/auth";
+import { prisma } from "@/lib/db/prisma";
+import { BLOG_IMAGE_PREFIX, MAX_IMAGE_BYTES, sniffImageType } from "@/lib/image-upload";
+
+export const dynamic = "force-dynamic";
+
+// Admin-only. Stores the image bytes in Postgres and returns the public path to use as a cover image.
+export async function POST(request: Request) {
+  const session = await getServerSession(authOptions);
+  if (session?.user.role !== UserRole.ADMIN) {
+    return NextResponse.json({ error: "Not authorised" }, { status: 401 });
+  }
+
+  const file = (await request.formData()).get("file");
+  if (!(file instanceof File)) return NextResponse.json({ error: "No file uploaded" }, { status: 400 });
+  if (file.size > MAX_IMAGE_BYTES) {
+    return NextResponse.json({ error: "Image is larger than 2 MB" }, { status: 413 });
+  }
+
+  const bytes = new Uint8Array(await file.arrayBuffer());
+  const contentType = sniffImageType(bytes);
+  if (!contentType) {
+    return NextResponse.json({ error: "Use a JPG, PNG, WebP or GIF image" }, { status: 415 });
+  }
+
+  const image = await prisma.postImage.create({ data: { contentType, data: bytes }, select: { id: true } });
+  return NextResponse.json({ url: `${BLOG_IMAGE_PREFIX}${image.id}` });
+}

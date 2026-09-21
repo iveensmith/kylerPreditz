@@ -3,6 +3,7 @@ import { adminInput, adminLabel, adminLabelText } from "@/lib/admin-ui";
 import { ActionForm } from "@/components/admin/ActionForm";
 import type { ActionResult } from "@/lib/actions/result";
 import { RichTextEditor } from "@/components/admin/RichTextEditor";
+import { CoverImageField } from "@/components/admin/CoverImageField";
 import { TagInput } from "@/components/admin/TagInput";
 
 type PostDefaults = {
@@ -53,10 +54,10 @@ export function PostForm({
         <input name="author" defaultValue={post.author} required className={input} />
       </label>
 
-      <label className={labelWrap}>
-        <span className={hint}>Cover Image URL (optional)</span>
-        <input name="coverImage" type="url" defaultValue={post.coverImage ?? ""} className={input} />
-      </label>
+      <div className={labelWrap}>
+        <span className={hint}>Cover image</span>
+        <CoverImageField defaultValue={post.coverImage} />
+      </div>
 
       <div className={labelWrap}>
         <span className={hint}>Tags</span>
