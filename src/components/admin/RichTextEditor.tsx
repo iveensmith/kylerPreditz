@@ -33,7 +33,13 @@ export function RichTextEditor({ initialHtml }: { initialHtml: string }) {
     editorProps: {
       attributes: {
         class:
-          "prose prose-zinc max-w-none min-h-[22rem] px-4 py-3 outline-none focus:outline-none prose-img:rounded-lg prose-table:border prose-th:border prose-td:border prose-th:px-2 prose-td:px-2",
+          // Prose colours follow the theme tokens so text stays readable in light and dark mode.
+          "prose max-w-none min-h-[22rem] px-4 py-3 text-ink caret-[var(--ink)] outline-none focus:outline-none " +
+          "[--tw-prose-body:var(--ink)] [--tw-prose-headings:var(--ink)] [--tw-prose-bold:var(--ink)] " +
+          "[--tw-prose-links:var(--brand)] [--tw-prose-bullets:var(--ink)] [--tw-prose-counters:var(--ink)] " +
+          "[--tw-prose-quotes:var(--ink)] [--tw-prose-quote-borders:var(--line)] [--tw-prose-captions:var(--ink)] " +
+          "[--tw-prose-code:var(--ink)] [--tw-prose-hr:var(--line)] [--tw-prose-th-borders:var(--line)] " +
+          "[--tw-prose-td-borders:var(--line)] prose-img:rounded-lg prose-table:border prose-th:px-2 prose-td:px-2",
       },
     },
     // An empty editor reports "<p></p>"; send "" so the server's required-body check works.
