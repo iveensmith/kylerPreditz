@@ -13,7 +13,7 @@ export function TipOfTheDayCard({ banker }: { banker: Banker }) {
   const { fixture } = banker;
 
   return (
-    <section className="flex flex-col gap-4 rounded-[var(--radius-card)] border border-white/10 bg-[#0c1310] p-5 text-white md:sticky md:top-20">
+    <section className="flex flex-col gap-4 rounded-[var(--radius-card)] border border-white/10 bg-[#0c1310] p-5 text-white">
       <div className="flex items-center justify-between">
         <h2 className="eyebrow !text-brand-light">Tip of the day</h2>
         <span className="font-mono text-[11px] font-semibold tabular-nums text-brand-light">

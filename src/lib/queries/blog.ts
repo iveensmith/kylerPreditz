@@ -30,12 +30,17 @@ export async function getListedPostPageCount() {
   return pageMeta(total, 1).pageCount;
 }
 
-export async function getLatestListedPosts(n: number) {
+export async function getLatestListedPosts(n: number, skip = 0) {
   return prisma.post.findMany({
     where: LISTED_WHERE,
     orderBy: { publishedAt: "desc" },
     take: n,
+    skip,
   });
+}
+
+export async function countListedPosts() {
+  return prisma.post.count({ where: LISTED_WHERE });
 }
 
 /** Any published post, listed or not. Drafts (publishedAt === null) return null. */

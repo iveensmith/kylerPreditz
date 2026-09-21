@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { withPageSeo } from "@/lib/page-seo";
-import { parseDateParam } from "@/lib/format";
+import { formatArticleDate, parseDateParam } from "@/lib/format";
 import {
   getBankerOfTheDay,
   getFixturesForDate,
@@ -8,7 +8,8 @@ import {
   getStandingsForFeaturedLeagues,
   getTopScorersForFeaturedLeagues,
 } from "@/lib/queries/homepage";
-import { getLatestListedPosts } from "@/lib/queries/blog";
+import { countListedPosts, getLatestListedPosts } from "@/lib/queries/blog";
+import { SidebarBlogList } from "@/components/home/SidebarBlogList";
 import { getGamesToday } from "@/lib/site-settings";
 import { HOMEPAGE_FAQ } from "@/lib/faq.config";
 import { buildFaqPageJsonLd, buildSiteIdentityJsonLd } from "@/lib/structured-data";
@@ -62,14 +63,22 @@ export default async function Home({ searchParams }: PageProps<"/">) {
   // Admin "no matches today" switch: only affects the today view, other dates render normally.
   const noMatchesNotice = !gamesToday && isToday;
 
-  const [fetchedLeagues, fetchedBanker, recentWinners, standings, topScorers, latestPosts] = await Promise.all([
+  const [fetchedLeagues, fetchedBanker, recentWinners, standings, topScorers, latestPosts, sidebarPostRows, listedPostTotal] = await Promise.all([
     getFixturesForDate(selectedDate),
     getBankerOfTheDay(selectedDate),
     getRecentWinningTips(),
     getStandingsForFeaturedLeagues(),
     getTopScorersForFeaturedLeagues(),
     getLatestListedPosts(4),
+    getLatestListedPosts(3),
+    countListedPosts(),
   ]);
+  const sidebarPosts = sidebarPostRows.map((p) => ({
+    id: p.id,
+    slug: p.slug,
+    title: p.title,
+    date: p.publishedAt ? formatArticleDate(p.publishedAt) : null,
+  }));
 
   const leagues = noMatchesNotice ? [] : fetchedLeagues;
   const banker = noMatchesNotice ? null : fetchedBanker;
@@ -99,10 +108,11 @@ export default async function Home({ searchParams }: PageProps<"/">) {
       <Hero />
 
       <main id="todays-tips" className="max-w-6xl mx-auto w-full px-4 py-8 flex flex-col md:flex-row gap-6">
-        {banker && (
+        {(banker || sidebarPosts.length > 0) && (
           <div className="w-full md:w-72 shrink-0 flex flex-col gap-6">
-            <TipOfTheDayCard banker={banker} />
-            <SidebarFixtureList fixtures={sidebarFixtures} />
+            {banker && <TipOfTheDayCard banker={banker} />}
+            {banker && <SidebarFixtureList fixtures={sidebarFixtures} />}
+            <SidebarBlogList initialPosts={sidebarPosts} initialHasMore={listedPostTotal > sidebarPosts.length} />
           </div>
         )}
 
