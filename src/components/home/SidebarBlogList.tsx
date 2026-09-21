@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 
-export type SidebarPost = { id: string; slug: string; title: string; date: string | null };
+export type SidebarPost = { id: string; slug: string; title: string; coverImage: string | null; date: string | null };
 
 /** Homepage sidebar: first posts are server-rendered, "More" fetches the next batch. */
 export function SidebarBlogList({ initialPosts, initialHasMore }: { initialPosts: SidebarPost[]; initialHasMore: boolean }) {
@@ -37,6 +37,15 @@ export function SidebarBlogList({ initialPosts, initialHasMore }: { initialPosts
         {posts.map((post) => (
           <li key={post.id}>
             <Link href={`/blog/${post.slug}`} className="flex flex-col gap-1 py-2.5 transition-colors hover:text-brand-light">
+              {post.coverImage && (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={post.coverImage}
+                  alt=""
+                  loading="lazy"
+                  className="mb-1.5 aspect-[16/9] w-full rounded-md object-cover"
+                />
+              )}
               <span className="text-[13px] font-medium leading-snug">{post.title}</span>
               {post.date && (
                 <span className="font-mono text-[10px] uppercase tracking-wide text-white/35">{post.date}</span>

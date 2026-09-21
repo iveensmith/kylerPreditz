@@ -77,6 +77,7 @@ export default async function Home({ searchParams }: PageProps<"/">) {
     id: p.id,
     slug: p.slug,
     title: p.title,
+    coverImage: p.coverImage,
     date: p.publishedAt ? formatArticleDate(p.publishedAt) : null,
   }));
 
