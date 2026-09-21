@@ -36,4 +36,16 @@ describe("renderPostBody", () => {
     const html = renderPostBody("[x](javascript:alert(1))", { sponsored: false });
     expect(html).not.toContain("javascript:");
   });
+
+  it("keeps site-relative links in the same tab and never nofollow, even when sponsored", () => {
+    const html = renderPostBody("[Tips](/predictions)", { sponsored: true });
+    expect(html).toContain('href="/predictions"');
+    expect(html).not.toContain("target=");
+    expect(html).not.toContain("nofollow");
+  });
+
+  it("treats protocol-relative URLs as outbound", () => {
+    const html = renderPostBody("[x](//evil.example.com)", { sponsored: false });
+    expect(html).toContain('target="_blank"');
+  });
 });
