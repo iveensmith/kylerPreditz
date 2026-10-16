@@ -9,8 +9,26 @@
 	"compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
 	"triggers": {
 		// Same cadence as today's cron-job.org / GitHub Actions setup - see
-		// docs/cron-setup.md and worker-entry.ts's CRON_ROUTE_BY_SCHEDULE.
+		// docs/cron-setup.md and worker-entry.js's CRON_ROUTE_BY_SCHEDULE.
 		"crons": ["*/3 * * * *", "*/30 * * * *", "0 */6 * * *", "0 */2 * * *", "0 * * * *"]
+	},
+	// Secrets are set via `wrangler secret put` (not declared here) - without
+	// this, each deploy from a Git push would wipe them, since wrangler syncs
+	// bindings to exactly match this file by default.
+	"keep_vars": true,
+	"vars": {
+		"AI_MODEL": "claude-haiku-4-5",
+		"AI_LAYER_MODE": "reasoning_only",
+		"CONFIDENCE_FLOOR": "40",
+		"PREMIUM_CONFIDENCE_FLOOR": "92",
+		"PAYSTACK_PUBLIC_KEY": "pk_live_34a2dfde122ac8e005e5433b0d37d432fd92e5f8",
+		"EMAIL_FROM": "UniquePredict <noreply@uniquepredict.com>",
+		// Placeholder until the DNS cutover (Phase 8) - update to
+		// https://uniquepredict.com and redeploy once the domain is live.
+		// (NEXT_PUBLIC_SITE_URL isn't listed here - Next.js inlines
+		// NEXT_PUBLIC_* vars at build time, from the Build variables, not a
+		// live runtime lookup, so a runtime entry here would be a no-op.)
+		"NEXTAUTH_URL": "https://uniquepredict.kemismithy.workers.dev"
 	},
 	"assets": {
 		"directory": ".open-next/assets",
