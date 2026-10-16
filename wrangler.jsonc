@@ -28,7 +28,7 @@
 		// (NEXT_PUBLIC_SITE_URL isn't listed here - Next.js inlines
 		// NEXT_PUBLIC_* vars at build time, from the Build variables, not a
 		// live runtime lookup, so a runtime entry here would be a no-op.)
-		"NEXTAUTH_URL": "https://uniquepredict.kemismithy.workers.dev"
+		"NEXTAUTH_URL": "https://uniquepredict.com"
 	},
 	"assets": {
 		"directory": ".open-next/assets",
