@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { getSetting, setSetting } from "@/lib/site-settings";
 
 const KEY = "siteContent";
@@ -51,8 +52,14 @@ function str(v: unknown, max: number): string {
   return typeof v === "string" ? v.slice(0, max) : "";
 }
 
-/** Reads admin-set header/footer content. Never throws: public pages must render even if the DB read fails. */
-export async function getSiteContent(): Promise<SiteContent> {
+/**
+ * Reads admin-set header/footer content. Never throws: public pages must render even if the DB
+ * read fails. Called by both AnnouncementBar and Footer on every page - cache()'d so it's one
+ * DB read per request, not two (each Prisma call opens its own connection under Workers'
+ * `maxUses: 1`, see src/lib/db/prisma.ts - uncached duplicate reads were a real, measurable
+ * chunk of per-page latency).
+ */
+export const getSiteContent = cache(async (): Promise<SiteContent> => {
   try {
     const raw = await getSetting(KEY);
     if (!raw) return DEFAULT_SITE_CONTENT;
@@ -77,7 +84,7 @@ export async function getSiteContent(): Promise<SiteContent> {
     console.error("[site-content] read failed, using defaults", e);
     return DEFAULT_SITE_CONTENT;
   }
-}
+});
 
 export async function saveSiteContent(content: SiteContent): Promise<void> {
   await setSetting(KEY, JSON.stringify(content));
