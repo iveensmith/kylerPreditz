@@ -1,3 +1,4 @@
+import { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/db/prisma";
 import {
   getStandings,
@@ -28,7 +29,6 @@ export type TeamStatsResult = {
   errors: string[];
 };
 
-const UPSERT_CONCURRENCY = 10;
 // Leagues processed in parallel in the table pass - the API client has its own
 // rate-limit throttle and the DB pool handles the fan-out.
 const LEAGUE_CONCURRENCY = 5;
@@ -80,47 +80,55 @@ export async function syncLeagueTables(): Promise<LeagueTablesResult> {
         prisma.topScorer.findMany({ where: { leagueId: league.id, season } }),
       ]);
 
+      // Every write for this league collected here and sent as one
+      // $transaction below instead of awaited individually (even run
+      // concurrently in chunks, as this used to) - each prisma call opens
+      // its own connection on Workers (see src/lib/db/prisma.ts's
+      // `maxUses: 1`), and a league with many changed rows was adding up to
+      // minutes rather than seconds. One transaction per league instead of
+      // one per row.
+      const ops: Prisma.PrismaPromise<unknown>[] = [];
+
       // ---- standings ----------------------------------------------------
       const standingByTeam = new Map(existingStandings.map((s) => [s.teamId, s]));
       const seenStandingTeamIds = new Set<string>();
-      await inChunks(
-        standings.filter((row) => teamIdByApiId.has(row.team.id)),
-        UPSERT_CONCURRENCY,
-        async (row) => {
-          const teamId = teamIdByApiId.get(row.team.id)!;
-          seenStandingTeamIds.add(teamId);
-          const next = {
-            rank: row.rank,
-            played: row.all.played,
-            points: row.points ?? 0,
-            goalDiff: row.goalsDiff ?? 0,
-          };
-          const current = standingByTeam.get(teamId);
-          if (
-            current &&
-            current.rank === next.rank &&
-            current.played === next.played &&
-            current.points === next.points &&
-            current.goalDiff === next.goalDiff
-          ) {
-            return; // unchanged
-          }
-          await prisma.standing.upsert({
+      for (const row of standings) {
+        if (!teamIdByApiId.has(row.team.id)) continue;
+        const teamId = teamIdByApiId.get(row.team.id)!;
+        seenStandingTeamIds.add(teamId);
+        const next = {
+          rank: row.rank,
+          played: row.all.played,
+          points: row.points ?? 0,
+          goalDiff: row.goalsDiff ?? 0,
+        };
+        const current = standingByTeam.get(teamId);
+        if (
+          current &&
+          current.rank === next.rank &&
+          current.played === next.played &&
+          current.points === next.points &&
+          current.goalDiff === next.goalDiff
+        ) {
+          continue; // unchanged
+        }
+        ops.push(
+          prisma.standing.upsert({
             where: { leagueId_teamId_season: { leagueId: league.id, teamId, season } },
             create: { leagueId: league.id, teamId, season, ...next },
             update: next,
-          });
-          result.standingsWritten++;
-          changed = true;
-        },
-      );
+          }),
+        );
+        result.standingsWritten++;
+        changed = true;
+      }
       // Drop rows for teams no longer in the table - but only when the API
       // actually returned one (an empty pre-season cup response must not wipe it).
+      let staleStandingIds: string[] = [];
       if (seenStandingTeamIds.size > 0) {
-        const stale = existingStandings.filter((s) => !seenStandingTeamIds.has(s.teamId)).map((s) => s.id);
-        if (stale.length > 0) {
-          const pruned = await prisma.standing.deleteMany({ where: { id: { in: stale } } });
-          result.staleRowsPruned += pruned.count;
+        staleStandingIds = existingStandings.filter((s) => !seenStandingTeamIds.has(s.teamId)).map((s) => s.id);
+        if (staleStandingIds.length > 0) {
+          ops.push(prisma.standing.deleteMany({ where: { id: { in: staleStandingIds } } }));
           changed = true;
         }
       }
@@ -128,53 +136,53 @@ export async function syncLeagueTables(): Promise<LeagueTablesResult> {
       // ---- top scorers ------------------------------------------------
       const scorerByKey = new Map(existingScorers.map((s) => [`${s.teamId}::${s.playerName}`, s]));
       const seenScorerIds = new Set<string>();
-      await inChunks(
-        topScorers.filter((e) => e.statistics[0] && teamIdByApiId.has(e.statistics[0].team.id)),
-        UPSERT_CONCURRENCY,
-        async (entry) => {
-          const stat = entry.statistics[0]!;
-          const teamId = teamIdByApiId.get(stat.team.id)!;
-          const next = {
-            playerApiId: entry.player.id,
-            photoUrl: entry.player.photo ?? null,
-            goals: stat.goals.total ?? 0,
-            appearances: stat.games.appearences ?? 0,
-          };
-          const current = scorerByKey.get(`${teamId}::${entry.player.name}`);
-          if (current) {
-            seenScorerIds.add(current.id);
-            if (
-              current.goals === next.goals &&
-              current.appearances === next.appearances &&
-              current.playerApiId === next.playerApiId &&
-              current.photoUrl === next.photoUrl
-            ) {
-              return; // unchanged
-            }
-            await prisma.topScorer.update({ where: { id: current.id }, data: next });
-            result.topScorersWritten++;
-            changed = true;
-            return;
+      for (const entry of topScorers) {
+        const stat = entry.statistics[0];
+        if (!stat || !teamIdByApiId.has(stat.team.id)) continue;
+        const teamId = teamIdByApiId.get(stat.team.id)!;
+        const next = {
+          playerApiId: entry.player.id,
+          photoUrl: entry.player.photo ?? null,
+          goals: stat.goals.total ?? 0,
+          appearances: stat.games.appearences ?? 0,
+        };
+        const current = scorerByKey.get(`${teamId}::${entry.player.name}`);
+        if (current) {
+          seenScorerIds.add(current.id);
+          if (
+            current.goals === next.goals &&
+            current.appearances === next.appearances &&
+            current.playerApiId === next.playerApiId &&
+            current.photoUrl === next.photoUrl
+          ) {
+            continue; // unchanged
           }
-          const created = await prisma.topScorer.create({
-            data: { leagueId: league.id, teamId, playerName: entry.player.name, season, ...next },
-            select: { id: true },
-          });
-          seenScorerIds.add(created.id);
+          ops.push(prisma.topScorer.update({ where: { id: current.id }, data: next }));
           result.topScorersWritten++;
           changed = true;
-        },
-      );
+          continue;
+        }
+        ops.push(
+          prisma.topScorer.create({
+            data: { leagueId: league.id, teamId, playerName: entry.player.name, season, ...next },
+          }),
+        );
+        result.topScorersWritten++;
+        changed = true;
+      }
       // The API only returns the current top ~20; anyone who dropped out keeps a
       // stale row (and stale goal count) that pollutes the top-10 list.
+      let staleScorerIds: string[] = [];
       if (seenScorerIds.size > 0) {
-        const stale = existingScorers.filter((s) => !seenScorerIds.has(s.id)).map((s) => s.id);
-        if (stale.length > 0) {
-          const pruned = await prisma.topScorer.deleteMany({ where: { id: { in: stale } } });
-          result.staleRowsPruned += pruned.count;
+        staleScorerIds = existingScorers.filter((s) => !seenScorerIds.has(s.id)).map((s) => s.id);
+        if (staleScorerIds.length > 0) {
+          ops.push(prisma.topScorer.deleteMany({ where: { id: { in: staleScorerIds } } }));
           changed = true;
         }
       }
+
+      if (ops.length > 0) await prisma.$transaction(ops);
+      result.staleRowsPruned += staleStandingIds.length + staleScorerIds.length;
 
       result.tablesChecked++;
       if (changed) result.changedLeagues.push({ country: league.country, slug: league.slug });
