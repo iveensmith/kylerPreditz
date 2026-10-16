@@ -1,16 +1,8 @@
 import type { Metadata } from "next";
 import { withPageSeo } from "@/lib/page-seo";
 import { formatArticleDate, parseDateParam } from "@/lib/format";
-import {
-  getBankerOfTheDay,
-  getFixturesForDate,
-  getRecentWinningTips,
-  getStandingsForFeaturedLeagues,
-  getTopScorersForFeaturedLeagues,
-} from "@/lib/queries/homepage";
-import { countListedPosts, getLatestListedPosts } from "@/lib/queries/blog";
+import { getHomepageData } from "@/lib/queries/homepage";
 import { SidebarBlogList } from "@/components/home/SidebarBlogList";
-import { getGamesToday } from "@/lib/site-settings";
 import { HOMEPAGE_FAQ } from "@/lib/faq.config";
 import { buildFaqPageJsonLd, buildSiteIdentityJsonLd } from "@/lib/structured-data";
 import { absoluteUrl, SITE_NAME, SITE_TAGLINE, SITE_URL } from "@/lib/seo";
@@ -58,21 +50,21 @@ export default async function Home({ searchParams }: PageProps<"/">) {
   const dateParam = Array.isArray(params.date) ? params.date[0] : params.date;
   const selectedDate = parseDateParam(dateParam);
 
-  const gamesToday = await getGamesToday();
+  const {
+    gamesToday,
+    fixtureLeagues: fetchedLeagues,
+    banker: fetchedBanker,
+    recentWinners,
+    standings,
+    topScorers,
+    latestPosts4: latestPosts,
+    latestPosts3: sidebarPostRows,
+    listedPostTotal,
+  } = await getHomepageData(selectedDate);
   const isToday = selectedDate.getTime() === parseDateParam(undefined).getTime();
   // Admin "no matches today" switch: only affects the today view, other dates render normally.
   const noMatchesNotice = !gamesToday && isToday;
 
-  const [fetchedLeagues, fetchedBanker, recentWinners, standings, topScorers, latestPosts, sidebarPostRows, listedPostTotal] = await Promise.all([
-    getFixturesForDate(selectedDate),
-    getBankerOfTheDay(selectedDate),
-    getRecentWinningTips(),
-    getStandingsForFeaturedLeagues(),
-    getTopScorersForFeaturedLeagues(),
-    getLatestListedPosts(4),
-    getLatestListedPosts(3),
-    countListedPosts(),
-  ]);
   const sidebarPosts = sidebarPostRows.map((p) => ({
     id: p.id,
     slug: p.slug,

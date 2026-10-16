@@ -2,6 +2,8 @@ import { SettledStatus } from "@/generated/prisma/enums";
 import { getCurrentSeason } from "@/lib/api-football/season";
 import { prisma } from "@/lib/db/prisma";
 import { dropLockedFixturesFromList, shouldLockPick } from "@/lib/premium";
+import { gamesTodayQuery } from "@/lib/site-settings";
+import { latestListedPostsQuery, listedPostsCountQuery } from "./blog";
 import { fixtureListInclude } from "./types";
 
 export function dayRangeUtc(date: Date): { gte: Date; lt: Date } {
@@ -16,10 +18,15 @@ export function dayRangeUtc(date: Date): { gte: Date; lt: Date } {
  * public day views entirely rather than shown as an empty "No tip" row - the
  * admin can still see and manually pick them via the dedicated admin query
  * (getSkippedFixtures in queries/admin.ts).
+ *
+ * `*Query` variants below return the raw, unawaited query - callers that need
+ * several of these at once (e.g. getHomepageData) batch them into one
+ * prisma.$transaction([...]) instead of each opening its own connection
+ * (each Prisma call does on Workers - see src/lib/db/prisma.ts's `maxUses: 1`).
  */
-export async function getFixturesForDate(date: Date) {
+export function fixturesForDateQuery(date: Date) {
   const { gte, lt } = dayRangeUtc(date);
-  const leagues = await prisma.league.findMany({
+  return prisma.league.findMany({
     where: { isFeatured: true, fixtures: { some: { kickoffUtc: { gte, lt }, prediction: { isNot: null } } } },
     orderBy: { priority: "asc" },
     include: {
@@ -30,7 +37,10 @@ export async function getFixturesForDate(date: Date) {
       },
     },
   });
-  return dropLockedFixturesFromList(leagues);
+}
+
+export async function getFixturesForDate(date: Date) {
+  return dropLockedFixturesFromList(await fixturesForDateQuery(date));
 }
 
 export type { LeagueWithFixtures as FixturesByLeague } from "./types";
@@ -41,24 +51,32 @@ export type { LeagueWithFixtures as FixturesByLeague } from "./types";
  * slot only ever shows a free pick (the strongest premium pick lives on
  * /premium). Falls back through the top few candidates.
  */
-export async function getBankerOfTheDay(date: Date) {
+export function bankerCandidatesQuery(date: Date) {
   const { gte, lt } = dayRangeUtc(date);
-  const candidates = await prisma.prediction.findMany({
+  return prisma.prediction.findMany({
     where: { fixture: { kickoffUtc: { gte, lt } } },
     orderBy: [{ isBanker: "desc" }, { confidence: "desc" }],
     take: 10,
     include: { fixture: { include: fixtureListInclude } },
   });
+}
+
+export async function getBankerOfTheDay(date: Date) {
+  const candidates = await bankerCandidatesQuery(date);
   return candidates.find((p) => !shouldLockPick(p)) ?? null;
 }
 
-export async function getRecentWinningTips(limit = 6) {
+export function recentWinningTipsQuery(limit = 6) {
   return prisma.prediction.findMany({
     where: { settledAs: SettledStatus.WON },
     orderBy: { fixture: { kickoffUtc: "desc" } },
     take: limit,
     include: { fixture: { include: fixtureListInclude } },
   });
+}
+
+export async function getRecentWinningTips(limit = 6) {
+  return recentWinningTipsQuery(limit);
 }
 
 // These two queries share one season value across every featured league in a
@@ -69,9 +87,9 @@ export async function getRecentWinningTips(limit = 6) {
 // (filtered out below) until it lines back up - never wrong data. Fixing this
 // properly needs a per-league query; not worth it for a decorative homepage
 // section. Sync and prediction generation resolve season per-league correctly.
-export async function getStandingsForFeaturedLeagues() {
+export function standingsForFeaturedLeaguesQuery() {
   const season = getCurrentSeason();
-  const leagues = await prisma.league.findMany({
+  return prisma.league.findMany({
     where: { isFeatured: true },
     orderBy: { priority: "asc" },
     include: {
@@ -82,14 +100,18 @@ export async function getStandingsForFeaturedLeagues() {
       },
     },
   });
+}
+
+export async function getStandingsForFeaturedLeagues() {
+  const leagues = await standingsForFeaturedLeaguesQuery();
   return leagues.filter((l) => l.standings.length > 0);
 }
 
 export type StandingsByLeague = Awaited<ReturnType<typeof getStandingsForFeaturedLeagues>>;
 
-export async function getTopScorersForFeaturedLeagues(limit = 5, leagueLimit = 6) {
+export function topScorersForFeaturedLeaguesQuery(limit = 5, leagueLimit = 6) {
   const season = getCurrentSeason();
-  const leagues = await prisma.league.findMany({
+  return prisma.league.findMany({
     where: { isFeatured: true },
     orderBy: { priority: "asc" },
     take: leagueLimit,
@@ -102,7 +124,57 @@ export async function getTopScorersForFeaturedLeagues(limit = 5, leagueLimit = 6
       },
     },
   });
+}
+
+export async function getTopScorersForFeaturedLeagues(limit = 5, leagueLimit = 6) {
+  const leagues = await topScorersForFeaturedLeaguesQuery(limit, leagueLimit);
   return leagues.filter((l) => l.topScorers.length > 0);
 }
 
 export type TopScorersByLeague = Awaited<ReturnType<typeof getTopScorersForFeaturedLeagues>>;
+
+/**
+ * Everything the homepage needs, in one round-trip. The page previously ran
+ * `getGamesToday()` plus 8 more independent queries via `Promise.all`, which
+ * doesn't reduce the number of connections opened (each still opens its own
+ * under Workers' `maxUses: 1` - see src/lib/db/prisma.ts) - only overlaps
+ * their wait time, and real production pages were measured at 6-8s, the
+ * slowest page on the site. One `$transaction([...])` sends all 9 as a
+ * single connection; the same post-processing each individual getter does is
+ * applied here afterward.
+ */
+export async function getHomepageData(date: Date) {
+  const [
+    gamesTodayRow,
+    fixtureLeagues,
+    bankerCandidates,
+    recentWinners,
+    standingsLeagues,
+    topScorerLeagues,
+    latestPosts4,
+    latestPosts3,
+    listedPostTotal,
+  ] = await prisma.$transaction([
+    gamesTodayQuery(),
+    fixturesForDateQuery(date),
+    bankerCandidatesQuery(date),
+    recentWinningTipsQuery(6),
+    standingsForFeaturedLeaguesQuery(),
+    topScorersForFeaturedLeaguesQuery(),
+    latestListedPostsQuery(4),
+    latestListedPostsQuery(3),
+    listedPostsCountQuery(),
+  ]);
+
+  return {
+    gamesToday: gamesTodayRow?.value !== "no",
+    fixtureLeagues: dropLockedFixturesFromList(fixtureLeagues),
+    banker: bankerCandidates.find((p) => !shouldLockPick(p)) ?? null,
+    recentWinners,
+    standings: standingsLeagues.filter((l) => l.standings.length > 0),
+    topScorers: topScorerLeagues.filter((l) => l.topScorers.length > 0),
+    latestPosts4,
+    latestPosts3,
+    listedPostTotal,
+  };
+}
