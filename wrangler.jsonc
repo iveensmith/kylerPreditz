@@ -23,8 +23,6 @@
 		"PREMIUM_CONFIDENCE_FLOOR": "92",
 		"PAYSTACK_PUBLIC_KEY": "pk_live_34a2dfde122ac8e005e5433b0d37d432fd92e5f8",
 		"EMAIL_FROM": "UniquePredict <noreply@uniquepredict.com>",
-		// Placeholder until the DNS cutover (Phase 8) - update to
-		// https://uniquepredict.com and redeploy once the domain is live.
 		// (NEXT_PUBLIC_SITE_URL isn't listed here - Next.js inlines
 		// NEXT_PUBLIC_* vars at build time, from the Build variables, not a
 		// live runtime lookup, so a runtime entry here would be a no-op.)
