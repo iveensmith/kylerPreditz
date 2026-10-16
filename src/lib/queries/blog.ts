@@ -30,8 +30,7 @@ export async function getListedPostPageCount() {
   return pageMeta(total, 1).pageCount;
 }
 
-/** Unawaited, so callers that need several of these at once (e.g. the homepage) can batch them into one prisma.$transaction([...]). */
-export function latestListedPostsQuery(n: number, skip = 0) {
+export async function getLatestListedPosts(n: number, skip = 0) {
   return prisma.post.findMany({
     where: LISTED_WHERE,
     orderBy: { publishedAt: "desc" },
@@ -40,16 +39,8 @@ export function latestListedPostsQuery(n: number, skip = 0) {
   });
 }
 
-export async function getLatestListedPosts(n: number, skip = 0) {
-  return latestListedPostsQuery(n, skip);
-}
-
-export function listedPostsCountQuery() {
-  return prisma.post.count({ where: LISTED_WHERE });
-}
-
 export async function countListedPosts() {
-  return listedPostsCountQuery();
+  return prisma.post.count({ where: LISTED_WHERE });
 }
 
 /** Any published post, listed or not. Drafts (publishedAt === null) return null. */

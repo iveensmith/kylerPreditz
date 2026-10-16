@@ -2,17 +2,12 @@ import { prisma } from "@/lib/db/prisma";
 
 const GAMES_TODAY_KEY = "gamesToday";
 
-/** Unawaited, so callers that need several settings at once (e.g. the homepage) can batch them into one prisma.$transaction([...]). */
-export function gamesTodayQuery() {
-  return prisma.siteSetting.findUnique({ where: { key: GAMES_TODAY_KEY } });
-}
-
 /**
  * Admin "Are there games today?" switch. Defaults to true (no row = normal site);
  * only an explicit "no" turns the homepage's today view into a no-matches notice.
  */
 export async function getGamesToday(): Promise<boolean> {
-  const row = await gamesTodayQuery();
+  const row = await prisma.siteSetting.findUnique({ where: { key: GAMES_TODAY_KEY } });
   return row?.value !== "no";
 }
 
