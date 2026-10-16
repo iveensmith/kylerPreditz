@@ -1,0 +1,37 @@
+{
+	"$schema": "node_modules/wrangler/config-schema.json",
+	// worker-entry.js wraps OpenNext's generated .open-next/worker.js, adding
+	// the "scheduled" handler below (OpenNext has no built-in Cron Triggers
+	// support) while passing "fetch" straight through.
+	"main": "worker-entry.js",
+	"name": "uniquepredict",
+	"compatibility_date": "2026-10-15",
+	"compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
+	"triggers": {
+		// Same cadence as today's cron-job.org / GitHub Actions setup - see
+		// docs/cron-setup.md and worker-entry.ts's CRON_ROUTE_BY_SCHEDULE.
+		"crons": ["*/3 * * * *", "*/30 * * * *", "0 */6 * * *", "0 */2 * * *", "0 * * * *"]
+	},
+	"assets": {
+		"directory": ".open-next/assets",
+		"binding": "ASSETS"
+	},
+	"services": [
+		{
+			// Self-reference service binding, used by OpenNext for revalidation -
+			// the binding/service names must match "name" above.
+			// See https://opennext.js.org/cloudflare/caching
+			"binding": "WORKER_SELF_REFERENCE",
+			"service": "uniquepredict"
+		}
+	],
+	"kv_namespaces": [
+		{
+			// ISR/data-cache store for the ~18 `revalidate`-using routes.
+			// KV only (no R2/Queue) - traffic here doesn't warrant them. See
+			// https://opennext.js.org/cloudflare/caching
+			"binding": "NEXT_INC_CACHE_KV",
+			"id": "caa762194f8f4761b6396a1e18ede6fb"
+		}
+	]
+}

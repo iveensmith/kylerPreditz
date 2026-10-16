@@ -1,13 +1,16 @@
 /**
- * Build-time guard: on a deployed (Vercel) build, fail fast if
- * NEXT_PUBLIC_SITE_URL is missing or still points at localhost. It drives every
- * canonical URL, OpenGraph tag, and sitemap entry - a localhost value silently
- * tells Google to ignore the real site.
+ * Build-time guard: on an automated/CI build, fail fast if
+ * NEXT_PUBLIC_SITE_URL is missing or still points at localhost. It drives
+ * every canonical URL, OpenGraph tag, and sitemap entry - a localhost value
+ * silently tells Google to ignore the real site.
  *
- * Local `npm run build` is unaffected (localhost is expected there).
+ * Gated on `CI` (set by virtually every hosted build system - GitHub Actions,
+ * Cloudflare Workers Builds, Vercel, etc.) rather than a Vercel-only var, so
+ * it still fires after the move off Vercel. Local `npm run build` is
+ * unaffected (localhost is expected there, and `CI` is unset).
  */
-const onVercel = process.env.VERCEL === "1" || Boolean(process.env.VERCEL_ENV);
-if (!onVercel) process.exit(0);
+const isCiBuild = Boolean(process.env.CI);
+if (!isCiBuild) process.exit(0);
 
 const url = process.env.NEXT_PUBLIC_SITE_URL?.trim();
 const problems: string[] = [];
@@ -28,8 +31,8 @@ if (problems.length > 0) {
   console.error("\n✖ Build blocked - NEXT_PUBLIC_SITE_URL is misconfigured for a deployed build:");
   for (const p of problems) console.error(`  - ${p}`);
   console.error(
-    "\n  Set it in Vercel → Settings → Environment Variables to the real origin,\n" +
-      "  e.g. https://unique-preditz.vercel.app (no trailing slash). It drives every\n" +
+    "\n  Set it in your build environment's variables to the real origin,\n" +
+      "  e.g. https://uniquepredict.com (no trailing slash). It drives every\n" +
       "  canonical URL, OpenGraph tag, and sitemap entry.\n",
   );
   process.exit(1);

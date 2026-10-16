@@ -67,6 +67,22 @@ async function readCache(cacheKey: string) {
   return prisma.apiCache.findUnique({ where: { cacheKey } });
 }
 
+// Cache rows are kept past expiry on purpose - apiFootballRequest serves a
+// stale row as a fallback once the daily quota is exhausted (see below) - but
+// nothing ever deleted old ones, so distinct cache keys (one per date/league/
+// team/param combo ever requested) accumulated forever: ApiCache alone grew
+// to 22MB/4500+ rows, ~2/3 of the whole database. Prune anything well past
+// its fallback-usefulness window on a random subset of writes, rather than
+// adding a dedicated cron job for it.
+const PRUNE_PROBABILITY = 0.02; // ~1 in 50 writes
+const PRUNE_GRACE_MS = 7 * 24 * 60 * 60 * 1000; // keep a week of stale-fallback buffer past expiry
+
+async function pruneExpiredCache(): Promise<void> {
+  await prisma.apiCache.deleteMany({
+    where: { expiresAt: { lt: new Date(Date.now() - PRUNE_GRACE_MS) } },
+  });
+}
+
 async function writeCache(cacheKey: string, endpoint: string, response: unknown, ttlSeconds: number) {
   const expiresAt = new Date(Date.now() + ttlSeconds * 1000);
   await prisma.apiCache.upsert({
@@ -74,6 +90,10 @@ async function writeCache(cacheKey: string, endpoint: string, response: unknown,
     create: { cacheKey, endpoint, response: response as object, expiresAt },
     update: { response: response as object, expiresAt, fetchedAt: new Date() },
   });
+
+  if (Math.random() < PRUNE_PROBABILITY) {
+    pruneExpiredCache().catch((err) => console.warn("[api-football] cache prune failed:", err));
+  }
 }
 
 /** Returns true if the call is allowed, having reserved one unit of quota. */

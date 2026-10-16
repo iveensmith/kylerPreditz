@@ -37,8 +37,9 @@ export function CoverImageField({ defaultValue }: { defaultValue: string | null 
       const body = new FormData();
       body.append("file", blob, file.name);
       const res = await fetch("/api/admin/upload-image", { method: "POST", body });
-      const data = await res.json().catch(() => ({}));
+      const data = (await res.json().catch(() => ({}))) as { error?: string; url?: string };
       if (!res.ok) throw new Error(data.error ?? "Upload failed");
+      if (!data.url) throw new Error("Upload succeeded but the server didn't return a URL.");
       setValue(data.url);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Upload failed");

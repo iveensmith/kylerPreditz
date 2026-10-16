@@ -4,8 +4,14 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "postinstall": "prisma generate",
+    "postinstall": "prisma generate && tsx scripts/select-prisma-client.ts node",
     "build": "prisma migrate deploy && tsx scripts/check-site-url.ts && next build",
+    "prebuild:cf": "tsx scripts/select-prisma-client.ts workerd",
+    "build:cf": "npm run build && opennextjs-cloudflare build",
+    "postbuild:cf": "tsx scripts/select-prisma-client.ts node",
+    "cf-typegen": "wrangler types",
+    "preview": "npm run build:cf && opennextjs-cloudflare preview",
+    "deploy": "npm run build:cf && wrangler deploy",
     "start": "next start",
     "lint": "eslint",
     "sync:fixtures": "tsx scripts/run-job.ts fixtures",
@@ -19,6 +25,7 @@
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.120.0",
+    "@opennextjs/cloudflare": "^1.20.12",
     "@neondatabase/serverless": "^1.1.0",
     "@prisma/adapter-neon": "^7.9.1",
     "@prisma/client": "^7.9.1",
@@ -36,7 +43,7 @@
     "dotenv": "^17.4.2",
     "lucide-react": "^1.47.0",
     "marked": "^18.0.11",
-    "next": "16.3.2",
+    "next": "^16.4.1",
     "next-auth": "^4.24.15",
     "react": "19.2.8",
     "react-dom": "19.2.8",
@@ -54,12 +61,13 @@
     "@types/sanitize-html": "^2.16.1",
     "@types/ws": "^8.18.1",
     "eslint": "^9",
-    "eslint-config-next": "16.3.2",
+    "eslint-config-next": "^16.4.1",
     "prisma": "^7.9.1",
     "tailwindcss": "^4",
     "tsx": "^4.23.12",
     "typescript": "^5",
-    "vitest": "^4.1.11"
+    "vitest": "^4.1.11",
+    "wrangler": "^4.151.0"
   },
   "allowScripts": {
     "@prisma/engines@7.9.1": true,

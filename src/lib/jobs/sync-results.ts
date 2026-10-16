@@ -1,3 +1,4 @@
+import { Prisma } from "@/generated/prisma/client";
 import { FixtureStatus, SettledStatus } from "@/generated/prisma/enums";
 import { ApiFootballQuotaExceededError } from "@/lib/api-football/client";
 import { getFixturesForLiveUpdate } from "@/lib/api-football/endpoints";
@@ -52,12 +53,24 @@ async function abandonStaleFixtures(): Promise<{ fixturesAbandoned: number }> {
     select: { id: true, prediction: { select: { id: true, settledAs: true } } },
   });
 
-  for (const f of stale) {
-    await prisma.fixture.update({ where: { id: f.id }, data: { status: FixtureStatus.ABANDONED } });
+  if (stale.length === 0) return { fixturesAbandoned: 0 };
+
+  // One batch instead of up to 2 awaited writes per fixture: on Workers, each
+  // individual prisma call pays its own connection-setup cost (see
+  // src/lib/db/prisma.ts), so a sequential per-fixture loop here was the main
+  // driver behind this job timing out. $transaction([...]) sends every op as
+  // one round-trip; these writes are independent (no op's result feeds
+  // another), so batching changes nothing about the outcome.
+  const ops = stale.flatMap((f) => {
+    const writes: Prisma.PrismaPromise<unknown>[] = [
+      prisma.fixture.update({ where: { id: f.id }, data: { status: FixtureStatus.ABANDONED } }),
+    ];
     if (f.prediction && f.prediction.settledAs === SettledStatus.PENDING) {
-      await prisma.prediction.update({ where: { id: f.prediction.id }, data: { settledAs: SettledStatus.VOID } });
+      writes.push(prisma.prediction.update({ where: { id: f.prediction.id }, data: { settledAs: SettledStatus.VOID } }));
     }
-  }
+    return writes;
+  });
+  await prisma.$transaction(ops);
 
   return { fixturesAbandoned: stale.length };
 }
@@ -109,22 +122,33 @@ export async function syncResults(): Promise<SyncResultsResult> {
   for (const group of groups.values()) {
     try {
       const apiFixtures = await getFixturesForLiveUpdate(group.leagueApiId, group.season, group.date);
+
+      // Collected instead of awaited inline, then sent as one $transaction
+      // below - same reasoning as abandonStaleFixtures() above: each op here
+      // is independent (computed purely from apiFixture/existing, nothing
+      // depends on another write's result), so batching this group's writes
+      // into one round-trip instead of up to 2-per-fixture is safe and
+      // doesn't change the outcome.
+      const ops: Prisma.PrismaPromise<unknown>[] = [];
+
       for (const apiFixture of apiFixtures) {
         const existing = byApiId.get(apiFixture.fixture.id);
         if (!existing) continue;
 
         const newStatus = mapApiFixtureStatus(apiFixture.fixture.status.short);
-        await prisma.fixture.update({
-          where: { id: existing.id },
-          data: {
-            status: newStatus,
-            homeScore: apiFixture.goals.home,
-            awayScore: apiFixture.goals.away,
-            htHomeScore: apiFixture.score.halftime.home,
-            htAwayScore: apiFixture.score.halftime.away,
-            elapsedMinutes: apiFixture.fixture.status.elapsed,
-          },
-        });
+        ops.push(
+          prisma.fixture.update({
+            where: { id: existing.id },
+            data: {
+              status: newStatus,
+              homeScore: apiFixture.goals.home,
+              awayScore: apiFixture.goals.away,
+              htHomeScore: apiFixture.score.halftime.home,
+              htAwayScore: apiFixture.score.halftime.away,
+              elapsedMinutes: apiFixture.fixture.status.elapsed,
+            },
+          }),
+        );
         result.fixturesUpdated++;
         if (newStatus !== existing.status) {
           result.fixturesTransitioned++;
@@ -153,10 +177,12 @@ export async function syncResults(): Promise<SyncResultsResult> {
         }
 
         if (outcome) {
-          await prisma.prediction.update({ where: { id: prediction.id }, data: { settledAs: outcome } });
+          ops.push(prisma.prediction.update({ where: { id: prediction.id }, data: { settledAs: outcome } }));
           result.predictionsSettled++;
         }
       }
+
+      if (ops.length > 0) await prisma.$transaction(ops);
     } catch (err) {
       if (err instanceof ApiFootballQuotaExceededError) {
         result.errors.push("quota exhausted mid-sync, stopping this run");

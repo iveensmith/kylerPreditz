@@ -1,6 +1,19 @@
+// Two client outputs: Prisma 7's WASM query compiler loads differently per
+// target (base64-decoded + compiled at runtime on Node; a static `?module`
+// import on Cloudflare Workers, since workerd disallows runtime Wasm
+// compilation - see https://github.com/prisma/prisma/issues/28657). Neither
+// flavor works on the other target, so local dev/tests/scripts use the Node
+// client and the Cloudflare build swaps in the workerd one just for that
+// build (see scripts/select-prisma-client.ts, package.json's build:cf).
 generator client {
   provider = "prisma-client"
-  output   = "../src/generated/prisma"
+  output   = "../src/generated/prisma-node"
+}
+
+generator client_workerd {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma-workerd"
+  runtime  = "cloudflare"
 }
 
 datasource db {

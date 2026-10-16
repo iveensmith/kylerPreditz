@@ -46,8 +46,9 @@ export function LinkDialog({ editor, onClose }: { editor: Editor; onClose: () =>
       body.append("file", file, file.name);
       body.append("allowPdf", "1");
       const res = await fetch("/api/admin/upload-image", { method: "POST", body });
-      const data = await res.json().catch(() => ({}));
+      const data = (await res.json().catch(() => ({}))) as { error?: string; url?: string };
       if (!res.ok) throw new Error(data.error ?? "Upload failed");
+      if (!data.url) throw new Error("Upload succeeded but the server didn't return a URL.");
       setType("internal");
       setUrl(data.url);
       if (!text) setText(file.name);

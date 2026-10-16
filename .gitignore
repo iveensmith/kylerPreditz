@@ -37,11 +37,17 @@ yarn-error.log*
 # vercel
 .vercel
 
+# cloudflare / opennext
+.open-next/
+.wrangler/
+.dev.vars
+worker-configuration.d.ts
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts
 
-/src/generated/prisma
+/src/generated/
 
 # design reference screenshots - internal reference only, not part of the app
 /project
