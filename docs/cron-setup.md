@@ -38,24 +38,20 @@ token (same as before):
 curl -H "Authorization: Bearer $CRON_SECRET" https://uniquepredict.com/api/cron/sync-results
 ```
 
-## Legacy: cron-job.org / GitHub Actions (being phased out)
+## Decommissioned: cron-job.org / GitHub Actions
 
 Before the Cloudflare migration, Vercel Hobby's 2-jobs/day Cron limit meant
 splitting the schedule across **cron-job.org** (sync-results, sync-stats —
 timing-sensitive) and **GitHub Actions** (the other three — delay-tolerant,
 and GitHub's free tier throttles hourly triggers to firing every 2-5h on a
-low-activity repo, which is why those jobs tolerate a long delay).
+low-activity repo, which is why those jobs tolerated a long delay).
 
-These are kept running in parallel with Cloudflare Cron Triggers for now, as
-a safety net, and should be decommissioned once the native triggers have run
-reliably for a few cycles:
-- cron-job.org: cancel the `uniquepredict sync-results` / `uniquepredict
-  sync-stats` jobs.
-- GitHub Actions: delete `.github/workflows/cron-*.yml` (5 files) - note
-  `cron-sync-results.yml` and `cron-sync-stats.yml` are already
-  dispatch-only (no `schedule:` trigger), so only `cron-sync-fixtures.yml`,
-  `cron-sync-team-stats.yml`, and `cron-generate-predictions.yml` are
-  actually still firing on a schedule today.
+Both are now decommissioned (2026-10-16) - `.github/workflows/cron-*.yml`
+deleted, and the two cron-job.org jobs cancelled - after confirming
+Cloudflare Cron Triggers firing correctly in production via `wrangler
+tail`. The HTTP routes still work unchanged for manual/debugging use
+(`curl` with the bearer token, as above); nothing else depends on
+cron-job.org or these workflow files anymore.
 
 ## Rotating CRON_SECRET
 
