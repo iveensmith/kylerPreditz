@@ -1,65 +1,64 @@
 # Cron setup
 
 The scheduled jobs live at `/api/cron/*` and each expects
-`Authorization: Bearer $CRON_SECRET`. They need an external scheduler to hit them
-on a schedule.
+`Authorization: Bearer $CRON_SECRET`.
 
-We are on the Vercel **Hobby** plan, so Vercel Cron is not an option (Hobby =
-2 jobs, once per day). We use a split:
+## Cloudflare Cron Triggers (current)
 
-| Job | Endpoint | Schedule | Runs on | Why |
-|---|---|---|---|---|
-| sync-results | `/api/cron/sync-results` | every 3 min | **cron-job.org** | Timing matters — this is what clears a finished match's live minute. Fast (<10s). |
-| sync-stats | `/api/cron/sync-stats` | every 30 min | **cron-job.org** | Standings + top scorers only. Skips rows that didn't change, so a between-matchday run is a few seconds; a busy one stays well under the 30s timeout. |
-| sync-team-stats | `/api/cron/sync-team-stats` | every 2h | GitHub Actions | Per-team stats (model inputs). One statistics call per team → can't finish all leagues in one run, so it's stalest-first + time-boxed. Delay-tolerant. |
-| sync-fixtures | `/api/cron/sync-fixtures` | every 6h | GitHub Actions | A 20-min delay is irrelevant. |
-| generate-predictions | `/api/cron/generate-predictions` | hourly | GitHub Actions | Can run longer than cron-job.org's 30s response timeout. |
+Now that hosting is on Cloudflare Workers, all 5 jobs run on native
+**Cron Triggers** — no external scheduler needed. They're declared in
+`wrangler.jsonc`'s `triggers.crons`, and `worker-entry.js` exports a
+`scheduled(event, env, ctx)` handler that maps `event.cron` to the matching
+route and invokes it in-process (a synthetic `Request` passed straight to
+OpenNext's own `fetch` handler — no network round-trip, and the real route
+handler, bearer-token check included, stays the single source of truth).
 
-> **GitHub Actions drops most scheduled runs.** On the free tier, an hourly
-> `schedule:` trigger for a low-activity repo actually fires every 2–5 hours —
-> observed on this repo. Anything that needs to be reliably fresh (sync-results,
-> sync-stats) belongs on cron-job.org. GitHub is fine for the jobs where a
-> multi-hour delay doesn't matter. The workflows are in `.github/workflows/`.
+| Job | Endpoint | Schedule |
+|---|---|---|
+| sync-results | `/api/cron/sync-results` | `*/3 * * * *` |
+| sync-stats | `/api/cron/sync-stats` | `*/30 * * * *` |
+| sync-fixtures | `/api/cron/sync-fixtures` | `0 */6 * * *` |
+| sync-team-stats | `/api/cron/sync-team-stats` | `0 */2 * * *` |
+| generate-predictions | `/api/cron/generate-predictions` | `0 * * * *` |
 
-## One-time: cron-job.org jobs
+**Changing the schedule**: edit `wrangler.jsonc`'s `triggers.crons` array
+*and* `worker-entry.js`'s `CRON_ROUTE_BY_SCHEDULE` map (the cron expression
+string is the lookup key between them — they must match exactly).
 
-1. Create a free account at https://cron-job.org (free tier: 50 jobs, 1-minute
-   resolution).
-2. Create **two** cronjobs, same setup, different URL + schedule:
+**Testing a trigger manually** without waiting for the real schedule: via
+Wrangler's local dev server, Cloudflare's Local Explorer exposes a dispatch
+endpoint —
+```
+curl -X POST "http://127.0.0.1:8787/cdn-cgi/local/explorer/api/local/scheduled?worker=uniquepredict" \
+  -H "Content-Type: application/json" -d '{"cron":"*/3 * * * *"}'
+```
+On the real deployment, just hit the HTTP route directly with the bearer
+token (same as before):
+```
+curl -H "Authorization: Bearer $CRON_SECRET" https://uniquepredict.com/api/cron/sync-results
+```
 
-   | Title | URL (`<domain>` = `NEXT_PUBLIC_SITE_URL`) | Schedule |
-   |---|---|---|
-   | `uniquepredict sync-results` | `https://<domain>/api/cron/sync-results` | `*/3 * * * *` |
-   | `uniquepredict sync-stats` | `https://<domain>/api/cron/sync-stats` | `*/30 * * * *` |
+## Legacy: cron-job.org / GitHub Actions (being phased out)
 
-3. **Advanced settings** (both jobs):
-   - **Request method**: `GET`
-   - **Headers**: add one — name `Authorization`, value
-     `Bearer <the CRON_SECRET value from Vercel>`
-   - **Treat redirects as success**: off
-   - **Request timeout**: raise to the max (30s on free tier).
-   - **Notifications**: enable "on failure".
-4. Save. Check **History** after a few minutes — `200` with a JSON body
-   (`{"fixturesChecked":0,...}` / `{"tablesChecked":32,...}`). `401` = bad
-   header, `404` = bad URL.
-5. Once green, disable the GitHub fallbacks so they don't double-run: GitHub →
-   **Actions** → **Cron - Sync Results** and **Cron - Sync Stats** → `···` →
-   **Disable workflow**. Leave the files in the repo for `workflow_dispatch`.
+Before the Cloudflare migration, Vercel Hobby's 2-jobs/day Cron limit meant
+splitting the schedule across **cron-job.org** (sync-results, sync-stats —
+timing-sensitive) and **GitHub Actions** (the other three — delay-tolerant,
+and GitHub's free tier throttles hourly triggers to firing every 2-5h on a
+low-activity repo, which is why those jobs tolerate a long delay).
 
-> **If cron-job.org logs occasional timeouts on sync-stats:** the work still
-> completed on Vercel (it runs to `maxDuration` regardless of the client
-> hanging up). But if it's frequent, the matchday write volume is the cause —
-> check the Vercel function duration for `/api/cron/sync-stats`. The
-> change-detection in `syncLeagueTables` should keep it fast; a persistent
-> problem means something is rewriting every row every run.
+These are kept running in parallel with Cloudflare Cron Triggers for now, as
+a safety net, and should be decommissioned once the native triggers have run
+reliably for a few cycles:
+- cron-job.org: cancel the `uniquepredict sync-results` / `uniquepredict
+  sync-stats` jobs.
+- GitHub Actions: delete `.github/workflows/cron-*.yml` (5 files) - note
+  `cron-sync-results.yml` and `cron-sync-stats.yml` are already
+  dispatch-only (no `schedule:` trigger), so only `cron-sync-fixtures.yml`,
+  `cron-sync-team-stats.yml`, and `cron-generate-predictions.yml` are
+  actually still firing on a schedule today.
 
 ## Rotating CRON_SECRET
 
-If `CRON_SECRET` changes in Vercel, update the `Authorization` header on the
-cron-job.org job and the `CRON_SECRET` GitHub Actions secret.
-
-## If we upgrade to Vercel Pro
-
-Add `vercel.json` with a `crons` array for all four endpoints (Vercel injects the
-`Authorization: Bearer $CRON_SECRET` header automatically) and delete both the
-cron-job.org job and the GitHub workflows.
+Update it via `wrangler secret put CRON_SECRET` (Cloudflare), and the
+cron-job.org job header / GitHub Actions secret too, until those are
+decommissioned.
